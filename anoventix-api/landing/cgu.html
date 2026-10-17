@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conditions d'utilisation — AnoventiX</title>
+    <meta
+      name="description"
+      content="Conditions générales d'utilisation de l'application AnoventiX, plateforme d'annonces immobilières en Guinée."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --blue: #1e3a6e;
+        --blue-light: #e6ecf7;
+        --gold: #c9960c;
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #4b5563;
+        --border: #e5e7eb;
+        --todo-bg: #fff4d6;
+        --todo-text: #7a4d00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --blue: #9db8ea;
+          --blue-light: #1b2740;
+          --bg: #0f1420;
+          --card: #161d2c;
+          --text: #e8ecf3;
+          --muted: #a5afc0;
+          --border: #273047;
+          --todo-bg: #3a2e10;
+          --todo-text: #f2cf7a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.65;
+        font-size: 16px;
+      }
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+      }
+      .bar {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .logo {
+        font-weight: 800;
+        font-size: 20px;
+        color: var(--blue);
+        text-decoration: none;
+        letter-spacing: -0.5px;
+      }
+      .logo span { color: var(--gold); }
+      .bar a.back { color: var(--blue); font-weight: 600; font-size: 14px; }
+      main {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.5px; }
+      .updated { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+      .toc, section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+      }
+      .toc h2 { font-size: 15px; margin: 0 0 8px; }
+      .toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; font-size: 14px; }
+      .toc a { color: var(--blue); text-decoration: none; }
+      .toc a:hover { text-decoration: underline; }
+      section h2 { font-size: 19px; margin: 0 0 8px; color: var(--blue); scroll-margin-top: 16px; }
+      section h3 { font-size: 16px; margin: 16px 0 4px; }
+      p, li { color: var(--text); }
+      ul { padding-left: 20px; }
+      .todo {
+        background: var(--todo-bg);
+        color: var(--todo-text);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+      .note {
+        background: var(--blue-light);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      footer { text-align: center; color: var(--muted); font-size: 14px; padding: 0 16px 32px; }
+      footer a { color: var(--blue); }
+      @media (max-width: 600px) {
+        h1 { font-size: 24px; }
+        .toc ol { columns: 1; }
+        .toc, section { padding: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <a class="logo" href="/">Anovent<span>iX</span></a>
+        <a class="back" href="/">← Retour à l'accueil</a>
+      </div>
+    </header>
+
+    <main>
+      <h1>Conditions générales d'utilisation</h1>
+      <p class="updated">Dernière mise à jour : 25 septembre 2026</p>
+
+      <nav class="toc" aria-label="Sommaire">
+        <h2>Sommaire</h2>
+        <ol>
+          <li><a href="#editeur">Éditeur</a></li>
+          <li><a href="#objet">Objet et acceptation</a></li>
+          <li><a href="#definitions">Définitions</a></li>
+          <li><a href="#compte">Compte et identité</a></li>
+          <li><a href="#annonces">Publication d'annonces</a></li>
+          <li><a href="#interdits">Contenus interdits</a></li>
+          <li><a href="#moderation">Modération et signalements</a></li>
+          <li><a href="#licence">Annonces gratuites et licence annuelle</a></li>
+          <li><a href="#messagerie">Messagerie et contacts</a></li>
+          <li><a href="#role">Rôle d'AnoventiX</a></li>
+          <li><a href="#responsabilite">Responsabilités</a></li>
+          <li><a href="#propriete">Propriété intellectuelle</a></li>
+          <li><a href="#donnees">Données personnelles</a></li>
+          <li><a href="#resiliation">Suspension et suppression</a></li>
+          <li><a href="#modification">Modification des CGU</a></li>
+          <li><a href="#droit">Droit applicable</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <section id="editeur">
+        <h2>1. Éditeur</h2>
+        <p>
+          L'application mobile AnoventiX et le site www.anoventix.com (ensemble, « la Plateforme »)
+          sont édités par Anoventix SARL, société à responsabilité limitée au capital de
+          2 000 000 GNF, en cours d'immatriculation au RCCM, dont le siège est situé
+          à Matoto, Conakry, République de Guinée.
+        </p>
+        <p>
+          Créateur : Abdourahmane B.
+          Contact : <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>.
+        </p>
+        <p>Hébergement : OVH SAS (OVHcloud), 2 rue Kellermann, 59100 Roubaix, France.</p>
+      </section>
+
+      <section id="objet">
+        <h2>2. Objet et acceptation</h2>
+        <p>
+          La Plateforme met en relation des personnes qui proposent des biens immobiliers à la
+          vente, à la location ou en bail commercial en Guinée, et des personnes qui recherchent
+          de tels biens.
+        </p>
+        <p>
+          Les présentes conditions encadrent l'utilisation de la Plateforme. Toute personne qui
+          crée un compte les accepte en cochant la case prévue à l'inscription. La simple
+          consultation des annonces, sans compte, vaut également acceptation des articles qui
+          la concernent (notamment 10 à 12 et 16).
+        </p>
+      </section>
+
+      <section id="definitions">
+        <h2>3. Définitions</h2>
+        <ul>
+          <li><strong>Utilisateur</strong> : toute personne qui consulte la Plateforme, avec ou sans compte.</li>
+          <li><strong>Annonceur</strong> : Utilisateur disposant d'un compte qui publie une annonce.</li>
+          <li><strong>Particulier</strong> : Annonceur agissant pour son propre compte, hors activité professionnelle.</li>
+          <li>
+            <strong>Professionnel</strong> : agence, promoteur ou agent immobilier agissant dans le cadre
+            de son activité, rattaché à une entreprise déclarée sur la Plateforme. Un Professionnel peut
+            inviter des <strong>agents</strong>, qui publient pour le compte de son entreprise.
+          </li>
+          <li>
+            <strong>Bien non bâti</strong> : terrain ou domaine sans construction, proposé
+            « en l'état ».
+          </li>
+          <li><strong>Licence</strong> : droit annuel, activé par une clé, permettant de publier au-delà des annonces gratuites.</li>
+        </ul>
+      </section>
+
+      <section id="compte">
+        <h2>4. Compte et vérification d'identité</h2>
+        <p>
+          L'inscription est gratuite et réservée aux personnes majeures et capables. L'Utilisateur
+          fournit des informations exactes et à jour, active son compte via le lien reçu par email
+          et garde son mot de passe confidentiel. Toute action réalisée depuis son compte est
+          réputée faite par lui.
+        </p>
+        <p>
+          Pour protéger les acheteurs et locataires, <strong>la publication d'une annonce est
+          subordonnée à la validation d'une pièce d'identité</strong> (carte nationale d'identité,
+          passeport ou tout autre document accepté par la Plateforme). Ce document n'est jamais
+          affiché publiquement : il sert uniquement à la vérification. Un Professionnel doit en
+          outre déclarer son entreprise avant de publier.
+        </p>
+      </section>
+
+      <section id="annonces">
+        <h2>5. Publication d'annonces</h2>
+        <p>L'Annonceur s'engage à ce que chaque annonce :</p>
+        <ul>
+          <li>concerne un bien réel, disponible, situé en Guinée, qu'il a le droit de vendre, de louer ou de proposer à bail ;</li>
+          <li>
+            décrive fidèlement le bien : type, localisation, surface ou superficie, composition
+            (pièces, chambres, salles de bain) pour un bien bâti, prix ou loyer mensuel, frais
+            d'honoraires éventuels ;
+          </li>
+          <li>
+            pour un <strong>terrain ou un domaine non bâti</strong>, précise qu'il est proposé en
+            l'état, sa superficie et les documents fonciers réellement disponibles ;
+          </li>
+          <li>
+            mentionne uniquement les documents qu'il détient effectivement (titre foncier, acte de
+            vente, donation, certificat d'usage foncier…), qu'il pourra présenter à tout intéressé ;
+          </li>
+          <li>comporte des photos du bien lui-même, sans filigrane trompeur ni image empruntée ;</li>
+          <li>soit clôturée dès que le bien est vendu, loué ou retiré.</li>
+        </ul>
+        <p>
+          Une annonce est publiée immédiatement. Elle reste sous l'entière responsabilité de son
+          Annonceur, qui garantit la Plateforme contre toute réclamation liée à son contenu.
+        </p>
+      </section>
+
+      <section id="interdits">
+        <h2>6. Contenus et comportements interdits</h2>
+        <ul>
+          <li>annonces fictives, en double, ou pour un bien déjà vendu ou loué ;</li>
+          <li>prix trompeur, demande d'avance ou de « frais de visite » avant toute visite du bien ;</li>
+          <li>usurpation d'identité ou de la qualité de propriétaire, de mandataire ou de professionnel ;</li>
+          <li>contenu illicite, discriminatoire, injurieux, ou sans rapport avec l'immobilier ;</li>
+          <li>collecte des coordonnées des Utilisateurs à d'autres fins que la transaction concernée ;</li>
+          <li>contournement des mesures techniques de la Plateforme (création de comptes multiples, extraction automatisée…).</li>
+        </ul>
+      </section>
+
+      <section id="moderation">
+        <h2>7. Modération et signalements</h2>
+        <p>
+          Tout Utilisateur connecté peut signaler une annonce ou un message. Les modérateurs de la
+          Plateforme peuvent, après examen :
+        </p>
+        <ul>
+          <li><strong>masquer</strong> une annonce : elle devient invisible et peut être remise en ligne après correction ;</li>
+          <li><strong>rejeter</strong> une annonce : elle est retirée définitivement.</li>
+        </ul>
+        <p>
+          Dans les deux cas, <strong>le motif est communiqué à l'Annonceur</strong> dans
+          l'application. Les modérateurs peuvent aussi adresser un avertissement ou suspendre un
+          compte en cas de manquements répétés ou graves (article 14).
+        </p>
+        <p>
+          La Plateforme peut également <strong>masquer l'ensemble des annonces d'un compte</strong>,
+          notamment en cas de suspicion de fraude ou le temps d'une vérification. Les annonces
+          restent enregistrées mais ne sont plus visibles du public ; l'Annonceur, informé du motif,
+          ne peut plus publier ni modifier d'annonce, mais peut les clôturer ou les supprimer. À la
+          levée de cette mesure, chaque annonce retrouve la visibilité qu'elle avait auparavant.
+        </p>
+      </section>
+
+      <section id="licence">
+        <h2>8. Annonces gratuites et licence annuelle</h2>
+        <p>
+          Chaque compte peut avoir gratuitement un nombre limité d'annonces actives, indiqué dans
+          l'application ; pour un Professionnel, ce nombre est partagé avec ses agents. Au-delà, la Plateforme peut exiger
+          une Licence annuelle, distincte pour les particuliers et les professionnels. La
+          Licence d'un Professionnel couvre ses agents.
+        </p>
+        <p>
+          La Licence s'active dans l'application à l'aide d'une clé et reste valable un an à
+          compter de son activation ; activée avant l'échéance, elle prolonge la Licence en cours.
+          Une clé ne peut être utilisée qu'une seule fois et n'est ni cessible ni remboursable.
+        </p>
+        <p>
+          Un compte qui dépasse le nombre d'annonces gratuites sans Licence valide, notamment à
+          l'expiration de sa Licence, est limité : il ne peut plus publier, modifier ni remettre
+          en ligne d'annonce. Ses annonces restent visibles et la messagerie reste accessible.
+          L'accès complet est rétabli dès l'activation d'une Licence ou le retour sous le nombre
+          d'annonces gratuites.
+        </p>
+        <p class="note">
+          <span class="todo">[À compléter à l'ouverture des licences : tarifs particulier et
+          professionnel, moyens de paiement, facturation et conditions de remboursement.]</span>
+        </p>
+      </section>
+
+      <section id="messagerie">
+        <h2>9. Messagerie et contacts</h2>
+        <p>
+          La messagerie permet d'échanger au sujet d'une annonce. Le premier message est rédigé
+          et validé par l'Utilisateur avant envoi. Les échanges doivent rester courtois et liés à
+          l'annonce. Le numéro de téléphone d'un Annonceur n'est affiché que s'il l'a renseigné.
+        </p>
+      </section>
+
+      <section id="role">
+        <h2>10. Rôle d'AnoventiX</h2>
+        <p>
+          AnoventiX est un <strong>hébergeur d'annonces et un outil de mise en relation</strong>.
+          La Plateforme n'est ni agent immobilier, ni mandataire, ni notaire. Elle n'est pas partie
+          aux transactions, ne perçoit aucune somme au titre de celles-ci et ne vérifie pas la
+          situation juridique des biens.
+        </p>
+        <p class="note">
+          Avant tout paiement, <strong>visitez le bien</strong>, vérifiez l'identité de votre
+          interlocuteur et les documents fonciers auprès des services compétents (conservation
+          foncière, notaire), et ne versez jamais d'argent à distance à une personne que vous
+          n'avez pas rencontrée.
+        </p>
+      </section>
+
+      <section id="responsabilite">
+        <h2>11. Responsabilités</h2>
+        <p>
+          Chaque Annonceur est seul responsable de ses annonces, de ses messages et des
+          transactions qu'il conclut. La responsabilité de la Plateforme ne peut être engagée
+          qu'en cas de faute prouvée de sa part ; elle ne répond pas du contenu publié par les
+          Utilisateurs, dès lors qu'elle agit promptement pour retirer un contenu manifestement
+          illicite qui lui est signalé.
+        </p>
+        <p>
+          La Plateforme s'efforce d'assurer un service continu mais peut être interrompue pour
+          maintenance, mise à jour ou cause extérieure, sans que cela ouvre droit à indemnité.
+        </p>
+      </section>
+
+      <section id="propriete">
+        <h2>12. Propriété intellectuelle</h2>
+        <p>
+          La marque AnoventiX, les logos, l'interface et le code de la Plateforme sont protégés.
+          Toute reproduction non autorisée est interdite.
+        </p>
+        <p>
+          En publiant un contenu (texte, photos), l'Annonceur déclare en détenir les droits et
+          accorde à la Plateforme, pour la durée de publication, une licence gratuite et non
+          exclusive pour l'afficher, l'adapter aux formats d'affichage et le diffuser, y compris
+          via le partage d'annonce.
+        </p>
+      </section>
+
+      <section id="donnees">
+        <h2>13. Données personnelles</h2>
+        <p>
+          Les données collectées (identité, coordonnées, pièce d'identité, annonces, messages,
+          position si vous l'autorisez) sont traitées pour fournir le service, sécuriser la
+          Plateforme et respecter nos obligations légales. Leur traitement, leur durée de
+          conservation et vos droits (accès, rectification, suppression) sont détaillés dans la
+          <a href="/confidentialite">politique de confidentialité</a>.
+        </p>
+      </section>
+
+      <section id="resiliation">
+        <h2>14. Suspension et suppression du compte</h2>
+        <p>
+          L'Utilisateur peut supprimer son compte à tout moment depuis son profil ; ses annonces
+          sont alors retirées. La Plateforme peut suspendre ou fermer un compte en cas de
+          manquement aux présentes conditions, après avertissement sauf urgence (fraude,
+          contenu illicite, atteinte à la sécurité des Utilisateurs).
+        </p>
+      </section>
+
+      <section id="modification">
+        <h2>15. Modification des conditions</h2>
+        <p>
+          Les présentes conditions peuvent évoluer. Les Utilisateurs sont informés de toute
+          modification importante dans l'application au moins 15 jours avant son entrée en
+          vigueur. La poursuite de l'utilisation vaut acceptation de la nouvelle version.
+        </p>
+      </section>
+
+      <section id="droit">
+        <h2>16. Droit applicable et litiges</h2>
+        <p>
+          Les présentes conditions sont régies par le droit de la République de Guinée. En cas de
+          litige, les parties recherchent d'abord une solution amiable en écrivant à
+          <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>. À défaut d'accord dans
+          un délai de 30 jours, les tribunaux compétents de Conakry sont seuls compétents, sous
+          réserve des règles impératives applicables.
+        </p>
+      </section>
+
+      <section id="contact">
+        <h2>17. Contact</h2>
+        <p>
+          Pour toute question sur ces conditions :
+          <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      © 2026 AnoventiX · <a href="/">Accueil</a> ·
+      <a href="/confidentialite">Confidentialité</a>
+    </footer>
+  </body>
+</html>

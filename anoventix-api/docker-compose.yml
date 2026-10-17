@@ -1,0 +1,101 @@
+services:
+  app:
+    build: .
+    container_name: anoventix-api
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      # L'API n'est joignable que via nginx, qui écrase X-Forwarded-For avec l'IP réelle.
+      - TRUST_XFF=true
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - app_uploads:/app/uploads
+      # Export web lu par SharePageService pour servir /annonce/* avec les balises Open Graph.
+      - ./web:/var/www/web:ro
+    networks:
+      - anoventix-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    container_name: postgres-db
+    expose:
+      - "5432"
+#    ports:
+#      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - anoventix-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: anoventix-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Application web (www) : web/current → web/releases/<date>, cf. anoventix-app/scripts/deploy-web.ps1.
+      - ./web:/var/www/web:ro
+      # Ancienne landing : n'en restent servies que les pages légales (/cgu, /confidentialite).
+      - ./landing:/var/www/landing:ro
+      # APK Android déposé à la main (hors git), servi sous /telecharger/
+      - ./downloads:/var/www/downloads:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - app_uploads:/app/uploads:ro
+    depends_on:
+      - app
+    networks:
+      - anoventix-network
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: anoventix-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM; while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $!;
+      done"
+
+volumes:
+  postgres_data:
+    name: anoventix_postgres_data
+  app_uploads:
+    name: anoventix_uploads
+  certbot_www:
+
+networks:
+  anoventix-network:
+    name: anoventix-network

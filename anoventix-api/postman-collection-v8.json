@@ -1,0 +1,1136 @@
+{
+  "info": {
+    "name": "Anoventix API v8",
+    "description": "Collection complète de l'API Anoventix — plateforme d'annonces immobilières.\n\nVariables requises :\n- baseUrl : http://localhost:8080\n- token   : access token JWT (rempli automatiquement après signin)\n- annonceId, userId, entrepriseId, conversationId, messageId, mediaId : à renseigner selon les tests",
+    "version": "8.1.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",         "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",           "value": "",                       "type": "string" },
+    { "key": "refreshToken",    "value": "",                       "type": "string" },
+    { "key": "annonceId",       "value": "1",                      "type": "string" },
+    { "key": "userId",          "value": "",                       "type": "string" },
+    { "key": "entrepriseId",    "value": "",                       "type": "string" },
+    { "key": "conversationId",  "value": "",                       "type": "string" },
+    { "key": "messageId",       "value": "",                       "type": "string" },
+    { "key": "mediaId",         "value": "",                       "type": "string" },
+    { "key": "agentId",         "value": "",                       "type": "string" },
+    { "key": "localisationId",  "value": "",                       "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Inscription",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/signup", "host": ["{{baseUrl}}"], "path": ["api","auth","signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"nom\": \"Diallo\",\n  \"prenom\": \"Mamadou\",\n  \"password\": \"motdepasse123\",\n  \"role\": \"PARTICULIER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Connexion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.token)        pm.collectionVariables.set('token', r.token);",
+                  "if (r.refreshToken) pm.collectionVariables.set('refreshToken', r.refreshToken);",
+                  "if (r.id)           pm.collectionVariables.set('userId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/signin", "host": ["{{baseUrl}}"], "path": ["api","auth","signin"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"motdepasse123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Rafraîchir le token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.token) pm.collectionVariables.set('token', r.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","auth","refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Déconnexion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","auth","logout"] }
+          }
+        },
+        {
+          "name": "Mot de passe oublié",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api","auth","forgot-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Réinitialiser le mot de passe",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api","auth","reset-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"token\": \"<token_email>\",\n  \"newPassword\": \"nouveauMotDePasse123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Changer son mot de passe",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api","auth","change-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"ancien\",\n  \"newPassword\": \"nouveau123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Réactiver un compte",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/reactivate", "host": ["{{baseUrl}}"], "path": ["api","auth","reactivate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"motdepasse123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Profil utilisateur",
+      "item": [
+        {
+          "name": "Mon profil",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }
+          }
+        },
+        {
+          "name": "Mettre à jour mon profil",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Diallo\",\n  \"prenom\": \"Mamadou\",\n  \"telephone\": \"+224620000000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Uploader photo de profil",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/users/me/photo", "host": ["{{baseUrl}}"], "path": ["api","users","me","photo"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Soumettre pièce d'identité",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/users/me/piece-identite", "host": ["{{baseUrl}}"], "path": ["api","users","me","piece-identite"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file",                  "type": "file",   "src": "" },
+                { "key": "typePieceIdentite",      "type": "text",   "value": "CNI" },
+                { "key": "numeroPieceIdentite",    "type": "text",   "value": "CNI-123456" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Télécharger pièce d'identité",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/piece-identite", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","piece-identite"] }
+          }
+        },
+        {
+          "name": "Supprimer mon compte",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Favoris",
+      "item": [
+        {
+          "name": "Mes favoris",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/favoris?page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","users","me","favoris"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Ajouter aux favoris",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/users/me/favoris/{{annonceId}}", "host": ["{{baseUrl}}"], "path": ["api","users","me","favoris","{{annonceId}}"] }
+          }
+        },
+        {
+          "name": "Retirer des favoris",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/users/me/favoris/{{annonceId}}", "host": ["{{baseUrl}}"], "path": ["api","users","me","favoris","{{annonceId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Annonces immobilières — Public",
+      "item": [
+        {
+          "name": "Catalogue (liste paginée)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo?page=0&size=10&sort=dateCreation&direction=desc",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo"],
+              "query": [
+                { "key": "page",      "value": "0" },
+                { "key": "size",      "value": "10" },
+                { "key": "sort",      "value": "dateCreation" },
+                { "key": "direction", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Détail d'une annonce",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}"] }
+          }
+        },
+        {
+          "name": "Filtrage multi-critères",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/filter?typeAnnonce=VENTE&typeBien=VILLA&commune=Ratoma&prixMin=100000000&prixMax=600000000&page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","filter"],
+              "query": [
+                { "key": "typeAnnonce", "value": "VENTE" },
+                { "key": "typeBien",    "value": "VILLA" },
+                { "key": "commune",     "value": "Ratoma" },
+                { "key": "prixMin",     "value": "100000000" },
+                { "key": "prixMax",     "value": "600000000" },
+                { "key": "page",        "value": "0" },
+                { "key": "size",        "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recherche en langage naturel",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/public/search?q=appartement+3+pièces+Conakry&page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","public","search"],
+              "query": [
+                { "key": "q",    "value": "appartement 3 pièces Conakry" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Annonces à proximité (GPS)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/nearby?lat=9.5370&lng=-13.6773&rayon=5&page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","nearby"],
+              "query": [
+                { "key": "lat",   "value": "9.5370" },
+                { "key": "lng",   "value": "-13.6773" },
+                { "key": "rayon", "value": "5" },
+                { "key": "page",  "value": "0" },
+                { "key": "size",  "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Annonces similaires",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/similaires?max=6",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","similaires"],
+              "query": [{ "key": "max", "value": "6" }]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Annonces immobilières — Authentifié",
+      "item": [
+        {
+          "name": "Créer une annonce",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.id) pm.collectionVariables.set('annonceId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo", "host": ["{{baseUrl}}"], "path": ["api","biens-immo"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "titre",               "value": "Villa 4 pièces à Ratoma",       "type": "text" },
+                { "key": "description",         "value": "Belle villa avec jardin arboré, 4 chambres, garage double, proche commodités.", "type": "text" },
+                { "key": "prix",                "value": "450000000",                      "type": "text" },
+                { "key": "prixRevise",          "value": "",                               "type": "text" },
+                { "key": "localisationId",      "value": "{{localisationId}}",             "type": "text" },
+                { "key": "complementAdresse",   "value": "Près du marché central",         "type": "text" },
+                { "key": "longitude",           "value": "-13.677",                        "type": "text" },
+                { "key": "latitude",            "value": "9.537",                          "type": "text" },
+                { "key": "typeAnnonce",         "value": "VENTE",                          "type": "text" },
+                { "key": "typeBien",            "value": "VILLA",                          "type": "text" },
+                { "key": "fraisHonoraire",      "value": "0",                              "type": "text" },
+                { "key": "documentsDisponibles","value": "Titre foncier, Plan cadastral",  "type": "text" },
+                { "key": "surfaceTotal",        "value": "350",                            "type": "text" },
+                { "key": "medias",              "type": "file",  "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Modifier une annonce",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Villa 4 pièces — prix révisé\",\n  \"description\": \"Belle villa avec jardin arboré, 4 chambres, garage double, proche commodités.\",\n  \"prix\": 450000000,\n  \"prixRevise\": 420000000,\n  \"localisationId\": \"{{localisationId}}\",\n  \"typeAnnonce\": \"VENTE\",\n  \"typeBien\": \"VILLA\",\n  \"documentsDisponibles\": \"Titre foncier\",\n  \"surfaceTotal\": 350\n}"
+            }
+          }
+        },
+        {
+          "name": "Supprimer une annonce",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}"] }
+          }
+        },
+        {
+          "name": "Mes annonces",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/user?page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","user"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Stats d'une annonce",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/stats", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","stats"] }
+          }
+        },
+        {
+          "name": "Historique d'une annonce",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/historique", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","historique"] }
+          }
+        },
+        {
+          "name": "Clôturer une annonce",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/cloturer?motif=VENDU",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","cloturer"],
+              "query": [{ "key": "motif", "value": "VENDU" }]
+            }
+          }
+        },
+        {
+          "name": "Réactiver une annonce",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/reactiver", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","reactiver"] }
+          }
+        },
+        {
+          "name": "Ajouter des médias",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/medias", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","medias"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "medias", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Supprimer un média",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/medias/{{mediaId}}", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","medias","{{mediaId}}"] }
+          }
+        },
+        {
+          "name": "Signaler une annonce",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/signaler", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","signaler"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motif\": \"CONTENU_INAPPROPRIE\",\n  \"commentaire\": \"Description du problème\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Annuler mon signalement",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/biens-immo/{{annonceId}}/signaler", "host": ["{{baseUrl}}"], "path": ["api","biens-immo","{{annonceId}}","signaler"] }
+          }
+        },
+        {
+          "name": "Mes signalements",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/biens-immo/user/signalements?page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api","biens-immo","user","signalements"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Localisations",
+      "item": [
+        {
+          "name": "Toutes les localisations",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/localisations", "host": ["{{baseUrl}}"], "path": ["api","localisations"] }
+          }
+        },
+        {
+          "name": "Par région",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/localisations/region/Conakry", "host": ["{{baseUrl}}"], "path": ["api","localisations","region","Conakry"] }
+          }
+        },
+        {
+          "name": "Par préfecture",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/localisations/prefecture/Ratoma", "host": ["{{baseUrl}}"], "path": ["api","localisations","prefecture","Ratoma"] }
+          }
+        },
+        {
+          "name": "Par commune",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/localisations/commune/Ratoma", "host": ["{{baseUrl}}"], "path": ["api","localisations","commune","Ratoma"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Entreprises",
+      "item": [
+        {
+          "name": "Profil public d'une entreprise",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/profil?page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","profil"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Créer une entreprise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.id) pm.collectionVariables.set('entrepriseId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/entreprises", "host": ["{{baseUrl}}"], "path": ["api","entreprises"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Agence Immobilière Alpha\",\n  \"description\": \"Spécialiste de l'immobilier à Conakry depuis 2010.\",\n  \"adresse\": \"Cité Minière, Kipé\",\n  \"telephone\": \"+224620000000\",\n  \"email\": \"contact@alpha.com\",\n  \"siteWeb\": \"https://alpha.com\",\n  \"quotaAnnonces\": 50,\n  \"quotaAgents\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Modifier une entreprise",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Agence Alpha Immobilier\",\n  \"description\": \"Description mise à jour.\",\n  \"telephone\": \"+224620000001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Uploader logo entreprise",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/photo", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","photo"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Mon entreprise (par userId)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/user/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","entreprises","user","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Annonces de l'entreprise",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/annonces?page=0&size=10",
+              "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","annonces"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Peut créer une annonce ?",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/can-create-annonce", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","can-create-annonce"] }
+          }
+        },
+        {
+          "name": "Supprimer l'entreprise",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Liste des agents",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/agents", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","agents"] }
+          }
+        },
+        {
+          "name": "Créer un agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.id) pm.collectionVariables.set('agentId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/agents", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","agents"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent@alpha.com\",\n  \"nom\": \"Barry\",\n  \"prenom\": \"Ibrahima\",\n  \"telephone\": \"+224620000001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Suspendre un agent",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/agents/{{agentId}}/suspendre", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","agents","{{agentId}}","suspendre"] }
+          }
+        },
+        {
+          "name": "Activer un agent",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/agents/{{agentId}}/activer", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","agents","{{agentId}}","activer"] }
+          }
+        },
+        {
+          "name": "Retirer un agent",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/entreprises/{{entrepriseId}}/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api","entreprises","{{entrepriseId}}","agents","{{agentId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Messagerie",
+      "item": [
+        {
+          "name": "Démarrer une conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.id) pm.collectionVariables.set('conversationId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/messagerie/conversations", "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"annonceId\": {{annonceId}},\n  \"message\": \"Bonjour, l'annonce est-elle encore disponible ?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mes conversations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/messagerie/conversations?page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "Détail d'une conversation",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/messagerie/conversations/{{conversationId}}", "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations","{{conversationId}}"] }
+          }
+        },
+        {
+          "name": "Messages d'une conversation",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/messagerie/conversations/{{conversationId}}/messages?page=0&size=50",
+              "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations","{{conversationId}}","messages"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "50" }]
+            }
+          }
+        },
+        {
+          "name": "Envoyer un message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.id) pm.collectionVariables.set('messageId', r.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/messagerie/conversations/{{conversationId}}/messages", "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations","{{conversationId}}","messages"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contenu\": \"Oui, toujours disponible. Quand voulez-vous visiter ?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Marquer un message lu",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/messagerie/messages/{{messageId}}/read", "host": ["{{baseUrl}}"], "path": ["api","messagerie","messages","{{messageId}}","read"] }
+          }
+        },
+        {
+          "name": "Marquer conversation lue",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{baseUrl}}/api/messagerie/conversations/{{conversationId}}/read", "host": ["{{baseUrl}}"], "path": ["api","messagerie","conversations","{{conversationId}}","read"] }
+          }
+        },
+        {
+          "name": "Signaler un message",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/messagerie/messages/{{messageId}}/signaler", "host": ["{{baseUrl}}"], "path": ["api","messagerie","messages","{{messageId}}","signaler"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Licences",
+      "item": [
+        {
+          "name": "Ma licence",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/licences/me", "host": ["{{baseUrl}}"], "path": ["api","licences","me"] }
+          }
+        },
+        {
+          "name": "Activer une clé",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/licences/activer", "host": ["{{baseUrl}}"], "path": ["api","licences","activer"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cle\": \"ANX-XXXX-XXXX-XXXX\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Stats PRO",
+      "item": [
+        {
+          "name": "Dashboard PRO",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/stats/pro", "host": ["{{baseUrl}}"], "path": ["api","stats","pro"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fichiers",
+      "item": [
+        {
+          "name": "Servir un fichier public",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/uploads/public/annonces/exemple.jpg", "host": ["{{baseUrl}}"], "path": ["uploads","public","annonces","exemple.jpg"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Administration",
+      "item": [
+
+        {
+          "name": "Modération annonces",
+          "item": [
+            {
+              "name": "Liste annonces (avec filtre statut)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/annonces?statut=EN_ATTENTE&page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","annonces"],
+                  "query": [{ "key": "statut", "value": "EN_ATTENTE" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Publier une annonce",
+              "request": {
+                "method": "PUT",
+                "url": { "raw": "{{baseUrl}}/api/admin/annonces/{{annonceId}}/publier", "host": ["{{baseUrl}}"], "path": ["api","admin","annonces","{{annonceId}}","publier"] }
+              }
+            },
+            {
+              "name": "Masquer une annonce",
+              "request": {
+                "method": "PUT",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/annonces/{{annonceId}}/masquer?raison=Contenu+inapproprié",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","annonces","{{annonceId}}","masquer"],
+                  "query": [{ "key": "raison", "value": "Contenu inapproprié" }]
+                }
+              }
+            },
+            {
+              "name": "Rejeter une annonce",
+              "request": {
+                "method": "PUT",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/annonces/{{annonceId}}/rejeter?raison=Prix+non+conforme",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","annonces","{{annonceId}}","rejeter"],
+                  "query": [{ "key": "raison", "value": "Prix non conforme" }]
+                }
+              }
+            },
+            {
+              "name": "Historique d'une annonce",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/api/admin/annonces/{{annonceId}}/historique", "host": ["{{baseUrl}}"], "path": ["api","admin","annonces","{{annonceId}}","historique"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Signalements",
+          "item": [
+            {
+              "name": "Liste des signalements",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/signalements?statut=EN_ATTENTE&page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","signalements"],
+                  "query": [{ "key": "statut", "value": "EN_ATTENTE" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Traiter un signalement",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/admin/signalements/1/traiter", "host": ["{{baseUrl}}"], "path": ["api","admin","signalements","1","traiter"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"decision\": \"VALIDE\",\n  \"commentaire\": \"Contenu vérifié, annonce masquée.\"\n}"
+                }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Utilisateurs",
+          "item": [
+            {
+              "name": "Liste des utilisateurs",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/utilisateurs?page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","utilisateurs"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Pièces d'identité en attente",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/pieces-identite/en-attente?page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","pieces-identite","en-attente"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Valider/rejeter une pièce d'identité",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/piece-identite/statut", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","piece-identite","statut"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"statut\": \"VALIDE\",\n  \"commentaire\": \"\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Activer / suspendre un utilisateur",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/statut", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}","statut"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"statut\": \"SUSPENDU\",\n  \"raison\": \"Comportement abusif\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Émettre un avertissement",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/admin/utilisateurs/{{userId}}/avertissements", "host": ["{{baseUrl}}"], "path": ["api","admin","utilisateurs","{{userId}}","avertissements"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"motif\": \"Annonce frauduleuse\",\n  \"niveau\": \"MOYEN\"\n}"
+                }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Messagerie modération",
+          "item": [
+            {
+              "name": "Messages signalés",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/messages/signales?page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","messages","signales"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Supprimer un message",
+              "request": {
+                "method": "PUT",
+                "url": { "raw": "{{baseUrl}}/api/admin/messages/{{messageId}}/supprimer", "host": ["{{baseUrl}}"], "path": ["api","admin","messages","{{messageId}}","supprimer"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Annonces d'un compte",
+          "item": [
+            {
+              "name": "Masquer toutes les annonces d'un compte (masquage système)",
+              "request": {
+                "method": "PUT",
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/utilisateurs/{{userId}}/annonces/masquer?raison=Fraude suspectée",
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","utilisateurs","{{userId}}","annonces","masquer"],
+                  "query": [{ "key": "raison", "value": "Fraude suspectée" }]
+                }
+              }
+            },
+            {
+              "name": "Réafficher les annonces d'un compte (lever le masquage système)",
+              "request": {
+                "method": "PUT",
+                "url": { "raw": "{{baseUrl}}/api/admin/utilisateurs/{{userId}}/annonces/afficher", "host": ["{{baseUrl}}"], "path": ["api","admin","utilisateurs","{{userId}}","annonces","afficher"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Licences admin",
+          "item": [
+            {
+              "name": "Générer une clé",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/licences/admin/cles", "host": ["{{baseUrl}}"], "path": ["api","licences","admin","cles"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"PARTICULIER\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Lister les clés",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/licences/admin/cles?statut=TOUTES&q=&page=0&size=20",
+                  "host": ["{{baseUrl}}"], "path": ["api","licences","admin","cles"],
+                  "query": [{ "key": "statut", "value": "TOUTES" }, { "key": "q", "value": "" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+                }
+              }
+            },
+            {
+              "name": "Tarifs et contact",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/api/licences/admin/reglages", "host": ["{{baseUrl}}"], "path": ["api","licences","admin","reglages"] }
+              }
+            },
+            {
+              "name": "Modifier tarifs et contact",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/licences/admin/reglages", "host": ["{{baseUrl}}"], "path": ["api","licences","admin","reglages"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"prixParticulier\": 150000,\n  \"prixProfessionnel\": 1500000,\n  \"contactTelephone\": \"+224 620 00 00 00\"\n}"
+                }
+              }
+            },
+            {
+              "name": "État du mode licence",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/api/licences/admin/mode", "host": ["{{baseUrl}}"], "path": ["api","licences","admin","mode"] }
+              }
+            },
+            {
+              "name": "Activer / désactiver le mode licence",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/api/licences/admin/mode", "host": ["{{baseUrl}}"], "path": ["api","licences","admin","mode"] },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"actif\": true\n}"
+                }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Statistiques",
+          "item": [
+            {
+              "name": "Stats globales",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/api/admin/stats", "host": ["{{baseUrl}}"], "path": ["api","admin","stats"] }
+              }
+            },
+            {
+              "name": "Stats avancées",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/api/admin/stats/avancees", "host": ["{{baseUrl}}"], "path": ["api","admin","stats","avancees"] }
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}

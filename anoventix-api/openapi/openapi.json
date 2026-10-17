@@ -1,0 +1,6401 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "description" : "API REST pour la plateforme immobilière Anoventix.\n\n## Authentification\nTous les endpoints protégés nécessitent un JWT dans le header :\n```\nAuthorization: Bearer <token>\n```\nObtenez un token via `POST /api/auth/signin`.\n",
+    "title" : "Anoventix API",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost",
+    "description" : "Generated server url"
+  } ],
+  "security" : [ {
+    "Bearer" : [ ]
+  } ],
+  "tags" : [ {
+    "description" : "Tableau de bord pour PROFESSIONNEL et AGENT_PROFESSIONNEL",
+    "name" : "Statistiques PRO"
+  }, {
+    "description" : "Administration et modération",
+    "name" : "Admin"
+  }, {
+    "description" : "Statistiques globales et gestion des signalements",
+    "name" : "Administration"
+  }, {
+    "description" : "Référentiel géographique (régions, préfectures, communes, quartiers)",
+    "name" : "Localisations"
+  }, {
+    "description" : "Profil utilisateur, favoris, administration",
+    "name" : "Users"
+  }, {
+    "description" : "Messagerie interne autour des annonces",
+    "name" : "Messagerie"
+  }, {
+    "description" : "Inscription, connexion, activation de compte",
+    "name" : "Auth"
+  }, {
+    "description" : "Gestion du profil et des comptes",
+    "name" : "Utilisateurs"
+  }, {
+    "description" : "Quotas des comptes professionnels : valeur globale et exceptions par entreprise",
+    "name" : "Quotas"
+  }, {
+    "description" : "Gestion des entreprises et de leurs agents",
+    "name" : "Entreprises"
+  }, {
+    "description" : "Gestion des annonces immobilières (habitations et terrains)",
+    "name" : "Biens Immobiliers"
+  }, {
+    "description" : "Licence annuelle : annonces gratuites puis licence obligatoire (mode activé par l'administrateur)",
+    "name" : "Licences"
+  }, {
+    "description" : "Conversations et messages entre utilisateurs",
+    "name" : "Messaging"
+  }, {
+    "description" : "Référentiel géographique",
+    "name" : "Localisations"
+  }, {
+    "description" : "Annonces immobilières (CRUD, recherche, signalement)",
+    "name" : "Biens Immobiliers"
+  } ],
+  "paths" : {
+    "/activate" : {
+      "get" : {
+        "operationId" : "activateAccount_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "token",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "activation-controller" ]
+      }
+    },
+    "/api/admin/annonces" : {
+      "get" : {
+        "description" : "Retourne toutes les annonces. Filtres optionnels : statut (PUBLIEE, MASQUEE, REJETEE, DESACTIVEE), cloturee (true / false) et q (titre, référence, email / nom du propriétaire). Réservé aux ADMIN/MOD.",
+        "operationId" : "getAllAnnonces",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "dateCreation"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        }, {
+          "in" : "query",
+          "name" : "statut",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PUBLIEE", "MASQUEE", "REJETEE", "DESACTIVEE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "cloturee",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister toutes les annonces",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/annonces/{id}/historique" : {
+      "get" : {
+        "description" : "Retourne toutes les actions de modération effectuées sur une annonce (qui a fait quoi, quand).",
+        "operationId" : "getHistoriqueAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/HistoriqueAnnonceResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Historique de modération d'une annonce",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/annonces/{id}/masquer" : {
+      "put" : {
+        "description" : "Rend une annonce invisible temporairement. Le motif (500 car. max) est affiché au propriétaire et enregistré dans l'historique.",
+        "operationId" : "masquerAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "raison",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "Non conforme aux règles de la plateforme"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Masquer une annonce",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/annonces/{id}/publier" : {
+      "put" : {
+        "description" : "Remet une annonce masquée ou rejetée en ligne. L'action est enregistrée dans l'historique.",
+        "operationId" : "publierAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remettre une annonce en ligne",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/annonces/{id}/rejeter" : {
+      "put" : {
+        "description" : "Rejette définitivement une annonce. Le motif (500 car. max) est affiché au propriétaire et enregistré dans l'historique.",
+        "operationId" : "rejeterAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "raison",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "Contenu non autorisé"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rejeter une annonce",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/audit" : {
+      "get" : {
+        "description" : "Actions de la modération, de l'administration et du système, de la plus récente à la plus ancienne. Filtres facultatifs : acteurId, action, cibleType, cibleId. Réservé à l'ADMINISTRATEUR.",
+        "operationId" : "getJournalAudit",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "acteurId",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "cibleType",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "cibleId",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAuditEventResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Journal d'audit",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/conversations/{conversationId}/messages" : {
+      "get" : {
+        "description" : "Retourne tous les messages d'une conversation, y compris les supprimés et signalés.",
+        "operationId" : "getMessagesConversationAdmin",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseMessageModerationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Messages d'une conversation (vue admin)",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/entreprises/{entrepriseId}/quotas" : {
+      "put" : {
+        "description" : "Une valeur nulle ramène le quota à la valeur globale.",
+        "operationId" : "setQuotasEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuotasDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Quotas propres à une entreprise",
+        "tags" : [ "Quotas" ]
+      }
+    },
+    "/api/admin/messages/signales" : {
+      "get" : {
+        "description" : "Liste paginée des messages signalés par les utilisateurs, en attente de modération.",
+        "operationId" : "getMessagesSignales",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseMessageModerationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Messages signalés",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/messages/{messageId}/ignorer" : {
+      "put" : {
+        "description" : "Signalement infondé : le message est conservé tel quel et sort de la file de modération.",
+        "operationId" : "ignorerSignalementMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageModerationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ignorer un signalement de message",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/messages/{messageId}/supprimer" : {
+      "put" : {
+        "description" : "Remplace le contenu du message par '[Message supprimé par la modération]'.",
+        "operationId" : "supprimerMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageModerationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer un message",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/pieces-identite/en-attente" : {
+      "get" : {
+        "description" : "Retourne les utilisateurs dont la pièce d'identité est en attente de validation.",
+        "operationId" : "getPiecesIdentiteEnAttente",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseUserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les pièces d'identité en attente",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/quotas" : {
+      "get" : {
+        "operationId" : "getQuotas",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QuotasDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Quotas globaux des comptes pro",
+        "tags" : [ "Quotas" ]
+      },
+      "put" : {
+        "description" : "S'applique à toutes les entreprises sans exception. Les deux valeurs sont requises.",
+        "operationId" : "setQuotas",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuotasDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QuotasDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Modifier les quotas globaux",
+        "tags" : [ "Quotas" ]
+      }
+    },
+    "/api/admin/signalements" : {
+      "get" : {
+        "description" : "Retourne les signalements avec filtre optionnel par statut (EN_ATTENTE, TRAITE, IGNORE).",
+        "operationId" : "getSignalements",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "statut",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE", "TRAITE", "IGNORE" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseSignalementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les signalements",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/signalements/{id}" : {
+      "delete" : {
+        "description" : "Supprime définitivement un signalement. Réservé à l'ADMIN et au MODÉRATEUR.",
+        "operationId" : "supprimerSignalement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer un signalement",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/signalements/{id}/traiter" : {
+      "put" : {
+        "description" : "Passe un signalement de EN_ATTENTE à TRAITE ou IGNORE.",
+        "operationId" : "traiterSignalement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TraiterSignalementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignalementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Traiter un signalement",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/stats" : {
+      "get" : {
+        "description" : "Retourne les compteurs globaux : utilisateurs, annonces, signalements, entreprises.",
+        "operationId" : "getStats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Tableau de bord — statistiques générales",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/stats/avancees" : {
+      "get" : {
+        "description" : "Évolution mensuelle des annonces (12 mois), répartition par région, par type de bien et par type d'annonce.",
+        "operationId" : "getStatsAvancees",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminStatsAvanceesResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Statistiques avancées",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs" : {
+      "get" : {
+        "description" : "Recherche paginée par username, email, nom, prénom ou téléphone, avec filtre optionnel par statut. L'admin appelant est exclu des résultats.",
+        "operationId" : "rechercherUtilisateurs",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "search",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : ""
+          }
+        }, {
+          "in" : "query",
+          "name" : "statut",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE_ACTIVATION", "ACTIF", "INACTIF", "SUSPENDU" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseUserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rechercher des utilisateurs",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}" : {
+      "delete" : {
+        "description" : "Supprime immédiatement un compte : annonces désactivées et photos effacées, favoris retirés, données personnelles anonymisées, sessions fermées. Un PROFESSIONNEL emporte son entreprise et tous ses agents. Les messages sont conservés (anonymes). Réservé à l'ADMINISTRATEUR ; impossible sur soi-même ou sur un autre administrateur.",
+        "operationId" : "supprimerCompte",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer un compte",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}/annonces/afficher" : {
+      "put" : {
+        "description" : "Chaque annonce retrouve exactement sa visibilité antérieure (celles masquées ou clôturées par le propriétaire restent hors ligne).",
+        "operationId" : "afficherAnnoncesCompte",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Lever le masquage système des annonces d'un compte",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}/annonces/masquer" : {
+      "put" : {
+        "description" : "Retire toutes les annonces de ce compte (pas celles des autres membres de son entreprise) des vues publiques, sans modifier les annonces elles-mêmes. Publication et modification sont suspendues pour le propriétaire. Le motif (500 car. max) lui est affiché et envoyé par email.",
+        "operationId" : "masquerAnnoncesCompte",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "raison",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Masquer toutes les annonces d'un compte (masquage système)",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}/avertissements" : {
+      "get" : {
+        "operationId" : "getAvertissements",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AvertissementResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Historique des avertissements d'un utilisateur",
+        "tags" : [ "Administration" ]
+      },
+      "post" : {
+        "description" : "Émet un avertissement gradué (LÉGER → MODÉRÉ → GRAVE). Au 3ème avertissement, l'utilisateur est automatiquement suspendu.",
+        "operationId" : "emettreAvertissement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvertissementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AvertissementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Émettre un avertissement",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}/roles/{role}" : {
+      "delete" : {
+        "description" : "Retire un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR.",
+        "operationId" : "revoquerRole",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "role",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Révoquer un rôle d'un utilisateur",
+        "tags" : [ "Administration" ]
+      },
+      "post" : {
+        "description" : "Ajoute un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR. Un admin ne peut pas modifier son propre rôle.",
+        "operationId" : "octroierRole",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "role",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Octroyer un rôle à un utilisateur",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/auth/activate" : {
+      "get" : {
+        "operationId" : "activateAccount",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "token",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/change-password" : {
+      "post" : {
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/forgot-password" : {
+      "post" : {
+        "operationId" : "forgotPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/reactivate" : {
+      "post" : {
+        "operationId" : "reactivate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JwtResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/refresh" : {
+      "post" : {
+        "operationId" : "refresh",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/resend-activation" : {
+      "post" : {
+        "operationId" : "resendActivation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/reset-password" : {
+      "post" : {
+        "operationId" : "resetPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/signin" : {
+      "post" : {
+        "operationId" : "authenticateUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JwtResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/signup" : {
+      "post" : {
+        "operationId" : "registerUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/biens-immo" : {
+      "get" : {
+        "operationId" : "getAllBiens",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "dateCreation"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister tous les biens immobiliers actifs avec pagination",
+        "tags" : [ "Biens Immobiliers" ]
+      },
+      "post" : {
+        "description" : "Crée un bien de type HABITATION, TERRAIN ou LOCAL_COMMERCIAL selon typeBien.",
+        "operationId" : "createBienImmo",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BienImmoRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Créer une annonce immobilière",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/filter" : {
+      "get" : {
+        "description" : "Tous les paramètres sont optionnels et cumulables.\n\n- `reference` : référence exacte de l'annonce\n- `typeAnnonce` : VENTE | LOCATION | BAIL\n- `typeBien` : APPARTEMENT | MAISON | VILLA | TERRAIN | DOMAINE | MAGASIN | BUREAU | ENTREPOT | AUTRE\n- `typeUsage` : AGRICOLE | HABITATION | COMMERCIAL | LOISIR | PROFESSIONNEL | AUTRE\n- `prixMin` / `prixMax` : intervalle de prix\n- `region`, `prefecture`, `commune`, `quartier` : localisation\n- `q` : recherche texte (combinable avec les autres critères)\n- `nbPiecesMin` / `nbChambresMin` : composition minimale (biens bâtis)\n- `surfaceMin` / `surfaceMax` : surface en m²",
+        "operationId" : "filterBiens",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "reference",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "typeAnnonce",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "VENTE", "LOCATION", "BAIL" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "typeBien",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "APPARTEMENT", "MAISON", "VILLA", "TERRAIN", "DOMAINE", "MAGASIN", "BUREAU", "ENTREPOT", "AUTRE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "typeUsage",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "AGRICOLE", "HABITATION", "COMMERCIAL", "LOISIR", "PROFESSIONNEL", "AUTRE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "prixMin",
+          "required" : false,
+          "schema" : {
+            "type" : "number"
+          }
+        }, {
+          "in" : "query",
+          "name" : "prixMax",
+          "required" : false,
+          "schema" : {
+            "type" : "number"
+          }
+        }, {
+          "in" : "query",
+          "name" : "region",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "prefecture",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "commune",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "quartier",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nbPiecesMin",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nbChambresMin",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "surfaceMin",
+          "required" : false,
+          "schema" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }, {
+          "in" : "query",
+          "name" : "surfaceMax",
+          "required" : false,
+          "schema" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "dateCreation"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Recherche multi-critères",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/nearby" : {
+      "get" : {
+        "description" : "Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS.",
+        "operationId" : "nearby",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "lat",
+          "required" : true,
+          "schema" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 90.0,
+            "minimum" : -90.0
+          }
+        }, {
+          "in" : "query",
+          "name" : "lng",
+          "required" : true,
+          "schema" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 180.0,
+            "minimum" : -180.0
+          }
+        }, {
+          "in" : "query",
+          "name" : "rayon",
+          "required" : false,
+          "schema" : {
+            "type" : "number",
+            "format" : "double",
+            "default" : 5.0
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Annonces à proximité (Haversine)",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/public/p/{publicId}" : {
+      "get" : {
+        "description" : "Identifiant utilisé dans les URLs partagées (/annonce/{slug}-{publicId}). Même règle de visibilité et même comptage des vues que GET /{id}.",
+        "operationId" : "getBienByPublicId",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "publicId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Récupérer un bien immobilier par son identifiant public",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/public/search" : {
+      "get" : {
+        "description" : "Recherche via PostgreSQL Full-Text Search (configuration 'french'). Accepte une phrase libre (ex: \"appartement 3 pièces Conakry\"). Résultats triés par pertinence décroissante.",
+        "operationId" : "naturalLanguageSearch",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchPageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Recherche en langage naturel",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/quartier/{localisationId}" : {
+      "get" : {
+        "operationId" : "getBiensByQuartier",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "localisationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Filtrer les biens immobiliers par quartier (localisation)",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/search" : {
+      "get" : {
+        "operationId" : "searchBiens",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rechercher des biens immobiliers par mot-clé",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/surface" : {
+      "get" : {
+        "operationId" : "getBiensBySurface",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "minSurface",
+          "required" : true,
+          "schema" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Filtrer les biens immobiliers par surface minimale (m²)",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/user" : {
+      "get" : {
+        "operationId" : "getBiensByUser",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les biens immobiliers de l'utilisateur connecté",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/user/signalements" : {
+      "get" : {
+        "description" : "Retourne la liste paginée de tous les signalements posés par l'utilisateur connecté.",
+        "operationId" : "getMesSignalements",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseSignalementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mes signalements",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/zones-actives" : {
+      "get" : {
+        "description" : "Communes ayant le plus d'annonces publiées, toutes régions confondues, les plus actives d'abord. Public : alimente le sélecteur de zones d'Explorer.",
+        "operationId" : "zonesActives",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 8
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ZoneActiveDTO"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Zones les plus actives",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}" : {
+      "delete" : {
+        "operationId" : "deleteBienImmo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer une annonce immobilière (soft delete)",
+        "tags" : [ "Biens Immobiliers" ]
+      },
+      "get" : {
+        "description" : "Public : annonces actives et publiées. Propriétaire : ses annonces actives (tout statut). Admin/Mod : tout.\n\nLe compteur de vues est dédupliqué : une même clé viewer (utilisateur authentifié ou IP) ne compte qu'une seule vue par fenêtre de 24h.",
+        "operationId" : "getBienById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Récupérer un bien immobilier par son ID",
+        "tags" : [ "Biens Immobiliers" ]
+      },
+      "put" : {
+        "operationId" : "updateBienImmo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BienImmoRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mettre à jour une annonce immobilière",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/cloturer" : {
+      "put" : {
+        "description" : "Indique qu'un bien est vendu, loué, ou retiré par son propriétaire. Réservé au propriétaire.",
+        "operationId" : "cloturerAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "motif",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "VENDU", "LOUE", "RETIRE", "EXPIREE" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Clôturer une annonce",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/historique" : {
+      "get" : {
+        "description" : "Retourne toutes les modifications enregistrées sur une annonce. Réservé au propriétaire, ADMIN ou MODÉRATEUR.",
+        "operationId" : "getHistorique",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/HistoriqueAnnonceDTO"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Historique des modifications",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/medias" : {
+      "put" : {
+        "description" : "Envoie un ou plusieurs fichiers images en multipart/form-data (champ 'medias'). Seul le propriétaire de l'annonce ou un ADMIN/MODERATEUR peut effectuer cette opération.",
+        "operationId" : "addMedias",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MediaRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ajouter des médias à un bien immobilier",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/medias/{mediaId}" : {
+      "delete" : {
+        "description" : "Supprime le média (image) identifié par mediaId de l'annonce. Seul le propriétaire de l'annonce ou un ADMIN/MODERATEUR peut effectuer cette opération.",
+        "operationId" : "deleteMedia",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "mediaId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer un média d'un bien immobilier",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/reactiver" : {
+      "put" : {
+        "description" : "Remet en ligne une annonce clôturée par son propriétaire. Non applicable aux annonces rejetées par la modération.",
+        "operationId" : "reactiver",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Réactiver une annonce clôturée",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/signaler" : {
+      "delete" : {
+        "description" : "L'utilisateur connecté annule son propre signalement actif sur cette annonce (soft delete).",
+        "operationId" : "retirerSignalement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Retirer son signalement",
+        "tags" : [ "Biens Immobiliers" ]
+      },
+      "post" : {
+        "description" : "Tout utilisateur authentifié peut signaler une annonce inappropriée.",
+        "operationId" : "signalerAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignalementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Signaler une annonce",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/similaires" : {
+      "get" : {
+        "description" : "Retourne jusqu'à `max` annonces actives du même type, même commune et dans un écart de prix de ±30%. Public.",
+        "operationId" : "getSimilaires",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "max",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 6
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AnnonceDTO"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Annonces similaires",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/stats" : {
+      "get" : {
+        "description" : "Réservé au propriétaire, au PROFESSIONNEL parent (si l'owner est un AGENT), ou à un ADMIN/MOD.",
+        "operationId" : "getAnnonceStats",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Statistiques de vues d'une annonce",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/biens-immo/{id}/toggle-actif" : {
+      "put" : {
+        "description" : "Masque/affiche une annonce. Accessible au propriétaire (ou au PROFESSIONNEL parent pour une annonce d'agent) ainsi qu'aux ADMINISTRATEUR et MODERATEUR.",
+        "operationId" : "toggleActif",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Activer ou désactiver une annonce",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
+    "/api/entreprises" : {
+      "get" : {
+        "description" : "Réservé aux modérateurs et administrateurs ; renvoie les entreprises actives et inactives",
+        "operationId" : "getAllEntreprises",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseEntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister toutes les entreprises",
+        "tags" : [ "Entreprises" ]
+      },
+      "post" : {
+        "description" : "Permet à un Annonceur Professionnel de créer son entreprise",
+        "operationId" : "createEntreprise",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EntrepriseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Créer une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/user/{userId}" : {
+      "get" : {
+        "description" : "Trouve l'entreprise associée à un utilisateur",
+        "operationId" : "getEntrepriseByUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Récupérer l'entreprise d'un utilisateur",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/agents" : {
+      "get" : {
+        "description" : "Retourne tous les agents rattachés à l'entreprise",
+        "operationId" : "getAgentsByEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AgentDTO"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les agents d'une entreprise",
+        "tags" : [ "Entreprises" ]
+      },
+      "post" : {
+        "description" : "Crée un nouvel utilisateur rattaché à l'entreprise. Seul le propriétaire de l'entreprise peut créer des agents.",
+        "operationId" : "createAgent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Créer un agent pour l'entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/agents/{agentId}" : {
+      "delete" : {
+        "description" : "Permet au propriétaire de retirer un agent de son entreprise",
+        "operationId" : "removeAgent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "agentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Retirer un agent de l'entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/agents/{agentId}/activer" : {
+      "put" : {
+        "description" : "L'annonceurProfessionnel de l'entreprise ou le créateur de l'agent peuvent réactiver un agent",
+        "operationId" : "activerAgent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "agentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Réactiver un agent",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/agents/{agentId}/suspendre" : {
+      "put" : {
+        "description" : "L'annonceurProfessionnel de l'entreprise ou le créateur de l'agent peuvent suspendre un agent",
+        "operationId" : "suspendreAgent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "agentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Suspendre un agent",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/annonces" : {
+      "get" : {
+        "description" : "Retourne toutes les annonces actives publiées par les agents de l'entreprise, avec pagination. Réservé aux membres de l'entreprise et à la modération (le public utilise /{id}/profil).",
+        "operationId" : "getAnnoncesByEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "dateCreation"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les annonces d'une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/can-add-agent" : {
+      "get" : {
+        "description" : "Vérifie si l'entreprise peut ajouter un nouvel agent",
+        "operationId" : "canAddAgent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Vérifier le quota d'agents",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/can-create-annonce" : {
+      "get" : {
+        "description" : "Vérifie si l'entreprise peut créer une nouvelle annonce",
+        "operationId" : "canCreateAnnonce",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Vérifier le quota d'annonces",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{id}" : {
+      "delete" : {
+        "description" : "Permet au propriétaire ou à un admin de désactiver une entreprise",
+        "operationId" : "disableEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Désactiver une entreprise",
+        "tags" : [ "Entreprises" ]
+      },
+      "get" : {
+        "description" : "Affiche les détails d'une entreprise",
+        "operationId" : "getEntrepriseById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Récupérer une entreprise par ID",
+        "tags" : [ "Entreprises" ]
+      },
+      "put" : {
+        "description" : "Permet au propriétaire de modifier les informations de son entreprise",
+        "operationId" : "updateEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EntrepriseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mettre à jour une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{id}/photo" : {
+      "put" : {
+        "description" : "Envoyer le fichier image en multipart/form-data. Seul le propriétaire peut modifier la photo.",
+        "operationId" : "uploadPhoto_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Uploader la photo de profil de l'entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{id}/profil" : {
+      "get" : {
+        "description" : "Retourne les détails de l'entreprise et la liste paginée de ses annonces publiées",
+        "operationId" : "getEntrepriseProfil",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "dateCreation"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseProfilDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Profil d'une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{id}/reactiver" : {
+      "put" : {
+        "description" : "Permet à un administrateur de réactiver une entreprise désactivée",
+        "operationId" : "enableEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Réactiver une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/licences/activer" : {
+      "post" : {
+        "description" : "Valable 1 an ; prolonge une licence encore valide. La clé doit correspondre au type de compte. Refusé tant que le mode licence n'est pas activé.",
+        "operationId" : "activer",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ActivationLicenceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LicenceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Activer une clé de licence",
+        "tags" : [ "Licences" ]
+      }
+    },
+    "/api/licences/admin/cles" : {
+      "get" : {
+        "description" : "statut : TOUTES (défaut), LIBRE, ACTIVE, EXPIREE. q : recherche dans la clé ou l'email du titulaire.",
+        "operationId" : "listerCles",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "statut",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "TOUTES"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseLicenceAdminResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Lister les clés de licence",
+        "tags" : [ "Licences" ]
+      },
+      "post" : {
+        "description" : "Type PARTICULIER ou PROFESSIONNEL.",
+        "operationId" : "genererCle",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerationLicenceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Générer une clé de licence",
+        "tags" : [ "Licences" ]
+      }
+    },
+    "/api/licences/admin/mode" : {
+      "get" : {
+        "operationId" : "getMode",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "boolean"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] État du mode licence",
+        "tags" : [ "Licences" ]
+      },
+      "put" : {
+        "description" : "Actif : au-delà des annonces actives gratuites, publier ou remettre en ligne exige une licence valide.",
+        "operationId" : "setMode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModeLicenceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "boolean"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Activer / désactiver le mode licence",
+        "tags" : [ "Licences" ]
+      }
+    },
+    "/api/licences/admin/reglages" : {
+      "get" : {
+        "operationId" : "getReglages",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReglagesLicenceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Tarifs et contact de vente des licences",
+        "tags" : [ "Licences" ]
+      },
+      "put" : {
+        "description" : "Prix annuels en GNF (particulier / professionnel) et numéro affiché aux utilisateurs pour acheter une licence. Un champ null est effacé.",
+        "operationId" : "setReglages",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReglagesLicenceDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReglagesLicenceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "[Admin] Modifier les tarifs et le contact de vente",
+        "tags" : [ "Licences" ]
+      }
+    },
+    "/api/licences/me" : {
+      "get" : {
+        "description" : "Statut ACTIVE / EXPIREE / AUCUNE. Un agent voit la licence de son professionnel (partage=true). modeActif=false : les licences ne sont pas encore exigées.",
+        "operationId" : "getMaLicence",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LicenceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Licence de l'utilisateur connecté",
+        "tags" : [ "Licences" ]
+      }
+    },
+    "/api/localisations" : {
+      "get" : {
+        "operationId" : "getAllLocalisations",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "region"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseLocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister toutes les localisations (paginé)",
+        "tags" : [ "Localisations" ]
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LocalisationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ajouter une localisation",
+        "tags" : [ "Localisations" ]
+      }
+    },
+    "/api/localisations/commune/{communeName}" : {
+      "get" : {
+        "operationId" : "getLocalisationsByCommune",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "communeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "quartier"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseLocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les localisations d'une commune (paginé)",
+        "tags" : [ "Localisations" ]
+      }
+    },
+    "/api/localisations/prefecture/{prefectureName}" : {
+      "get" : {
+        "operationId" : "getLocalisationsByPrefecture",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "prefectureName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "commune"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseLocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les localisations d'une préfecture (paginé)",
+        "tags" : [ "Localisations" ]
+      }
+    },
+    "/api/localisations/region/{regionName}" : {
+      "get" : {
+        "operationId" : "getLocalisationsByRegion",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "regionName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "prefecture"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseLocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les localisations d'une région (paginé)",
+        "tags" : [ "Localisations" ]
+      }
+    },
+    "/api/localisations/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer une localisation",
+        "tags" : [ "Localisations" ]
+      },
+      "get" : {
+        "operationId" : "getLocalisationById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Localisations" ]
+      },
+      "put" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LocalisationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LocalisationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Modifier une localisation",
+        "tags" : [ "Localisations" ]
+      }
+    },
+    "/api/messagerie/conversations" : {
+      "get" : {
+        "operationId" : "getMyConversations",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "lastMessageAt"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseConversationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister mes conversations",
+        "tags" : [ "Messagerie" ]
+      },
+      "post" : {
+        "description" : "Démarre une conversation sur une annonce active ou retourne la conversation existante",
+        "operationId" : "createOrGetConversation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateConversationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConversationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Créer ou récupérer une conversation",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/conversations/{conversationId}" : {
+      "get" : {
+        "operationId" : "getConversationById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConversationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Obtenir une conversation par ID",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/conversations/{conversationId}/messages" : {
+      "get" : {
+        "operationId" : "getMessages",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt"
+          }
+        }, {
+          "in" : "query",
+          "name" : "direction",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseMessageDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister les messages d'une conversation",
+        "tags" : [ "Messagerie" ]
+      },
+      "post" : {
+        "operationId" : "sendMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SendMessageRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Envoyer un message dans une conversation",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/conversations/{conversationId}/read" : {
+      "put" : {
+        "operationId" : "markConversationAsRead",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Marquer une conversation comme lue",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/messages/{messageId}/read" : {
+      "put" : {
+        "operationId" : "markMessageAsRead",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Marquer un message comme lu",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/messages/{messageId}/signaler" : {
+      "post" : {
+        "description" : "Seul un participant de la conversation (autre que l'expéditeur) peut signaler un message. Corps : { motif } (ARNAQUE, PROPOS_INSULTANTS, HARCELEMENT, SPAM, AUTRE).",
+        "operationId" : "signalerMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignalerMessageRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Signaler un message à la modération",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/stats/pro" : {
+      "get" : {
+        "description" : "Réservé aux rôles PROFESSIONNEL et AGENT_PROFESSIONNEL.\n\nRetourne 5 sections :\n- **portefeuille** : annonces par statut (PUBLIEE/MASQUEE/REJETEE), clôtures du mois par motif (VENDU/LOUE/RETIRE), tauxConversionMois, repartitionParType (VENTE/LOCATION)\n- **visibilite** : totalVues, top5ParVues [{id, titre, referenceAnnonce, vueCount, nbFavoris}], totalFavoris\n- **messagerie** : totalConversations, messagesNonLus, tauxReponse (%)\n- **equipe** : agentsActifs, agentsSuspendus, performances [{agentId, agentUsername, nbAnnonces, totalVues}], topAgentUsername. **null** pour un AGENT_PROFESSIONNEL.\n- **conformite** : statutPieceIdentite, nbAvertissements, annoncesActives, quotaMax, annoncesRestantes, canCreateAnnonce",
+        "operationId" : "getProStats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Statistiques du tableau de bord pro",
+        "tags" : [ "Statistiques PRO" ]
+      }
+    },
+    "/api/users" : {
+      "get" : {
+        "operationId" : "getAllUsers",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseUserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister tous les comptes (paginé)",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me" : {
+      "delete" : {
+        "description" : "Désactive immédiatement le compte (statut INACTIF). Réactivable par l'utilisateur via POST /api/auth/reactivate pendant 30 jours, puis données personnelles anonymisées.",
+        "operationId" : "deleteMyAccount",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer son compte (RGPD)",
+        "tags" : [ "Utilisateurs" ]
+      },
+      "get" : {
+        "operationId" : "getMyProfile",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Obtenir son propre profil",
+        "tags" : [ "Utilisateurs" ]
+      },
+      "put" : {
+        "description" : "Modifier nom, prénom, téléphone, type de compte, numéro et type de pièce d'identité.",
+        "operationId" : "updateMyProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mettre à jour son profil",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/export" : {
+      "get" : {
+        "description" : "Profil, annonces, favoris, conversations, signalements, en JSON.",
+        "operationId" : "exportMyData",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : { }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Exporter mes données personnelles (RGPD)",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/favoris" : {
+      "get" : {
+        "description" : "Retourne la liste paginée des annonces ajoutées aux favoris.",
+        "operationId" : "getFavoris",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lister mes annonces favorites",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/favoris/{annonceId}" : {
+      "delete" : {
+        "operationId" : "removeFavori",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annonceId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Retirer une annonce des favoris",
+        "tags" : [ "Utilisateurs" ]
+      },
+      "post" : {
+        "operationId" : "addFavori",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annonceId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ajouter une annonce aux favoris",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/photo" : {
+      "put" : {
+        "description" : "Envoyer le fichier image en multipart/form-data.",
+        "operationId" : "uploadPhoto",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Uploader une photo de profil",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/piece-identite" : {
+      "post" : {
+        "description" : "Envoi en multipart/form-data.\nChamps : file (obligatoire, image), typePieceIdentite (obligatoire), numeroPieceIdentite (obligatoire).\nLe statut passe automatiquement à EN_ATTENTE jusqu'à validation par un admin/modérateur.",
+        "operationId" : "uploadPieceIdentite",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "typePieceIdentite",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "numeroPieceIdentite",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Uploader sa pièce d'identité",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{id}" : {
+      "get" : {
+        "operationId" : "getUserById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Obtenir un compte par ID",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{id}/piece-identite/statut" : {
+      "put" : {
+        "description" : "Statut : VALIDEE ou REJETEE. Un motif est obligatoire en cas de rejet. Un MODÉRATEUR ne peut pas agir sur un autre MODÉRATEUR (réservé à l'ADMINISTRATEUR).",
+        "operationId" : "validerPieceIdentite",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ValidationPieceIdentiteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Valider ou rejeter une pièce d'identité",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{id}/presence" : {
+      "get" : {
+        "description" : "ONLINE si une requête authentifiée date de moins de 2 minutes. Réservé à l'utilisateur lui-même, à la modération et à ses interlocuteurs en messagerie.",
+        "operationId" : "getPresence",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PresenceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Statut en ligne d'un utilisateur",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{id}/statut" : {
+      "put" : {
+        "description" : "Statuts disponibles : ACTIF, SUSPENDU, INACTIF. Un MODÉRATEUR ne peut pas modifier le statut d'un autre MODÉRATEUR (réservé à l'ADMINISTRATEUR).",
+        "operationId" : "updateStatut",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateStatutRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Changer le statut d'un compte utilisateur",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{userId}/piece-identite" : {
+      "get" : {
+        "description" : "Retourne le contenu binaire de la pièce d'identité.\n\nAutorisations : propriétaire OU ADMINISTRATEUR/MODERATEUR.\nLes pièces d'identité sont stockées dans /uploads/private/** et ne sont accessibles que via cet endpoint.",
+        "operationId" : "getPieceIdentite",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Servir la pièce d'identité d'un utilisateur",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/uploads/public/**" : {
+      "get" : {
+        "operationId" : "serveFile",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "file-controller" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ActivationLicenceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "cle" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "cle" ]
+      },
+      "AdminStatsAvanceesResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annonceParRegion" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StatParCategorie"
+            }
+          },
+          "annonceParTypeAnnonce" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StatParCategorie"
+            }
+          },
+          "annonceParTypeBien" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StatParCategorie"
+            }
+          },
+          "evolutionAnnonces" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StatParPeriode"
+            }
+          }
+        }
+      },
+      "AdminStatsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annoncesMasquees" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annoncesRejetees" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "messagesSignalesEnAttente" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "piecesIdentiteEnAttente" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "signalementsEnAttente" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalAnnoncesActives" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalEntreprises" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalSignalements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalUtilisateurs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "utilisateursEnAttenteActivation" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AgentDTO" : {
+        "type" : "object",
+        "properties" : {
+          "dateCreation" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "entrepriseId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "entrepriseNom" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "mustChangePassword" : {
+            "type" : "boolean"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "parentUserId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "prenom" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE_ACTIVATION", "ACTIF", "INACTIF", "SUSPENDU" ]
+          },
+          "telephone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AgentPerf" : {
+        "type" : "object",
+        "properties" : {
+          "agentEmail" : {
+            "type" : "string"
+          },
+          "agentId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "agentNom" : {
+            "type" : "string"
+          },
+          "agentPrenom" : {
+            "type" : "string"
+          },
+          "agentUsername" : {
+            "type" : "string"
+          },
+          "nbAnnonces" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalVues" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AgentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "nom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "prenom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "telephone" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "^(\\+|00)[1-9]\\d{6,14}$"
+          }
+        },
+        "required" : [ "email", "nom", "prenom", "telephone" ]
+      },
+      "AnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "actif" : {
+            "type" : "boolean"
+          },
+          "annonceur" : {
+            "$ref" : "#/components/schemas/AnnonceurDTO"
+          },
+          "complementAdresse" : {
+            "type" : "string"
+          },
+          "dateCloture" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateCreation" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateExpiration" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "documentsDisponibles" : {
+            "type" : "string"
+          },
+          "fraisHonoraire" : {
+            "type" : "number"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "latitude" : {
+            "type" : "number"
+          },
+          "localisation" : {
+            "$ref" : "#/components/schemas/LocalisationDTO"
+          },
+          "longitude" : {
+            "type" : "number"
+          },
+          "medias" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MediaDTO"
+            }
+          },
+          "motifCloture" : {
+            "type" : "string",
+            "enum" : [ "VENDU", "LOUE", "RETIRE", "EXPIREE" ]
+          },
+          "motifModeration" : {
+            "type" : "string"
+          },
+          "nbFavoris" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "prix" : {
+            "type" : "number"
+          },
+          "prixRevise" : {
+            "type" : "number"
+          },
+          "proprietaireMasque" : {
+            "type" : "boolean"
+          },
+          "publicId" : {
+            "type" : "string"
+          },
+          "referenceAnnonce" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "statutModeration" : {
+            "type" : "string",
+            "enum" : [ "PUBLIEE", "MASQUEE", "REJETEE", "DESACTIVEE" ]
+          },
+          "titre" : {
+            "type" : "string"
+          },
+          "typeAnnonce" : {
+            "type" : "string",
+            "enum" : [ "VENTE", "LOCATION", "BAIL" ]
+          },
+          "typeBien" : {
+            "type" : "string",
+            "enum" : [ "APPARTEMENT", "MAISON", "VILLA", "TERRAIN", "DOMAINE", "MAGASIN", "BUREAU", "ENTREPOT", "AUTRE" ]
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "vueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AnnonceStatsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "referenceAnnonce" : {
+            "type" : "string"
+          },
+          "vueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AnnonceurDTO" : {
+        "type" : "object",
+        "properties" : {
+          "entrepriseId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "photoProfil" : {
+            "type" : "string"
+          },
+          "prenom" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
+          },
+          "telephone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AuditEventResponse" : {
+        "type" : "object",
+        "properties" : {
+          "acteurId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "acteurLibelle" : {
+            "type" : "string"
+          },
+          "acteurRole" : {
+            "type" : "string"
+          },
+          "action" : {
+            "type" : "string",
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE" ]
+          },
+          "adresseIp" : {
+            "type" : "string"
+          },
+          "cibleId" : {
+            "type" : "string"
+          },
+          "cibleType" : {
+            "type" : "string",
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE" ]
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "motif" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AvertissementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motif" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "motif" ]
+      },
+      "AvertissementResponse" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "emitPar" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "motif" : {
+            "type" : "string"
+          },
+          "niveau" : {
+            "type" : "string",
+            "enum" : [ "LEGER", "MODERE", "GRAVE" ]
+          },
+          "suspenduAutomatiquement" : {
+            "type" : "boolean"
+          },
+          "utilisateurId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "BienImmoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "complementAdresse" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 20
+          },
+          "documentsDisponibles" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "fraisHonoraire" : {
+            "type" : "number",
+            "minimum" : 0.0
+          },
+          "latitude" : {
+            "type" : "number"
+          },
+          "localisationId" : {
+            "type" : "string"
+          },
+          "longitude" : {
+            "type" : "number"
+          },
+          "medias" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "binary"
+            }
+          },
+          "nbChambres" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 0
+          },
+          "nbPieces" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1
+          },
+          "nbSallesBain" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 0
+          },
+          "prix" : {
+            "type" : "number",
+            "minimum" : 0.0
+          },
+          "prixRevise" : {
+            "type" : "number",
+            "minimum" : 0.0
+          },
+          "surfaceTotal" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "titre" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 5
+          },
+          "typeAnnonce" : {
+            "type" : "string",
+            "enum" : [ "VENTE", "LOCATION", "BAIL" ]
+          },
+          "typeBien" : {
+            "type" : "string",
+            "enum" : [ "APPARTEMENT", "MAISON", "VILLA", "TERRAIN", "DOMAINE", "MAGASIN", "BUREAU", "ENTREPOT", "AUTRE" ]
+          },
+          "typeUsage" : {
+            "type" : "string",
+            "enum" : [ "AGRICOLE", "HABITATION", "COMMERCIAL", "LOISIR", "PROFESSIONNEL", "AUTRE" ]
+          }
+        },
+        "required" : [ "description", "documentsDisponibles", "localisationId", "prix", "titre", "typeAnnonce", "typeBien" ]
+      },
+      "ChangePasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "newPassword" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "oldPassword" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "newPassword", "oldPassword" ]
+      },
+      "ConformiteStats" : {
+        "type" : "object",
+        "properties" : {
+          "annoncesActives" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annoncesRestantes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "canCreateAnnonce" : {
+            "type" : "boolean"
+          },
+          "limiteParLicence" : {
+            "type" : "boolean"
+          },
+          "nbAvertissements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "quotaMax" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "statutPieceIdentite" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ConversationDTO" : {
+        "type" : "object",
+        "properties" : {
+          "annonceActive" : {
+            "type" : "boolean"
+          },
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annonceReference" : {
+            "type" : "string"
+          },
+          "annonceTitre" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "createdById" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastMessageAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastMessagePreview" : {
+            "type" : "string"
+          },
+          "otherParticipantId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "otherParticipantNomComplet" : {
+            "type" : "string"
+          },
+          "otherParticipantPhotoProfil" : {
+            "type" : "string"
+          },
+          "otherParticipantUsername" : {
+            "type" : "string"
+          },
+          "unreadCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "CreateConversationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "annonceId" ]
+      },
+      "EntrepriseDTO" : {
+        "type" : "object",
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          },
+          "adresse" : {
+            "type" : "string"
+          },
+          "agentsRestants" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "annoncesRestantes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "annonceurProfessionnelEmail" : {
+            "type" : "string"
+          },
+          "annonceurProfessionnelId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "codePostal" : {
+            "type" : "string"
+          },
+          "dateCreation" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "nombreAgents" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "numeroRCCM" : {
+            "type" : "string"
+          },
+          "pays" : {
+            "type" : "string"
+          },
+          "photoProfil" : {
+            "type" : "string"
+          },
+          "quotaAgents" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "quotaAgentsPersonnalise" : {
+            "type" : "boolean"
+          },
+          "quotaAnnonces" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "quotaAnnoncesPersonnalise" : {
+            "type" : "boolean"
+          },
+          "siteWeb" : {
+            "type" : "string"
+          },
+          "telephone" : {
+            "type" : "string"
+          },
+          "ville" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EntrepriseProfilDTO" : {
+        "type" : "object",
+        "properties" : {
+          "annonces" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnonceDTO"
+            }
+          },
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "entreprise" : {
+            "$ref" : "#/components/schemas/EntrepriseDTO"
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "EntrepriseRequest" : {
+        "type" : "object",
+        "properties" : {
+          "adresse" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "nom" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "numeroRCCM" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "pays" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "telephone" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "^(\\+|00)[1-9]\\d{6,14}$"
+          }
+        },
+        "required" : [ "adresse", "description", "email", "nom", "numeroRCCM", "telephone" ]
+      },
+      "EquipeStats" : {
+        "type" : "object",
+        "properties" : {
+          "agentsActifs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "agentsSuspendus" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "performances" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AgentPerf"
+            }
+          },
+          "topAgentEmail" : {
+            "type" : "string"
+          },
+          "topAgentNom" : {
+            "type" : "string"
+          },
+          "topAgentPrenom" : {
+            "type" : "string"
+          },
+          "topAgentUsername" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ErreurApi" : {
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "VALIDATION", "REQUETE_INVALIDE", "NON_AUTHENTIFIE", "IDENTIFIANTS_INVALIDES", "LICENCE_REQUISE", "ACCES_REFUSE", "COMPTE_INACTIF", "RESSOURCE_INTROUVABLE", "CONFLIT", "FICHIER_TROP_VOLUMINEUX", "REGLE_METIER", "MOT_DE_PASSE_A_CHANGER", "TROP_DE_REQUETES", "ERREUR_INTERNE" ]
+          },
+          "errors" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "ForgotPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "GenerationLicenceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL" ]
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "HistoriqueAnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "ancienneValeur" : {
+            "type" : "string"
+          },
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "champ" : {
+            "type" : "string"
+          },
+          "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modifiePar" : {
+            "type" : "string"
+          },
+          "nouvelleValeur" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HistoriqueAnnonceResponse" : {
+        "type" : "object",
+        "properties" : {
+          "ancienneValeur" : {
+            "type" : "string"
+          },
+          "champ" : {
+            "type" : "string"
+          },
+          "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modifiePar" : {
+            "type" : "string"
+          },
+          "nouvelleValeur" : {
+            "type" : "string"
+          }
+        }
+      },
+      "JwtResponse" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "mustChangePassword" : {
+            "type" : "boolean"
+          },
+          "refreshToken" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LicenceAdminResponse" : {
+        "type" : "object",
+        "properties" : {
+          "cle" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateDebut" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "dateFin" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ownerEmail" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL" ]
+          }
+        }
+      },
+      "LicenceResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annoncesActives" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annoncesGratuites" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bloque" : {
+            "type" : "boolean"
+          },
+          "compteOwner" : {
+            "type" : "string"
+          },
+          "contactTelephone" : {
+            "type" : "string"
+          },
+          "dateDebut" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "dateFin" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "modeActif" : {
+            "type" : "boolean"
+          },
+          "partage" : {
+            "type" : "boolean"
+          },
+          "prix" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL" ]
+          }
+        }
+      },
+      "LocalisationDTO" : {
+        "type" : "object",
+        "properties" : {
+          "commune" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "prefecture" : {
+            "type" : "string"
+          },
+          "quartier" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "typeCommune" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LocalisationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "commune" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "prefecture" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "quartier" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "region" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "typeCommune" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "urbaine|rurale"
+          }
+        },
+        "required" : [ "commune", "prefecture", "quartier", "region", "typeCommune" ]
+      },
+      "LoginRequest" : {
+        "type" : "object",
+        "properties" : {
+          "identifier" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "identifier", "password" ]
+      },
+      "MediaDTO" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ordre" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "typeMime" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MediaRequest" : {
+        "type" : "object",
+        "properties" : {
+          "medias" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "binary"
+            },
+            "minItems" : 1
+          }
+        },
+        "required" : [ "medias" ]
+      },
+      "MessageDTO" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "conversationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "mine" : {
+            "type" : "boolean"
+          },
+          "readAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "senderId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "senderNomComplet" : {
+            "type" : "string"
+          },
+          "senderPhotoProfil" : {
+            "type" : "string"
+          },
+          "senderUsername" : {
+            "type" : "string"
+          },
+          "signale" : {
+            "type" : "boolean"
+          },
+          "supprime" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "MessageModerationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annonceReference" : {
+            "type" : "string"
+          },
+          "annonceTitre" : {
+            "type" : "string"
+          },
+          "content" : {
+            "type" : "string"
+          },
+          "conversationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateSignalement" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateSuppression" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "motifSignalement" : {
+            "type" : "string"
+          },
+          "senderId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "senderUsername" : {
+            "type" : "string"
+          },
+          "signale" : {
+            "type" : "boolean"
+          },
+          "signaleParId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "signaleParUsername" : {
+            "type" : "string"
+          },
+          "supprime" : {
+            "type" : "boolean"
+          },
+          "supprimePar" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MessageResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MessagerieStats" : {
+        "type" : "object",
+        "properties" : {
+          "messagesNonLus" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tauxReponse" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "totalConversations" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ModeLicenceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "actif" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "actif" ]
+      },
+      "PageResponseAnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnonceDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseAuditEventResponse" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AuditEventResponse"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseConversationDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConversationDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseEntrepriseDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EntrepriseDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseLicenceAdminResponse" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LicenceAdminResponse"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseLocalisationDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LocalisationDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseMessageDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MessageDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseMessageModerationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MessageModerationResponse"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseSignalementResponse" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SignalementResponse"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PageResponseUserDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PortefeuilleStats" : {
+        "type" : "object",
+        "properties" : {
+          "annoncesMasquees" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annoncesPubliees" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annoncesRejetees" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clotureesLoueCeMois" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clotureesRetireCeMois" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clotureesVenduCeMois" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "repartitionParType" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "tauxConversionMois" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      },
+      "PresenceResponse" : {
+        "type" : "object",
+        "properties" : {
+          "lastSeenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
+      "ProStatsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "conformite" : {
+            "$ref" : "#/components/schemas/ConformiteStats"
+          },
+          "equipe" : {
+            "$ref" : "#/components/schemas/EquipeStats"
+          },
+          "messagerie" : {
+            "$ref" : "#/components/schemas/MessagerieStats"
+          },
+          "portefeuille" : {
+            "$ref" : "#/components/schemas/PortefeuilleStats"
+          },
+          "visibilite" : {
+            "$ref" : "#/components/schemas/VisibiliteStats"
+          }
+        }
+      },
+      "QuotasDTO" : {
+        "type" : "object",
+        "properties" : {
+          "quotaAgents" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 1000,
+            "minimum" : 0
+          },
+          "quotaAnnonces" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100000,
+            "minimum" : 0
+          }
+        }
+      },
+      "RefreshTokenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "refreshToken" ]
+      },
+      "ReglagesLicenceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "contactTelephone" : {
+            "type" : "string",
+            "pattern" : "^\\+?[0-9 ]{8,20}$"
+          },
+          "prixParticulier" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prixProfessionnel" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ResetPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "newPassword" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 6
+          },
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email", "newPassword", "token" ]
+      },
+      "SearchPageResponseAnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnonceDTO"
+            }
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SendMessageRequest" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string",
+            "maxLength" : 4000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "content" ]
+      },
+      "SignalementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "commentaire" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "motif" : {
+            "type" : "string",
+            "enum" : [ "CONTENU_INAPPROPRIE", "DEJA_VENDU_LOUE", "ARNAQUE_FRAUDE", "ANNONCE_EN_DOUBLE", "INFOS_INCORRECTES", "MAUVAISE_CATEGORIE", "PROBLEME_LOCALISATION", "AUTRE" ]
+          }
+        },
+        "required" : [ "motif" ]
+      },
+      "SignalementResponse" : {
+        "type" : "object",
+        "properties" : {
+          "annonceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annule" : {
+            "type" : "boolean"
+          },
+          "commentaire" : {
+            "type" : "string"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateAnnulation" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateTraitement" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "motif" : {
+            "type" : "string"
+          },
+          "noteAdmin" : {
+            "type" : "string"
+          },
+          "referenceAnnonce" : {
+            "type" : "string"
+          },
+          "reporterId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "reporterUsername" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE", "TRAITE", "IGNORE" ]
+          },
+          "titreAnnonce" : {
+            "type" : "string"
+          },
+          "traitePar" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignalerMessageRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motif" : {
+            "type" : "string",
+            "enum" : [ "ARNAQUE", "PROPOS_INSULTANTS", "HARCELEMENT", "SPAM", "AUTRE" ]
+          }
+        }
+      },
+      "SignupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "nom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 40,
+            "minLength" : 8
+          },
+          "prenom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "role" : {
+            "type" : "string",
+            "pattern" : "PARTICULIER|PROFESSIONNEL"
+          },
+          "telephone" : {
+            "type" : "string",
+            "pattern" : "^(\\+|00)[1-9]\\d{6,14}$"
+          }
+        },
+        "required" : [ "email", "nom", "password", "prenom" ]
+      },
+      "StatParCategorie" : {
+        "type" : "object",
+        "properties" : {
+          "categorie" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "StatParPeriode" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "periode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TopAnnonceItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nbFavoris" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "referenceAnnonce" : {
+            "type" : "string"
+          },
+          "titre" : {
+            "type" : "string"
+          },
+          "vueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TraiterSignalementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "noteAdmin" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE", "TRAITE", "IGNORE" ]
+          }
+        },
+        "required" : [ "statut" ]
+      },
+      "UpdateProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "nom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "numeroPieceIdentite" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "prenom" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "telephone" : {
+            "type" : "string",
+            "pattern" : "^(\\+|00)[1-9]\\d{6,14}$"
+          },
+          "typePieceIdentite" : {
+            "type" : "string",
+            "enum" : [ "CARTE_IDENTITE", "PASSEPORT", "PERMIS_DE_CONDUIRE", "AUTRE" ]
+          }
+        }
+      },
+      "UpdateStatutRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motif" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE_ACTIVATION", "ACTIF", "INACTIF", "SUSPENDU" ]
+          }
+        },
+        "required" : [ "statut" ]
+      },
+      "UserDTO" : {
+        "type" : "object",
+        "properties" : {
+          "annoncesMasquees" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateMasquageAnnonces" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "entrepriseId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "entrepriseNom" : {
+            "type" : "string"
+          },
+          "favorisIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "uniqueItems" : true
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "motifMasquageAnnonces" : {
+            "type" : "string"
+          },
+          "motifRejetPieceIdentite" : {
+            "type" : "string"
+          },
+          "motifStatut" : {
+            "type" : "string"
+          },
+          "nbAvertissements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "numeroPieceIdentite" : {
+            "type" : "string"
+          },
+          "parentUserId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "photoProfil" : {
+            "type" : "string"
+          },
+          "pieceIdentiteUrl" : {
+            "type" : "string"
+          },
+          "prenom" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE_ACTIVATION", "ACTIF", "INACTIF", "SUSPENDU" ]
+          },
+          "statutPieceIdentite" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE", "VALIDEE", "REJETEE" ]
+          },
+          "telephone" : {
+            "type" : "string"
+          },
+          "typePieceIdentite" : {
+            "type" : "string",
+            "enum" : [ "CARTE_IDENTITE", "PASSEPORT", "PERMIS_DE_CONDUIRE", "AUTRE" ]
+          }
+        }
+      },
+      "ValidationPieceIdentiteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motifRejet" : {
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "EN_ATTENTE", "VALIDEE", "REJETEE" ]
+          }
+        },
+        "required" : [ "statut" ]
+      },
+      "VisibiliteStats" : {
+        "type" : "object",
+        "properties" : {
+          "top5ParVues" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TopAnnonceItem"
+            }
+          },
+          "totalFavoris" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalVues" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ZoneActiveDTO" : {
+        "type" : "object",
+        "properties" : {
+          "commune" : {
+            "type" : "string"
+          },
+          "nbAnnonces" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prefecture" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "Bearer" : {
+        "bearerFormat" : "JWT",
+        "description" : "Entrez votre token JWT (sans le préfixe 'Bearer')",
+        "name" : "Bearer",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  }
+}

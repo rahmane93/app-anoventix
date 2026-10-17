@@ -1,0 +1,20 @@
+package com.app.AnnoncesAPI.repositories;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.app.AnnoncesAPI.entities.Avertissement;
+
+@Repository
+public interface AvertissementRepository extends JpaRepository<Avertissement, Long> {
+
+    @Query("SELECT a FROM Avertissement a JOIN FETCH a.utilisateur WHERE a.utilisateur.id = :userId ORDER BY a.date DESC")
+    List<Avertissement> findByUtilisateurId(@Param("userId") UUID userId);
+
+    long countByUtilisateurId(UUID userId);
+}

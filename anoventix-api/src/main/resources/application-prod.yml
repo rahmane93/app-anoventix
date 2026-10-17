@@ -1,0 +1,32 @@
+spring:
+  jpa:
+    hibernate:
+      # Le schéma de prod est piloté par Flyway (db/migration) ; Hibernate vérifie
+      # seulement qu'il correspond aux entités et refuse de démarrer sinon.
+      # Toute évolution d'entité doit donc s'accompagner d'une migration Vn__.
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    com.app.AnnoncesAPI: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level %logger{36} - %msg%n"
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

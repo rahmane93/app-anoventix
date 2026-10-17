@@ -1,0 +1,128 @@
+spring:
+  application:
+    name: AnnoncesAPI
+
+  # Profil par défaut : dev. Override via SPRING_PROFILES_ACTIVE=prod en production.
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  datasource:
+    url: ${POSTGRES_DB_URL:jdbc:postgresql://localhost:5432/anoventix}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:admin}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      schema: ${POSTGRES_BD_SCHEMA:public}
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+  jpa:
+    open-in-view: false
+    # Le schéma est piloté par Flyway (db/migration) dans tous les profils ;
+    # Hibernate vérifie seulement qu'il correspond aux entités.
+    # Toute évolution d'entité s'accompagne d'une migration Vn__.
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: ${POSTGRES_BD_SCHEMA}
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    # V1.1 (schéma initial) a été ajoutée après V13 : les bases existantes
+    # l'appliquent une fois hors ordre, sans effet (cf. V1_1__schema_initial.sql).
+    out-of-order: true
+    locations: classpath:db/migration
+    schemas: ${POSTGRES_BD_SCHEMA}
+    default-schema: ${POSTGRES_BD_SCHEMA}
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        debug: false
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+server:
+  forward-headers-strategy: framework
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+
+management:
+  health:
+    mail:
+      enabled: false
+
+upload:
+  dir: ${APP_UPLOAD_DIR}
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  expiration_ms: ${JWT_EXPIRATION}
+  refresh_expiration_ms: ${JWT_REFRESH_EXPIRATION:604800000}
+
+mail:
+  from: ${SMTP_FROM}
+
+admin:
+  email: ${ADMIN_EMAIL}
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+
+licence:
+  # Annonces actives gratuites par compte (entreprise = pro + agents) avant licence obligatoire.
+  # Appliqué seulement quand l'administrateur a activé le mode licence.
+  annonces-gratuites: ${LICENCE_ANNONCES_GRATUITES:5}
+
+annonce:
+  # Durée de validité d'une annonce avant clôture automatique (prolongation gratuite).
+  duree-validite-jours: ${ANNONCE_DUREE_VALIDITE_JOURS:180}
+  # Relance email envoyée ce nombre de jours avant l'expiration.
+  relance-jours-avant: ${ANNONCE_RELANCE_JOURS_AVANT:7}
+
+app:
+  base-url: ${APP_BASE_URL}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081,http://localhost:4200}
+  security:
+    trust-xff: ${TRUST_XFF:false}
+    bcrypt:
+      strength: ${APP_SECURITY_BCRYPT_STRENGTH:12}
+  # Pages d'annonce partagées (aperçu réseaux sociaux, cf. SharePageService).
+  web:
+    # Adresse publique du site (URL canonique des annonces).
+    url: ${APP_WEB_URL:https://www.anoventix.com}
+    # Domaine servant /uploads (photos en og:image).
+    media-base-url: ${APP_MEDIA_BASE_URL:https://anoventix.com}
+    # Export web Expo monté dans le conteneur (cf. docker-compose.yml).
+    root: ${APP_WEB_ROOT:/var/www/web/current}
