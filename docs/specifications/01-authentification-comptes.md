@@ -6,7 +6,15 @@
 
 Permettre à un visiteur de créer un compte (particulier ou professionnel), de l'activer par email, de se connecter avec son **email ou son numéro de téléphone**, de gérer son mot de passe et de maintenir une session sécurisée. Le module couvre aussi la première connexion des agents (mot de passe temporaire) et la réactivation d'un compte dont la suppression est en cours.
 
-Hors périmètre : connexion via un réseau social, double authentification, vérification du téléphone par SMS (aucune n'est implémentée).
+Hors périmètre (rien de tout cela n'est implémenté) :
+
+- connexion via un réseau social, connexion sans mot de passe (lien magique, code SMS), double authentification ;
+- vérification du téléphone, alors qu'il sert d'identifiant (ECART-53) ;
+- changement d'email par l'utilisateur (module 02, RG-02-01) ;
+- passage d'un compte particulier à professionnel, ou l'inverse, par l'utilisateur : seul un administrateur change un rôle (module 10, ECART-22) ;
+- liste des sessions ouvertes et déconnexion d'un appareil précis : le seul moyen est de changer de mot de passe, ce qui ferme toutes les sessions.
+
+Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P2 (première connexion d'un agent) et P5 (réactivation).
 
 ## 2. Acteurs et droits
 
@@ -86,6 +94,56 @@ Hors périmètre : connexion via un réseau social, double authentification, vé
 | RG-01-26 | Seul un compte INACTIF dont la suppression a été demandée par son titulaire il y a **moins de 30 jours** est réactivable. Un compte désactivé par un administrateur ne l'est pas. | idem |
 | RG-01-27 | La réactivation rétablit le statut ACTIF, réactive l'entreprise et les agents désactivés par la suppression (pour un pro), **mais pas les annonces**, qui restent hors ligne et doivent être réaffichées une par une. | `CompteSuppressionService.java:101-116` |
 
+### 4.6 Effet d'un changement de statut sur une session ouverte
+
+| ID | Règle | Source |
+|---|---|---|
+| RG-01-28 | Chaque requête authentifiée relit le compte en base. Si le compte n'est plus utilisable (statut autre que ACTIF, sauf l'agent en attente de changement de mot de passe), ou si le jeton a été émis avant le dernier changement de mot de passe, la requête est traitée comme anonyme : les écrans protégés reçoivent 401. Une suspension, une désactivation ou une suppression prend donc effet **dès la requête suivante**, sans attendre l'expiration du jeton d'accès. | `AuthTokenFilter.java:43-60`, `UserDetailsImpl.java:106-110` |
+| RG-01-29 | Sur un 401, l'app tente un rafraîchissement. S'il est refusé (401 jeton révoqué ou expiré, 403 compte suspendu ou désactivé), les jetons sont effacés et l'utilisateur est déconnecté. Une coupure réseau ou un 429 **ne déconnecte pas** : les jetons sont gardés pour réessayer. | `APP/src/api/client.ts:240-282` |
+| RG-01-30 | Un compte suspendu ou désactivé perd l'accès, mais **ses annonces restent visibles du public** (ECART-52). Une nouvelle conversation est refusée (RG-06-01), mais l'appel, WhatsApp et les conversations déjà ouvertes restent possibles (module 03 §4.6). Seuls le masquage système (module 09, RG-09-15) et la suppression demandée par le titulaire (module 02, RG-02-17) les retirent. | `UserServiceImpl.java:310-329`, SFG §8 |
+| RG-01-31 | Le changement de statut par la modération n'envoie **aucun email** : le titulaire découvre la suspension en se connectant (« Votre compte est temporairement suspendu… ») (ECART-23). | module 11 |
+| 🆕 RG-01-35 | **Cible DEC-01** : la règle de visibilité exige un compte propriétaire ACTIF (SFG §8). Une suspension ou une désactivation par la modération, y compris la suspension automatique au 3e avertissement, retire aussitôt toutes les annonces du compte du public, sans changer leur état ; la levée les rend visibles telles qu'avant. Pendant ce temps, les relances d'expiration sont suspendues, comme pour un masquage système (RG-09-15), et l'échéance continue de courir. Un agent revenu EN_ATTENTE_ACTIVATION (RG-07-13) n'a pas d'annonce visible tant qu'il n'a pas changé son mot de passe. Les annonces restent comptées dans les annonces gratuites et le quota (RG-08-22). | DEC-01 (SFG §17) |
+
+### 4.7 Comptes non activés et identifiants
+
+| ID | Règle | Source |
+|---|---|---|
+| RG-01-32 | Un compte qui n'est jamais activé reste EN_ATTENTE_ACTIVATION **sans limite de durée** : aucune tâche ne le purge. Son email et son téléphone restent réservés (ECART-53). | SFG §12 |
+| RG-01-33 | Le téléphone n'est pas vérifié. Si un tiers a réservé un numéro, son vrai titulaire ne peut ni s'inscrire avec ce numéro ni le récupérer. Pour l'email, le vrai titulaire reçoit les liens : il peut activer le compte (renvoi du lien) ou en reprendre la main (mot de passe oublié) (ECART-53). | `AuthServiceImpl.java:282-285` |
+| RG-01-34 | Mot de passe oublié et réinitialisation ne contrôlent pas le statut du compte : un compte suspendu ou désactivé peut recevoir un code et changer son mot de passe, sans pouvoir se connecter ensuite (ECART-36). La réinitialisation ne lève pas l'obligation de changement d'un agent (`mustChangePassword`), seul le changement de mot de passe connecté le fait. | `AuthServiceImpl.java:393-468, 495-501` |
+
+### 4.8 🆕 Double authentification du staff (cible DEC-03)
+
+| ID | Règle | Source |
+|---|---|---|
+| 🆕 RG-01-36 | Concerne les comptes MODERATEUR et ADMINISTRATEUR, à **chaque connexion**. Après un identifiant et un mot de passe corrects, l'API ne renvoie pas de jetons mais une demande de code (202, avec un identifiant de vérification) ; un **code à 6 chiffres** est envoyé par email (E14), valable **10 minutes**. | DEC-03 |
+| 🆕 RG-01-37 | Saisie du code : 5 essais au plus par code, au-delà le code est annulé et il faut se reconnecter ; renvoi possible 3 fois par 15 minutes. Le code est à usage unique et n'est jamais journalisé. | DEC-03 |
+| 🆕 RG-01-38 | Les jetons ne sont délivrés qu'après le code. Le jeton de rafraîchissement d'un compte du staff dure **24 h** au lieu de 7 jours ; au-delà, nouvelle connexion avec code. | DEC-03 |
+| 🆕 RG-01-39 | **Codes de secours** : à la première connexion avec double authentification, 8 codes à usage unique sont affichés une seule fois, pour se connecter si l'email est indisponible. Ils sont stockés hachés et régénérables depuis le profil, ce qui annule les précédents. | DEC-03 |
+| 🆕 RG-01-40 | Chaque connexion réussie d'un compte du staff déclenche un **email d'alerte** (E15 : date, appareil, adresse IP approximative, et l'adresse du support à contacter si ce n'était pas lui). | DEC-03, ECART-64 |
+| 🆕 RG-01-41 | Un compte promu modérateur passe à la double authentification dès sa connexion suivante ; ses sessions en cours sont fermées au changement de rôle. L'administrateur initial (RG-10-14) doit en plus changer son mot de passe à sa première connexion. | DEC-03, ECART-64 |
+
+### 4.9 🆕 Connexion d'un membre d'une entreprise désactivée (cible DEC-12)
+
+| ID | Règle | Source |
+|---|---|---|
+| 🆕 RG-01-42 | Quand son entreprise est désactivée, un **agent** ne peut plus se connecter (« L'entreprise <nom> est désactivée. Contactez votre responsable. ») et ses sessions en cours sont refusées dès la requête suivante, comme pour un compte suspendu (RG-01-28). Son statut n'est pas modifié : il retrouve l'accès à la réactivation. Le **professionnel** propriétaire garde l'accès, pour consulter sa situation et contacter le support, mais ne peut ni publier ni réafficher. | DEC-12 (SFG §17) |
+
+### 4.10 🆕 Téléphone vérifié (cible DEC-05)
+
+| ID | Règle | Source |
+|---|---|---|
+| 🆕 RG-01-43 | Le téléphone devient **obligatoire** à l'inscription (format international, normalisé). Il est vérifié par un **code à 6 chiffres** envoyé par SMS ou, au choix de l'utilisateur, par WhatsApp, valable **10 minutes**, 5 essais par code. Envois limités à 3 par 15 minutes et 10 par jour pour un même numéro. | DEC-05 (SFG §17) |
+| 🆕 RG-01-44 | Un compte devient ACTIF quand **l'email est activé et le téléphone vérifié**, dans n'importe quel ordre. Une connexion avec l'email avant la vérification du téléphone mène directement à la saisie du code. | DEC-05 |
+| 🆕 RG-01-45 | Seul un numéro **vérifié** est réservé et sert d'identifiant de connexion. Un numéro saisi mais non vérifié ne bloque personne : si un autre compte le vérifie, il est retiré du compte qui ne l'avait pas vérifié. Règle le cas du numéro réservé par un tiers (ECART-53). | DEC-05 |
+| 🆕 RG-01-46 | **Changer de téléphone** (profil, module 02) demande la vérification du nouveau numéro ; l'ancien reste actif jusqu'à cette vérification. **Comptes existants** : à la connexion suivante, l'utilisateur est invité à vérifier son numéro (ou à en saisir un) ; tant qu'il ne l'a pas fait, il peut consulter mais ni publier ni envoyer de message. Les agents vérifient leur numéro juste après le changement de leur mot de passe temporaire. | DEC-05 |
+
+### 4.11 🆕 Purge des comptes non activés (cible DEC-06)
+
+| ID | Règle | Source |
+|---|---|---|
+| 🆕 RG-01-47 | Tâche quotidienne (03:15) : à **J+5** après l'inscription, un compte toujours non activé reçoit une relance avec un nouveau lien d'activation (E19) ; à **J+7**, il est **supprimé définitivement** (aucune donnée à conserver : ni annonce, ni message). Son email et son téléphone redeviennent libres. Les agents créés par une entreprise ne sont pas concernés : leur sort dépend du professionnel (module 07). | DEC-06 (SFG §17) |
+
 ## 5. Écrans et parcours
 
 | Écran | Route | Contenu | Validations / comportements |
@@ -99,7 +157,16 @@ Hors périmètre : connexion via un réseau social, double authentification, vé
 
 Parcours de garde (`app/_layout.tsx`) : un utilisateur connecté qui arrive sur un écran d'authentification est renvoyé vers les onglets ; si `mustChangePassword` vaut vrai, il est renvoyé vers le changement de mot de passe. Après une connexion demandée depuis une fiche, l'utilisateur revient sur la fiche (`src/lib/auth-redirect.ts`).
 
-Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement sur une réponse 401, puis la requête est rejouée ; les jetons sont stockés dans `expo-secure-store`.
+Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement sur une réponse 401, puis la requête est rejouée ; une seule demande de rafraîchissement part à la fois, les requêtes concurrentes l'attendent (RG-01-29). Les jetons sont stockés dans `expo-secure-store` sur Android, mais dans le **`localStorage` sur le web**, lisible par tout script de la page (ECART-54).
+
+### 5.1 Emails du module
+
+| Événement | Email | Renvoi |
+|---|---|---|
+| Inscription, renvoi du lien | E1 : lien d'activation valable 48 h | module 11 |
+| Mot de passe oublié | E2 : code à 8 chiffres valable 15 min | module 11 |
+| Création d'un agent | E3 : identifiants avec mot de passe temporaire | module 07, ECART-47 |
+| Changement ou réinitialisation du mot de passe, demande de suppression, réactivation, suspension, désactivation | **aucun** : l'utilisateur n'est pas averti, même si l'action vient d'un tiers qui a pris le contrôle de sa boîte mail | ECART-23 |
 
 ## 6. API
 
@@ -133,6 +200,8 @@ Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement su
  tout statut ── suppression par l'administrateur ──► INACTIF anonymisé (définitif)
 ```
 
+Pour chaque état, ce que deviennent la connexion et les annonces, et qui peut en sortir : voir le tableau de synthèse de la SFG §9.2. À retenir : la suspension et la désactivation par la modération coupent l'accès mais **laissent les annonces en ligne** (RG-01-30), alors que la suppression demandée par le titulaire les retire (RG-02-17).
+
 ## 9. Messages utilisateur principaux
 
 « Votre compte a été créé. Le code d'activation a été envoyé par email. » (alors que c'est un lien : ECART-48) · « Identifiant ou mot de passe incorrect. » · « Trop de tentatives de connexion. Réessayez dans 15 minutes. » · « Votre compte est temporairement suspendu. Contactez l'administrateur. » · « Votre compte est en cours de suppression. Vous pouvez le réactiver jusqu'au jj/mm/aaaa. » · « Erreur: Mot de passe trop faible. » · « Session expirée suite à un changement de mot de passe. Veuillez vous reconnecter. »
@@ -147,7 +216,27 @@ Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement su
 | CA-01-04 | Après un changement ou une réinitialisation du mot de passe, un ancien jeton de rafraîchissement est refusé. |
 | CA-01-05 | Un agent avec mot de passe temporaire reçoit 423 sur `GET /api/biens-immo/user` et 200 sur `GET /api/users/me`. |
 | CA-01-06 | Un compte supprimé depuis 29 jours est réactivable ; à 31 jours, il est anonymisé et la réactivation échoue. |
+| CA-01-07 | Un utilisateur connecté que la modération suspend reçoit 401 à sa requête suivante, son rafraîchissement renvoie 403, et l'app le ramène à l'écran de connexion. |
+| CA-01-08 | Après une déconnexion, le jeton de rafraîchissement utilisé est refusé (401), tant que le serveur n'a pas redémarré (ECART-21). |
+| CA-01-09 | La réactivation d'un professionnel rétablit son entreprise et les agents désactivés par sa suppression ; ses annonces et celles de ses agents restent hors ligne. |
+| CA-01-10 | Un renvoi du lien d'activation pour un agent, un compte actif ou un email inconnu renvoie 200 sans envoyer d'email. |
+| CA-01-11 | Une connexion par téléphone accepte indifféremment `+224 6xx xx xx xx`, `00224 6xxxxxxxx` et `+2246xxxxxxxx` pour le même compte. |
+| CA-01-12 | Une coupure réseau pendant un rafraîchissement ne déconnecte pas l'utilisateur. |
+| 🆕 CA-01-13 | Un modérateur dont le mot de passe est correct ne reçoit aucun jeton tant qu'il n'a pas saisi le code reçu par email ; un code de plus de 10 minutes est refusé, et un code de secours déjà utilisé aussi. |
+| 🆕 CA-01-14 | Après la suspension d'un particulier, aucune de ses annonces n'apparaît dans le catalogue, la recherche ni sur leur page de partage ; après la levée, elles réapparaissent dans leur état antérieur. |
+| 🆕 CA-01-15 | Un compte dont l'email est activé mais le téléphone non vérifié ne peut ni publier ni envoyer de message ; un compte B qui vérifie le numéro saisi par un compte A non vérifié le récupère. |
+| 🆕 CA-01-16 | Un compte inscrit il y a 8 jours et jamais activé n'existe plus ; son email peut servir à une nouvelle inscription. |
 
 ## 11. Écarts propres au module
 
-ECART-01 (règles de mot de passe), ECART-05 (limitation du rafraîchissement par IP), ECART-21 (révocations perdues au redémarrage), ECART-36 (bornes de mot de passe et messages hétérogènes), ECART-41 (consentement CGU non tracé), ECART-48 (libellé « code » au lieu de « lien »), ECART-51 (pas de rotation du jeton de rafraîchissement, réinitialisation possible sur un compte suspendu).
+ECART-01 (règles de mot de passe), ECART-05 (limitation du rafraîchissement par IP), ECART-21 (révocations perdues au redémarrage), ECART-23 (aucun email sur les décisions qui touchent le compte), ECART-36 (motif du rôle, téléphone facultatif, réinitialisation possible sur un compte suspendu), ECART-41 (consentement CGU non tracé), ECART-47 (mot de passe temporaire des agents), ECART-48 (libellé « code » au lieu de « lien »), ECART-51 (pas de rotation du jeton de rafraîchissement), ECART-52 (annonces d'un compte suspendu toujours visibles), ECART-53 (comptes non activés jamais purgés, téléphone non vérifié), ECART-54 (jetons dans le `localStorage` sur le web).
+
+## 12. Questions ouvertes
+
+> **Arbitrages du 17/10/2026** (registre : [SFG §17](00-SFG-vue-ensemble.md)) : Q1 → DEC-05 ; Q2 → DEC-06 ; Q3 → DEC-01.
+
+1. Le téléphone doit-il devenir obligatoire et vérifié (SMS ou WhatsApp) ? Voir le 99 §7, questions 6 et 12.
+2. Au bout de combien de jours un compte non activé est-il supprimé (proposé : 7 jours) ?
+3. La suspension doit-elle retirer les annonces du public (99 §7, question 11) ?
+4. Quels événements de compte doivent déclencher un email de sécurité (proposé : changement et réinitialisation du mot de passe, suspension, demande de suppression) ?
+5. Faut-il permettre à un particulier de devenir professionnel sans passer par l'administrateur ?
