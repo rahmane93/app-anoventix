@@ -1,0 +1,83 @@
+spring:
+  # Par défaut, PostgreSQL 17 jetable lancé par Testcontainers (Docker requis).
+  # Sans Docker, viser une base locale DÉDIÉE aux tests (elle est vidée à chaque
+  # démarrage de contexte) : TEST_DB_URL=jdbc:postgresql://localhost:5432/anoventix_test
+  datasource:
+    url: ${TEST_DB_URL:jdbc:tc:postgresql:17:///anoventix}
+    username: ${TEST_DB_USER:postgres}
+    password: ${TEST_DB_PASSWORD:admin}
+    hikari:
+      schema: public
+
+  # Le schéma des tests est celui de la prod : migrations Flyway depuis une base
+  # vide (FlywayTestConfig), puis validation par Hibernate. Une entité modifiée
+  # sans migration fait donc échouer les tests.
+  flyway:
+    enabled: true
+    clean-disabled: false
+    schemas: public
+    default-schema: public
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: public
+
+  mail:
+    host: localhost
+    port: 25
+    username: test
+    password: test
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+logging:
+  level:
+    org:
+      springframework:
+        security: WARN
+    com:
+      app: INFO
+
+management:
+  health:
+    mail:
+      enabled: false
+
+upload:
+  dir: /tmp/test-uploads/
+
+jwt:
+  secret: ${JWT_SECRET_KEY:Q2t7wH+VnEooCPS4aJJ1imo/k5KFnKw36OdlOyMpxa16Qn0ejmQ5PpsPPbHmCB+9pdmYpkOlXmOfNMlcBoBasg==}
+  expiration_ms: 86400000
+  refresh_expiration_ms: 604800000
+
+mail:
+  from: no-reply@test.com
+
+admin:
+  email: admin@test.com
+  username: admin
+  password: TestAdmin123!
+
+app:
+  base-url: http://localhost:8080
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:8081,http://localhost:4200
+  # Pas d'envoi planifié pendant les tests : FileEmailsTest déclenche l'envoi lui-même.
+  email:
+    file:
+      envoi-actif: false
+
+# Contrat OpenAPI stable d'une exécution à l'autre (ContratOpenApiTest).
+springdoc:
+  writer-with-order-by-keys: true

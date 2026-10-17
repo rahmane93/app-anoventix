@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnoventiX</title>
+    <!--
+      Mise en page commune à tous les emails (Utility.renderEmail) :
+      {{preheader}} aperçu affiché dans la liste de la boîte de réception,
+      {{content}} corps propre à chaque email, {{footerNote}} mention de bas de carte.
+      Charte : bleu #1A3C6E, doré #D4A017 (identique à l'application).
+    -->
+  </head>
+  <body style="margin:0;padding:0;background-color:#f2f2f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+    <!-- Aperçu (caché) : remplace la première ligne affichée par Gmail / Outlook -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f2f2;font-size:1px;line-height:1px;">{{preheader}}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f2f2f2;">
+      <tr>
+        <td align="center" style="padding:40px 16px 24px;">
+          <!-- Carte -->
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:10px;border-top:4px solid #d4a017;">
+            <!-- En-tête -->
+            <tr>
+              <td style="padding:24px 40px;border-bottom:1px solid #ede6dc;">
+                <a href="https://www.anoventix.com" target="_blank" style="text-decoration:none;"><span style="font-size:22px;font-weight:800;color:#1a3c6e;letter-spacing:-0.5px;">Anovent</span><span style="font-size:22px;font-weight:800;color:#d4a017;letter-spacing:-0.5px;">iX</span></a>
+              </td>
+            </tr>
+
+            <!-- Contenu -->
+            <tr>
+              <td style="padding:36px 40px 32px;">
+{{content}}
+              </td>
+            </tr>
+
+            <!-- Mention de bas de carte -->
+            <tr>
+              <td style="padding:18px 40px;border-top:1px solid #ede6dc;background-color:#faf8f5;border-radius:0 0 10px 10px;">
+                <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.6;">{{footerNote}}</p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Pied de page -->
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;">
+            <tr>
+              <td align="center" style="padding:20px 16px 8px;font-size:12px;color:#6b7280;line-height:1.8;">
+                <a href="https://www.anoventix.com" target="_blank" style="color:#1a3c6e;text-decoration:none;font-weight:600;">www.anoventix.com</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:contact@anoventix.com" style="color:#1a3c6e;text-decoration:none;">contact@anoventix.com</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://www.anoventix.com/cgu" target="_blank" style="color:#1a3c6e;text-decoration:none;">Conditions d'utilisation</a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 16px 16px;font-size:11px;color:#9ca3af;">
+                &copy; {{year}} AnoventiX &mdash; L'immobilier en Guin&eacute;e
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+-- =====================================================================
+--  V1 — Baseline Flyway
+-- =====================================================================
+--
+--  Ce fichier est un PLACEHOLDER pour Flyway.
+--
+--  Stratégie de transition :
+--   - En DEV (profile=dev) : ddl-auto=update — Hibernate gère le schéma.
+--                            Flyway pose le baseline (V1) puis applique V2+.
+--   - En PROD (profile=prod) : ddl-auto=validate — Hibernate valide.
+--                              Flyway DOIT contenir toutes les migrations
+--                              de schéma à partir de V2.
+--
+--  Pour un déploiement PROD à partir d'une base vierge :
+--   1. Lancer une fois en mode dev sur cette base pour laisser Hibernate
+--      créer toutes les tables, OU
+--   2. Remplacer ce fichier par un dump SQL généré depuis l'environnement
+--      de référence :  pg_dump --schema-only --no-owner --no-privileges \
+--                              -n <schema> <db> > V1__baseline.sql
+--
+--  Pour une base existante (cas actuel) :
+--   - Flyway est configuré avec baseline-on-migrate=true (cf. application.yml).
+--   - À la 1re exécution sur une base déjà alimentée par ddl-auto=update,
+--     Flyway crée la table flyway_schema_history et pose ce V1 comme
+--     "baseline" sans exécuter le SQL ci-dessous.
+--   - Toutes les migrations de schéma APRÈS cette baseline doivent être
+--     ajoutées dans des fichiers V2__xxx.sql, V3__xxx.sql, etc.
+-- =====================================================================
+
+SELECT 1;
