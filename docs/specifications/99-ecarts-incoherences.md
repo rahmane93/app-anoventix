@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.1 — 17/10/2026 : relecture croisée de tous les modules ; ajout des écarts 52 à 65 ; extension des écarts 06, 22, 26, 29 ; tous les écarts rattachés à un lot du plan de correction. (1.0 — 16/10/2026 : version initiale.) |
+| **Version** | 1.2 — 17/10/2026 : points prioritaires mis à jour avec les décisions ; matrice API ↔ écrans vérifiée et complétée (endpoints modifiés et à créer). 1.1 — 17/10/2026 : relecture croisée de tous les modules ; ajout des écarts 52 à 65 ; extension des écarts 06, 22, 26, 29 ; tous les écarts rattachés à un lot du plan de correction. (1.0 — 16/10/2026 : version initiale.) |
 | **Méthode** | Lecture croisée de quatre couches : base (migrations Flyway, entités), API (controllers, services, validations, sécurité), application (écrans, appels API, schémas Zod, types) et documentation existante. Chaque écart cite sa preuve sous la forme `fichier:ligne`. |
 | **Gravité** | 🔴 **Bloquant** : fonction cassée, risque légal ou risque d'indisponibilité. 🟠 **Majeur** : règle métier incohérente, erreur 500 possible, droits incohérents, information fausse affichée. 🟡 **Mineur** : dette, documentation, confort. |
 | **Type** | `INCOH` incohérence entre couches · `MANQ` élément manquant · `BUG` comportement erroné · `SÉCU` sécurité ou confidentialité · `DOC` documentation |
@@ -17,14 +17,28 @@
 | 🟠 Majeur | 39 | 07 à 36, 52, 53, 57, 58, 60 à 64 |
 | 🟡 Mineur | 20 | 37 à 51, 54 à 56, 59, 65 |
 
-**Les six points à traiter en premier**
+**Les points à traiter en premier**
 
-1. **Mots de passe** : l'app accepte des mots de passe que l'API refuse. Une partie des inscriptions et réinitialisations échoue sans explication claire (ECART-01).
-2. **Profil public d'un particulier** : la fonction est entièrement inopérante (ECART-02).
-3. **Annonce masquée par la modération** : le propriétaire ne peut ni la corriger ni la remettre en ligne, alors que l'app l'y invite (ECART-03).
-4. **Installation sur une base vierge** : très probablement impossible en l'état des migrations (ECART-04).
-5. **Limitation de débit sur le rafraîchissement de session** : avec des IP partagées par les opérateurs mobiles, risque de déconnexions en masse (ECART-05).
-6. **Politique de confidentialité absente**, alors que la plateforme collecte des pièces d'identité (ECART-06).
+Mis à jour après la relecture croisée des modules et les décisions du 17/10/2026 (SFG §17).
+
+*Bloquants, à corriger d'abord :*
+
+1. **Mots de passe** : l'app accepte des mots de passe que l'API refuse ; une partie des inscriptions et réinitialisations échoue sans explication claire (ECART-01). Correction de quelques heures.
+2. **Installation sur une base vierge** : très probablement impossible en l'état des migrations (ECART-04). À vérifier avant tout nouvel environnement.
+3. **Limitation de débit sur le rafraîchissement de session** : avec des IP partagées par les opérateurs mobiles, risque de déconnexions en masse (ECART-05).
+4. **Politique de confidentialité et mentions légales absentes**, alors que la plateforme collecte des pièces d'identité (ECART-06). Cadre retenu : droit guinéen + RGPD (DEC-19). Prérequis de la publication sur le Play Store (DEC-20) et du selfie (EVO-01).
+5. **Profil public d'un particulier** inopérant (ECART-02) : à remplacer par le profil minimal décidé (DEC-21).
+6. **Annonce masquée non corrigeable** (ECART-03) : à remplacer par la correction et le réexamen décidés (DEC-09).
+
+*Sécurité et confiance, juste après :*
+
+7. **La modération peut lire toutes les conversations privées**, sans trace (ECART-60) : limiter aux conversations signalées et journaliser (DEC-02).
+8. **Comptes du staff peu protégés** : mot de passe initial non contrôlé, aucune double authentification (ECART-64) : double authentification par email (DEC-03).
+9. **Annonces d'un compte suspendu toujours visibles et joignables** (ECART-52) : les masquer avec le compte (DEC-01).
+
+*Gain rapide :*
+
+10. **Recherche par référence impossible** (ECART-57), alors que la référence figure dans le message WhatsApp prérempli : reconnaître son format dans le champ de recherche, quelques heures de travail.
 
 ---
 
@@ -145,7 +159,8 @@ Légende : ✅ utilisé par l'app · ❌ non utilisé · ⚠️ utilisé de faç
 
 | Endpoint | Écran(s) | État |
 |---|---|---|
-| `POST /api/auth/signup` · `signin` · `refresh` · `logout` · `forgot-password` · `reset-password` · `change-password` · `reactivate` · `resend-activation` · `GET /activate` | `(auth)/*`, client HTTP | ✅ |
+| `POST /api/auth/signup` · `signin` · `refresh` · `logout` · `forgot-password` · `reset-password` · `change-password` · `reactivate` · `resend-activation` | `(auth)/*`, client HTTP | ✅ |
+| `GET /api/auth/activate` (JSON) | `(auth)/activate` (lien profond de l'app) | ✅ |
 | `GET /activate` (HTML) | Lien de l'email | ✅ |
 | `GET/PUT /api/users/me` · `PUT /me/photo` · `POST /me/piece-identite` · `GET /me/export` · `DELETE /me` | profil, edit-profile | ✅ |
 | `GET /api/users/{id}/piece-identite` | profil, admin fiche utilisateur | ✅ |
@@ -174,8 +189,46 @@ Légende : ✅ utilisé par l'app · ❌ non utilisé · ⚠️ utilisé de faç
 | `GET /api/admin/stats/avancees` · `/annonces/{id}/historique` | — | ❌ ECART-30 |
 | `GET /api/admin/annonces` · masquer · rejeter · publier · signalements (liste, traiter, supprimer) · utilisateurs (recherche, avertissements, rôles, suppression, masquage) · messages signalés · conversation · pièces en attente | admin | ✅ (propriétaire ⚠️ ECART-18) |
 | `GET /share/annonce/{segment}` | pages de partage (nginx) | ✅ |
+| `GET /uploads/public/**` | photos d'annonces, d'entreprises et de profils (listes, fiches, aperçus) ; `/uploads/private/**` refusé | ✅ |
 
-**Écrans sans fonction API opérationnelle** : `app/profil/[userId].tsx` (ECART-02).
+**Écrans sans fonction API opérationnelle** : `app/profil/[userId].tsx` (ECART-02 ; cible DEC-21).
+
+Vérification du 17/10/2026 : la liste des endpoints a été comparée aux contrôleurs de l'API (aucun endpoint absent de la matrice) et les endpoints marqués ❌ ont été recherchés dans le code de l'app (aucun appel trouvé).
+
+### 5.1 🆕 Endpoints existants dont le comportement change (décisions)
+
+| Endpoint | Changement | Décision |
+|---|---|---|
+| `POST /api/auth/signin` | Pour le staff : réponse 202 et code par email avant les jetons | DEC-03 |
+| `POST /api/auth/signup` | Téléphone obligatoire ; compte actif après email et téléphone vérifiés | DEC-05 |
+| `POST /api/users/me/piece-identite` | Selfie obligatoire avec la pièce | EVO-01 |
+| `GET /api/biens-immo/**` publics, `/share/annonce/*` | Téléphone de l'annonceur retiré pour un visiteur non connecté ; annonces d'un compte suspendu ou d'une entreprise désactivée exclues | DEC-14, DEC-01, DEC-12 |
+| `PUT /api/biens-immo/{id}` · `PUT /{id}/medias` | Autorisés sur une annonce MASQUEE pour son propriétaire et pour le PRO parent | DEC-09, DEC-27 |
+| `POST /api/biens-immo/{id}/signaler` | Masquage automatique au 3e signalement « arnaque / fraude » | DEC-11 |
+| `PUT /api/admin/annonces/{id}/publier` | Refusé (409) sur une annonce REJETEE | DEC-10 |
+| `GET /api/admin/conversations/{id}/messages` | Limité aux conversations contenant un message signalé, lecture journalisée | DEC-02 |
+| `DELETE /api/entreprises/{id}` | Masque les annonces des membres et bloque les agents | DEC-12 |
+| `POST /api/licences/admin/cles` · `POST /api/licences/activer` | Clé nominative avec paiement ; activation réservée à l'acheteur, acceptée mode inactif | DEC-17, DEC-28 |
+| `PUT /api/licences/admin/mode` | Date d'effet à J+30 | DEC-18 |
+| `GET /api/biens-immo/filter?userId` | Remplacé par le profil public (plus d'usage par l'écran de profil) | DEC-21 |
+
+### 5.2 🆕 Endpoints à créer (noms proposés)
+
+| Endpoint proposé | Écran | Décision |
+|---|---|---|
+| `POST /api/auth/verification-code` (validation du code du staff) · `POST /api/users/me/codes-secours` | connexion du staff, profil | DEC-03 |
+| `POST /api/users/me/telephone/code` · `POST /api/users/me/telephone/verifier` | inscription, profil | DEC-05 |
+| `POST /api/users/me/selfie` · `GET /api/users/{id}/selfie` | vérification d'identité, admin | EVO-01 |
+| `GET /api/users/{id}/profil-public` | `app/profil/[userId].tsx` | DEC-21 |
+| `POST /api/biens-immo/{id}/reexamen` · `GET /api/admin/reexamens` | mes annonces, admin « Réexamens » | DEC-09 |
+| `POST /api/entreprises/{id}/verification` · `GET /api/admin/entreprises/a-verifier` · `PUT /api/admin/entreprises/{id}/verification` | entreprise, admin « Entreprises à vérifier » | DEC-04 |
+| `POST/DELETE /api/users/me/appareils` (jetons de notification) | app Android | DEC-13 |
+| `GET/POST/PUT/DELETE /api/users/me/alertes` | explorer, « Mes alertes » | DEC-16 |
+| `GET /api/admin/quartiers-demandes` · `PUT /api/admin/quartiers-demandes/{id}` | assistant de publication, admin « Quartiers demandés » | DEC-22 |
+| `GET/PUT /api/admin/parametres` | admin « Paramètres » (seuil de masquage automatique) | DEC-11 |
+| `GET /api/admin/audit` | admin « Journal d'audit » | DEC-02, ECART-63 |
+| `GET /api/app/version-minimale` | démarrage de l'app | DEC-20 |
+| `GET /sitemap.xml` · `GET /robots.txt` · `GET /share/entreprise/{id}` | moteurs de recherche, partage d'une agence | DEC-24 |
 
 ---
 

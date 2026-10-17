@@ -136,7 +136,7 @@ Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P
 | 🆕 RG-01-43 | Le téléphone devient **obligatoire** à l'inscription (format international, normalisé). Il est vérifié par un **code à 6 chiffres** envoyé par SMS ou, au choix de l'utilisateur, par WhatsApp, valable **10 minutes**, 5 essais par code. Envois limités à 3 par 15 minutes et 10 par jour pour un même numéro. | DEC-05 (SFG §17) |
 | 🆕 RG-01-44 | Un compte devient ACTIF quand **l'email est activé et le téléphone vérifié**, dans n'importe quel ordre. Une connexion avec l'email avant la vérification du téléphone mène directement à la saisie du code. | DEC-05 |
 | 🆕 RG-01-45 | Seul un numéro **vérifié** est réservé et sert d'identifiant de connexion. Un numéro saisi mais non vérifié ne bloque personne : si un autre compte le vérifie, il est retiré du compte qui ne l'avait pas vérifié. Règle le cas du numéro réservé par un tiers (ECART-53). | DEC-05 |
-| 🆕 RG-01-46 | **Changer de téléphone** (profil, module 02) demande la vérification du nouveau numéro ; l'ancien reste actif jusqu'à cette vérification. **Comptes existants** : à la connexion suivante, l'utilisateur est invité à vérifier son numéro (ou à en saisir un) ; tant qu'il ne l'a pas fait, il peut consulter mais ni publier ni envoyer de message. Les agents vérifient leur numéro juste après le changement de leur mot de passe temporaire. | DEC-05 |
+| 🆕 RG-01-46 | **Changer de téléphone** (profil, module 02) demande la vérification du nouveau numéro ; l'ancien reste actif jusqu'à cette vérification. **Comptes existants** : à la connexion suivante, un bandeau invite l'utilisateur à vérifier son numéro (ou à en saisir un) ; la vérification n'est **pas exigée** et il garde tous ses droits (choix validé le 17/10/2026). Tant que son numéro n'est pas vérifié, il ne sert pas d'identifiant de connexion et peut être récupéré par un compte qui le vérifie (RG-01-45). Les agents vérifient leur numéro juste après le changement de leur mot de passe temporaire. | DEC-05 |
 
 ### 4.11 🆕 Purge des comptes non activés (cible DEC-06)
 
@@ -224,7 +224,7 @@ Pour chaque état, ce que deviennent la connexion et les annonces, et qui peut e
 | CA-01-12 | Une coupure réseau pendant un rafraîchissement ne déconnecte pas l'utilisateur. |
 | 🆕 CA-01-13 | Un modérateur dont le mot de passe est correct ne reçoit aucun jeton tant qu'il n'a pas saisi le code reçu par email ; un code de plus de 10 minutes est refusé, et un code de secours déjà utilisé aussi. |
 | 🆕 CA-01-14 | Après la suspension d'un particulier, aucune de ses annonces n'apparaît dans le catalogue, la recherche ni sur leur page de partage ; après la levée, elles réapparaissent dans leur état antérieur. |
-| 🆕 CA-01-15 | Un compte dont l'email est activé mais le téléphone non vérifié ne peut ni publier ni envoyer de message ; un compte B qui vérifie le numéro saisi par un compte A non vérifié le récupère. |
+| 🆕 CA-01-15 | Un nouveau compte dont l'email est activé mais le téléphone non vérifié reste en attente : sa connexion mène à la saisie du code. Un compte existant sans téléphone vérifié publie et écrit normalement, avec un bandeau d'invitation. Un compte B qui vérifie le numéro saisi par un compte A non vérifié le récupère. |
 | 🆕 CA-01-16 | Un compte inscrit il y a 8 jours et jamais activé n'existe plus ; son email peut servir à une nouvelle inscription. |
 
 ## 11. Écarts propres au module

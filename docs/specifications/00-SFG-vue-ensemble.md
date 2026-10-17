@@ -503,7 +503,7 @@ Fonctions décidées mais **pas encore développées**. Dans les modules, leurs 
 
 ## 17. Décisions arrêtées
 
-Arbitrages rendus par le responsable produit le **17/10/2026**. Ils fixent le comportement cible : les règles des modules décrivent encore le code actuel, et chaque décision sera reportée dans les règles concernées lors de sa spécification détaillée. Les écarts du document 99 restent ouverts tant que le code n'est pas corrigé. Règles cibles déjà rédigées dans les modules (marquées 🆕) : toutes, de DEC-01 à DEC-32.
+Arbitrages rendus par le responsable produit le **17/10/2026**. Ils fixent le comportement cible : les règles des modules décrivent encore le code actuel, et chaque décision sera reportée dans les règles concernées lors de sa spécification détaillée. Les écarts du document 99 restent ouverts tant que le code n'est pas corrigé. Règles cibles déjà rédigées dans les modules (marquées 🆕) : toutes, de DEC-01 à DEC-32. Les choix de rédaction de ces règles ont été relus et validés le 17/10/2026, avec une seule modification : DEC-05 n'impose aucune restriction aux comptes existants (module 01, RG-01-46).
 
 | ID | Décision | Écarts, questions | Modules | Conséquences à prévoir |
 |---|---|---|---|---|
@@ -511,7 +511,7 @@ Arbitrages rendus par le responsable produit le **17/10/2026**. Ils fixent le co
 | DEC-02 | La modération ne lit que les conversations qui contiennent un **message signalé**, et chaque lecture est **journalisée** ; la politique de confidentialité le mentionne. | ECART-60 | 06, 09 | Contrôle d'accès sur `GET /api/admin/conversations/{id}/messages` ; s'appuie sur le journal d'audit (ECART-63). |
 | DEC-03 | **Double authentification par code email** pour les administrateurs et modérateurs. | ECART-64 | 01, 10 | Dépend d'un envoi d'email fiable (file avec nouvel essai, module 11 §7 Q4). |
 | DEC-04 | **Vérification des entreprises** (justificatif RCCM contrôlé par la modération) ; badge « Agence vérifiée » réservé aux entreprises vérifiées ; RCCM figé après vérification. | ECART-61 | 07, 10 | Nouvelle file de modération, sur le modèle du dossier d'identité (module 02). |
-| DEC-05 | Téléphone **obligatoire et vérifié par code** (SMS ou WhatsApp) à l'inscription. | ECART-36, ECART-53 · 99 §7 Q6, Q12 | 01, 02 | Nouveau fournisseur d'envoi de SMS ou WhatsApp (§4.1) ; parcours pour les comptes existants à définir. |
+| DEC-05 | Téléphone **obligatoire et vérifié par code** (SMS ou WhatsApp) à l'inscription. | ECART-36, ECART-53 · 99 §7 Q6, Q12 | 01, 02 | Nouveau fournisseur d'envoi de SMS ou WhatsApp (§4.1) ; comptes existants simplement invités à vérifier leur numéro, sans restriction. |
 | DEC-06 | Un compte jamais activé est **supprimé après 7 jours**. | ECART-53 · 99 §7 Q12 | 01 | Nouvelle tâche planifiée (§12). |
 | DEC-07 | Selfie (EVO-01) : les comptes **déjà validés restent valides**, sans blocage rétroactif. | EVO-01 · §15 Q7 | 02 | Conforme à RG-02-33. |
 | DEC-08 | **Chaque agent** fait vérifier sa propre identité (pièce + selfie). | ECART-28 · 99 §7 Q5 | 02, 07 | Conforme à RG-02-10 et RG-02-23. |
