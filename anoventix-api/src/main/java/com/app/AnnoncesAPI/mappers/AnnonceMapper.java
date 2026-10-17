@@ -1,10 +1,12 @@
 package com.app.AnnoncesAPI.mappers;
 
+import org.mapstruct.InheritConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
+import com.app.AnnoncesAPI.dto.AdminAnnonceDTO;
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.BienImmoDTO;
 import com.app.AnnoncesAPI.dto.LocalisationDTO;
@@ -43,6 +45,22 @@ public interface AnnonceMapper {
     @Mapping(source = "owner.annoncesMasquees", target = "proprietaireMasque")
     @Mapping(target = "slug", expression = "java(com.app.AnnoncesAPI.Utilities.Utility.slugify(bienImmo.getTitre()))")
     BienImmoDTO bienImmoEntityToDTO(BienImmo bienImmo);
+
+    // Vue de la modération : DTO public + identité du propriétaire (ECART-18)
+    @InheritConfiguration(name = "bienImmoEntityToDTO")
+    @Mapping(source = "owner.id", target = "proprietaireId")
+    @Mapping(source = "owner.email", target = "proprietaireEmail")
+    @Mapping(target = "proprietaireNom", expression = "java(nomComplet(bienImmo.getOwner()))")
+    AdminAnnonceDTO toAdminDTO(BienImmo bienImmo);
+
+    default String nomComplet(com.app.AnnoncesAPI.entities.User owner) {
+        if (owner == null) {
+            return null;
+        }
+        String nom = ((owner.getPrenom() == null ? "" : owner.getPrenom()) + " "
+                + (owner.getNom() == null ? "" : owner.getNom())).trim();
+        return nom.isEmpty() ? null : nom;
+    }
 
     // Convertir une entité Localisation en DTO
     LocalisationDTO localisationToDTO(Localisation localisation);

@@ -19,12 +19,8 @@ public class EntrepriseDTO {
     private String description;
     private String numeroRCCM;
     private String adresse;
-    private String ville;
-    private String codePostal;
-    private String pays;
     private String telephone;
     private String email;
-    private String siteWeb;
     private String photoProfil;
     private Integer quotaAnnonces;
     private Integer quotaAgents;

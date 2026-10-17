@@ -24,7 +24,8 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     Optional<BienImmo> findByPublicId(String publicId);
 
-    boolean existsByReferenceAnnonceAndActifTrue(String referenceAnnonce);
+    /** Toutes les annonces, actives ou non : la base impose l'unicité sur toutes (ECART-08). */
+    boolean existsByReferenceAnnonce(String referenceAnnonce);
 
     // Requêtes publiques : elles filtrent toutes sur visiblePublic, seule
     // traduction SQL de la règle de visibilité (SFG §8, migration V15).
@@ -76,27 +77,27 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     Page<BienImmo> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     /**
-     * Full-Text Search PostgreSQL — retourne uniquement les IDs triés par pertinence.
-     * On ne retourne pas les entités complètes pour éviter le problème de mapping
-     * clazz_ avec l'héritage JOINED.
+     * Recherche plein texte PostgreSQL sur les annonces visibles — retourne les IDs triés
+     * par pertinence (pas les entités, à cause du mapping clazz_ de l'héritage JOINED).
+     * Le texte indexé couvre le titre, la description, le type de bien et la localisation
+     * (quartier, commune, préfecture, région) ; accents ignorés des deux côtés (ECART-57).
      */
     @Query(value = """
             SELECT a.id FROM annonce a
             INNER JOIN bien_immo b ON b.annonce_id = a.id
-            WHERE to_tsvector('french',
+            LEFT JOIN localisation l ON l.id = a.localisation_id
+            CROSS JOIN LATERAL (SELECT to_tsvector('french', unaccent(
                 coalesce(a.titre, '') || ' ' ||
                 coalesce(a.description, '') || ' ' ||
-                coalesce(a.type_bien, '')
-            ) @@ plainto_tsquery('french', :query)
-            AND a.visible_public
-            ORDER BY ts_rank(
-                to_tsvector('french',
-                    coalesce(a.titre, '') || ' ' ||
-                    coalesce(a.description, '') || ' ' ||
-                    coalesce(a.type_bien, '')
-                ),
-                plainto_tsquery('french', :query)
-            ) DESC
+                coalesce(a.type_bien, '') || ' ' ||
+                coalesce(l.quartier, '') || ' ' ||
+                coalesce(l.commune, '') || ' ' ||
+                coalesce(l.prefecture, '') || ' ' ||
+                coalesce(l.region, '')
+            )) AS doc) t
+            WHERE a.visible_public
+              AND t.doc @@ plainto_tsquery('french', unaccent(:query))
+            ORDER BY ts_rank(t.doc, plainto_tsquery('french', unaccent(:query))) DESC
             """, nativeQuery = true)
     List<Long> findIdsByFullTextSearch(@Param("query") String query);
 
@@ -164,6 +165,8 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.id = :ownerId AND b.statutModeration = :statut")
     long countByOwnerIdAndActifTrueAndStatutModeration(@Param("ownerId") UUID ownerId, @Param("statut") StatutAnnonce statut);
+
+    long countByOwnerIdAndStatutModeration(UUID ownerId, StatutAnnonce statut);
 
     @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.owner.id = :ownerId AND b.motifCloture = :motif AND b.dateCloture >= :from")
     long countCloturesByOwnerAndMotifSince(@Param("ownerId") UUID ownerId, @Param("motif") MotifCloture motif, @Param("from") LocalDateTime from);

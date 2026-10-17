@@ -310,6 +310,45 @@ public class BienImmoControllerTest {
     }
 
     @Test
+    void testRecherche_parQuartierSansAccentEtParReference() throws Exception {
+        Localisation kipe = new Localisation();
+        kipe.setId("test-loc-kipe");
+        kipe.setRegion("Conakry");
+        kipe.setPrefecture("Conakry");
+        kipe.setCommune("Ratoma");
+        kipe.setQuartier("Kipé");
+        localisationRepository.save(kipe);
+        String jwt = signupActivateAndGetJWT("recherche1", "recherche1@test.com", "Test123!");
+
+        String response = mockMvc.perform(multipart("/api/biens-immo")
+                .file(TestPhotos.photo())
+                .param("titre", "Villa avec piscine")
+                .param("description", "Grande villa familiale avec piscine et jardin, proche de la plage")
+                .param("prix", "900000000")
+                .param("localisationId", "test-loc-kipe")
+                .param("typeAnnonce", "VENTE")
+                .param("typeBien", "VILLA")
+                .param("documentsDisponibles", "Titre foncier")
+                .param("typeUsage", "HABITATION")
+                .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String reference = objectMapper.readTree(response).get("referenceAnnonce").asString();
+
+        // Le quartier n'est cité ni dans le titre ni dans la description, et sans accent.
+        mockMvc.perform(get("/api/biens-immo/filter").param("q", "kipe"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.data[0].titre").value("Villa avec piscine"));
+
+        // Nouveau format de référence, avec l'année : VE-aammjj-XXXX.
+        org.assertj.core.api.Assertions.assertThat(reference).matches("VE-\\d{6}-[A-Z2-9]{4}");
+        mockMvc.perform(get("/api/biens-immo/filter").param("reference", reference.toLowerCase()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1));
+    }
+
+    @Test
     void testFilterBiens_public() throws Exception {
         mockMvc.perform(get("/api/biens-immo/filter").param("typeAnnonce", "VENTE"))
                 .andExpect(status().isOk());

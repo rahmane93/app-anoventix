@@ -37,12 +37,11 @@ function Quota({ label, used, total }: { label: string; used: number; total: num
 }
 
 function EntrepriseRow({ item }: { item: AdminEntreprise }) {
-  const localisation = [item.ville, item.pays].filter(Boolean).join(', ');
   return (
     <ListRow
       leading={<Avatar name={item.nom} uri={item.photoProfil ? buildMediaUrl(item.photoProfil) : null} />}
       title={item.nom}
-      subtitle={[localisation, item.numeroRCCM ? `RCCM ${item.numeroRCCM}` : null].filter(Boolean).join(' · ') || item.annonceurProfessionnelUsername}
+      subtitle={[item.adresse, item.numeroRCCM ? `RCCM ${item.numeroRCCM}` : null].filter(Boolean).join(' · ') || item.annonceurProfessionnelEmail}
       meta={
         <>
           <Quota label="Annonces" used={item.quotaAnnonces - item.annoncesRestantes} total={item.quotaAnnonces} />

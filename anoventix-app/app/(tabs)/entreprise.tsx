@@ -82,7 +82,6 @@ export default function EntrepriseScreen() {
       telephone: entreprise.telephone ?? '',
       email: entreprise.email ?? '',
       adresse: entreprise.adresse ?? '',
-      pays: entreprise.pays ?? '',
       numeroRCCM: entreprise.numeroRCCM ?? '',
     });
     setEditOpen((v) => !v);
@@ -237,12 +236,11 @@ export default function EntrepriseScreen() {
         <AppText style={styles.entrepriseDescription}>{entreprise.description}</AppText>
       ) : null}
 
-      {(entreprise.telephone || entreprise.email || entreprise.adresse || entreprise.pays || entreprise.numeroRCCM) ? (
+      {(entreprise.telephone || entreprise.email || entreprise.adresse || entreprise.numeroRCCM) ? (
         <View style={styles.entrepriseInfoList}>
           <InfoRow icon="call-outline" label="Téléphone" value={entreprise.telephone} />
           <InfoRow icon="mail-outline" label="Email" value={entreprise.email} />
           <InfoRow icon="location-outline" label="Adresse" value={entreprise.adresse} />
-          <InfoRow icon="flag-outline" label="Pays" value={entreprise.pays} />
           <InfoRow icon="document-text-outline" label="N° RCCM" value={entreprise.numeroRCCM} />
         </View>
       ) : null}

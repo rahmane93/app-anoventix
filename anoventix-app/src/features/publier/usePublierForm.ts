@@ -25,6 +25,7 @@ import {
   parseOptionalNumber,
 } from "@/src/utils/format";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cleBrouillon } from "./brouillon";
 import * as ImagePicker from "expo-image-picker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -55,8 +56,6 @@ import { useShallow } from 'zustand/react/shallow';
 /** Résultat affiché sur l'écran de succès après une création. */
 export type PublicationReussie = { id: number; reference: string; statut: StatutAnnonce };
 
-// Brouillon de création (hors photos déjà choisies) : survit à la fermeture de l'app.
-const BROUILLON_KEY = "publier:brouillon";
 
 const EMPTY_COMPOSITION: Record<ChampComposition, string> = {
   nbPieces: "",
@@ -66,6 +65,9 @@ const EMPTY_COMPOSITION: Record<ChampComposition, string> = {
 
 export function usePublierForm() {
   const { isAuthenticated, user } = useAuthStore(useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user })));
+  // Brouillon de création (hors photos déjà choisies) : survit à la fermeture de
+  // l'app, rangé par compte (ECART-56). Pas de brouillon sans compte connecté.
+  const brouillonKey = user?.id ? cleBrouillon(user.id) : null;
   const { profile } = useUserStore(useShallow((s) => ({ profile: s.profile })));
   const {
     entreprise,
@@ -271,8 +273,8 @@ export function usePublierForm() {
     setPrefillError(null);
     clearFieldErrors();
     clearError();
-    AsyncStorage.removeItem(BROUILLON_KEY).catch(() => {});
-  }, [clearError]);
+    if (brouillonKey) AsyncStorage.removeItem(brouillonKey).catch(() => {});
+  }, [clearError, brouillonKey]);
 
   // Transition edit → create sans soumission : remet le formulaire à zéro
   useEffect(() => {
@@ -294,12 +296,12 @@ export function usePublierForm() {
   const aDuContenu = !!(typeAnnonce || region || titre || description || prix);
 
   useEffect(() => {
-    if (isEditMode || success || !aDuContenu) return;
+    if (isEditMode || success || !aDuContenu || !brouillonKey) return;
     const t = setTimeout(() => {
-      AsyncStorage.setItem(BROUILLON_KEY, brouillonJson).catch(() => {});
+      AsyncStorage.setItem(brouillonKey, brouillonJson).catch(() => {});
     }, 800);
     return () => clearTimeout(t);
-  }, [isEditMode, success, aDuContenu, brouillonJson]);
+  }, [isEditMode, success, aDuContenu, brouillonJson, brouillonKey]);
 
   const restaurerBrouillon = async (d: typeof brouillon) => {
     setTypeAnnonce(d.typeAnnonce);
@@ -327,9 +329,9 @@ export function usePublierForm() {
 
   const brouillonVerifieRef = useRef(false);
   useEffect(() => {
-    if (isEditMode || brouillonVerifieRef.current) return;
+    if (isEditMode || brouillonVerifieRef.current || !brouillonKey) return;
     brouillonVerifieRef.current = true;
-    AsyncStorage.getItem(BROUILLON_KEY)
+    AsyncStorage.getItem(brouillonKey)
       .then((json) => {
         if (!json) return;
         const d = JSON.parse(json) as typeof brouillon;
@@ -337,14 +339,14 @@ export function usePublierForm() {
           "Reprendre votre annonce ?",
           "Vous aviez commencé une annonce sans la publier. Les photos seront à ajouter de nouveau.",
           [
-            { text: "Recommencer", style: "destructive", onPress: () => { AsyncStorage.removeItem(BROUILLON_KEY).catch(() => {}); } },
+            { text: "Recommencer", style: "destructive", onPress: () => { if (brouillonKey) AsyncStorage.removeItem(brouillonKey).catch(() => {}); } },
             { text: "Reprendre", onPress: () => { restaurerBrouillon(d); } },
           ],
         );
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode]);
+  }, [isEditMode, brouillonKey]);
 
   const prefectures = useMemo(
     () =>
@@ -807,7 +809,7 @@ export function usePublierForm() {
         return;
       }
       // Création : écran de succès (voir l'annonce, partager, en publier une autre).
-      AsyncStorage.removeItem(BROUILLON_KEY).catch(() => {});
+      if (brouillonKey) AsyncStorage.removeItem(brouillonKey).catch(() => {});
       setUploadProgress(null);
       setSuccess({ id: annonce.id, reference: annonce.referenceAnnonce, statut: annonce.statutModeration });
     } catch (err) {

@@ -9,6 +9,7 @@ import type {
 } from '../types/entreprise.types';
 import { normalizeMediaUrls } from './annonce.api';
 import { API_BASE_URL, apiClient } from './client';
+import type { Operation } from './contrat';
 import { multipartPut } from './multipart';
 
 // ─── Entreprise API ───────────────────────────────────────────────────────────
@@ -70,10 +71,14 @@ export const getEntrepriseById = async (id: string): Promise<EntrepriseDTO> => {
 export const getEntrepriseProfil = async (
   id: string,
   page = 0,
-  limit = 20,
+  size = 20,
 ): Promise<EntrepriseProfilResponse> => {
+  // Paramètres typés par le contrat de l'API : un nom erroné (ex. « limit »,
+  // ECART-19) ne compile plus.
+  const params: Operation<'getEntrepriseProfil'>['parameters']['query'] = { page, size };
   const response = await apiClient.get<EntrepriseProfilResponse>(
-    `/api/entreprises/${id}/profil?page=${page}&limit=${limit}`,
+    `/api/entreprises/${id}/profil`,
+    { params },
   );
   return response.data;
 };

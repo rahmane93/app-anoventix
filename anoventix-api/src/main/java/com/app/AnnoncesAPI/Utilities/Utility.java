@@ -99,12 +99,17 @@ public class Utility {
     // Sans O, I, 0, 1 pour éviter la confusion visuelle
     private static final String REF_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+    /**
+     * Référence lisible d'une annonce : préfixe du type, date (aammjj) et 4 caractères,
+     * par exemple VE-260317-K7QM. L'année évite que les collisions s'accumulent d'une année
+     * sur l'autre (ECART-08). Les références antérieures (VE-0317-K7QM) restent valides.
+     */
     public static String generateUniqueReference(String prefix, int randomLength, Predicate<String> isUnique) {
         String ref;
         int maxAttempts = 10;
         int attempts = 0;
         Random rnd = new Random();
-        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd"));
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
         do {
             StringBuilder randomPart = new StringBuilder();
             for (int i = 0; i < randomLength; i++) {

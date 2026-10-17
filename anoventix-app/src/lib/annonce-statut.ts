@@ -25,8 +25,6 @@ export function getStatutChip(
       return { text: STATUT_ANNONCE_LABELS.MASQUEE, color: colors.warningText };
     case 'REJETEE':
       return { text: STATUT_ANNONCE_LABELS.REJETEE, color: colors.errorText };
-    case 'EN_ATTENTE':
-      return { text: STATUT_ANNONCE_LABELS.EN_ATTENTE, color: colors.textMuted };
   }
   return item.actif ? null : { text: 'Masquée', color: colors.warningText };
 }

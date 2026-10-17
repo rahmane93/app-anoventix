@@ -1,0 +1,24 @@
+{
+  "_description": "Cas limites de la règle de mot de passe (ECART-01). Lu par MotDePasseTest (API) et validation.test.ts (app) : les deux règles doivent donner le même verdict.",
+  "valides": [
+    "Maison-2026",
+    "Conakry_2026",
+    "Kaloum.2026a",
+    "Abcdefg1!",
+    "Mot de passe 1A",
+    "Élégant2026X",
+    "Aa1!aaaa",
+    "Aa1!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "invalides": [
+    "",
+    "Aa1!aaa",
+    "Aa1!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "MAISON@2026",
+    "maison@2026",
+    "Maison@deux",
+    "Maison2026",
+    "ABCDEFGH",
+    "12345678"
+  ]
+}

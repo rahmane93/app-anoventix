@@ -139,7 +139,7 @@ public class BienImmoServiceImpl implements BienImmoService {
         annonceExpirationService.prolonger(bienImmo);
 
         String reference = Utility.generateUniqueReference(
-                bienImmo.getTypeAnnonce().getPrefix(), 4, ref -> !bienImmoRepository.existsByReferenceAnnonceAndActifTrue(ref));
+                bienImmo.getTypeAnnonce().getPrefix(), 4, ref -> !bienImmoRepository.existsByReferenceAnnonce(ref));
         bienImmo.setReferenceAnnonce(reference);
 
         List<Media> medias = mediaService.createMediaEntities(request.getMedias(), bienImmo);

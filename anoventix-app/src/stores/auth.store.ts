@@ -3,6 +3,7 @@ import * as authApi from '../api/auth.api';
 import { getRefreshToken, getToken, removeRefreshToken, removeToken, saveRefreshToken, saveToken, setOnSessionExpired } from '../api/client';
 
 import * as userApi from '../api/user.api';
+import { effacerBrouillons } from '../features/publier/brouillon';
 import { useUserStore } from './user.store';
 import type {
     AuthUser,
@@ -140,7 +141,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     await authApi.logout(await getRefreshToken());
     await removeToken();
     await removeRefreshToken();
-useUserStore.getState().reset();
+    await effacerBrouillons();
+    useUserStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false, mustChangePassword: false });
   },
 

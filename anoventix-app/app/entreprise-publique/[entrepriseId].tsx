@@ -180,17 +180,11 @@ export default function EntreprisePubliqueScreen() {
                   <AppText style={s.infoText}>{entreprise.email}</AppText>
                 </View>
               ) : null}
-              {entreprise.siteWeb ? (
-                <View style={s.infoItem}>
-                  <Ionicons name="globe-outline" size={14} color={colors.textMuted} />
-                  <AppText style={s.infoText}>{entreprise.siteWeb}</AppText>
-                </View>
-              ) : null}
               {entreprise.adresse ? (
                 <View style={s.infoItem}>
                   <Ionicons name="location-outline" size={14} color={colors.textMuted} />
                   <AppText style={s.infoText}>
-                    {[entreprise.adresse, entreprise.ville, entreprise.pays].filter(Boolean).join(', ')}
+                    {entreprise.adresse}
                   </AppText>
                 </View>
               ) : null}

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.app.AnnoncesAPI.Utilities.MotDePasse;
 import com.app.AnnoncesAPI.Utilities.Identifiants;
 import com.app.AnnoncesAPI.Utilities.Utility;
 
@@ -292,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!isValidPassword(signUpRequest.getPassword())) {
-            throw new IllegalArgumentException("Erreur: Mot de passe trop faible.");
+            throw new IllegalArgumentException(MotDePasse.MESSAGE);
         }
 
         User user = new User();
@@ -316,7 +317,7 @@ public class AuthServiceImpl implements AuthService {
                 case "professionnel" -> roleRepository.findByName(TypeRole.PROFESSIONNEL)
                         .orElseThrow(() -> new IllegalStateException("Rôle PROFESSIONNEL introuvable en base."));
                 default -> throw new IllegalArgumentException(
-                        "Rôle invalide : '" + strRole + "'. Valeurs autorisées : 'particulier' ou 'professionnel'.");
+                        "Le rôle doit être PARTICULIER ou PROFESSIONNEL.");
             };
         }
         user.setRole(role);
@@ -411,6 +412,12 @@ public class AuthServiceImpl implements AuthService {
         }
         User user = userOpt.get();
 
+        // Même réponse que pour un email inconnu (anti-énumération).
+        if (reinitialisationInterdite(user)) {
+            logger.warn("Demande de reset password pour un compte {} ({}) — ignorée.", user.getStatut(), user.getId());
+            return;
+        }
+
         // P1.3 — Code 8 chiffres (100M combinaisons, TTL 15 min, usage unique).
         String resetToken = String.format("%08d", new SecureRandom().nextInt(100_000_000));
         user.setResetPasswordToken(resetToken);
@@ -452,8 +459,13 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Token invalide ou expiré.");
         }
 
+        // Code émis avant une suspension : il ne sert plus (même message, rien à révéler).
+        if (reinitialisationInterdite(user)) {
+            throw new IllegalArgumentException("Token invalide ou expiré.");
+        }
+
         if (!isValidPassword(newPassword)) {
-            throw new IllegalArgumentException("Erreur: Mot de passe trop faible.");
+            throw new IllegalArgumentException(MotDePasse.MESSAGE);
         }
 
         user.setPassword(encoder.encode(newPassword));
@@ -483,7 +495,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!isValidPassword(newPassword)) {
-            throw new IllegalArgumentException("Erreur: Mot de passe trop faible.");
+            throw new IllegalArgumentException(MotDePasse.MESSAGE);
         }
 
         user.setPassword(encoder.encode(newPassword));
@@ -558,13 +570,19 @@ public class AuthServiceImpl implements AuthService {
         return email != null && email.matches(EMAIL_REGEX);
     }
 
+    /**
+     * Pas de réinitialisation pour un compte suspendu ou désactivé par la modération
+     * (ECART-36) : il ne doit pas retrouver d'accès par ce biais. Le compte en délai de
+     * grâce après une demande de suppression la garde, utile pour se réactiver.
+     */
+    private static boolean reinitialisationInterdite(User user) {
+        return user.getStatut() == StatutUtilisateur.SUSPENDU
+                || (user.getStatut() == StatutUtilisateur.INACTIF && user.getDateSuppressionDemandee() == null);
+    }
+
     @Override
     public boolean isValidPassword(String password) {
-        return password != null && password.length() >= 8 
-                && password.matches(".*[a-z].*") 
-                && password.matches(".*[A-Z].*") 
-                && password.matches(".*[0-9].*") 
-                && password.matches(".*[!@#$%^&*()-+].*");
+        return MotDePasse.estValide(password);
     }
 
     private String buildPasswordResetEmailBody(String code) {

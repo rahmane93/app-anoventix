@@ -53,7 +53,7 @@ Hors périmètre (non implémenté) : vidéos, plans et visites virtuelles ; mis
 | RG-03-05 | Composition : remise à vide pour un bien non bâti (TERRAIN, DOMAINE). Pour un bien bâti, le nombre de chambres ne peut pas dépasser le nombre de pièces. | `BienImmoServiceImpl.java:540-555` |
 | RG-03-06 | Documents disponibles : l'app propose TITRE_FONCIER, DONATION, ACTE_DE_VENTE, CERTIFICAT_USAGE_FONCIER, AUTRE ; l'API stocke une chaîne libre sans contrôle (ECART-35). | `constants.ts`, `Annonce.java:114` |
 | RG-03-07 | À la création : statut PUBLIEE, `actif = true` (publication **immédiate, sans modération préalable**), validité de **180 jours**, identifiant public aléatoire de 12 caractères hexadécimaux. | `BienImmoServiceImpl.java:136-139`, `Annonce.java:156-163` |
-| RG-03-08 | Référence : `<préfixe>-<MMjj>-<4 caractères aléatoires>` (VE, LO ou BA). L'unicité est vérifiée parmi les annonces actives seulement, alors que la base l'impose sur toutes (ECART-08). | `BienImmoServiceImpl.java:141-143`, `Utility.java:102` |
+| RG-03-08 | Référence : `<préfixe>-<aammjj>-<4 caractères aléatoires>` (VE, LO ou BA), unique parmi toutes les annonces (ECART-08 corrigé). Les références antérieures, sans l'année (`<MMjj>`), restent valides. | `BienImmoServiceImpl.java`, `Utility.generateUniqueReference` |
 
 ### 4.2 Photos
 

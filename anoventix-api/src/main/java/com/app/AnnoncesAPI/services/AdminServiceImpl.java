@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.app.AnnoncesAPI.dto.AdminAnnonceDTO;
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.UserDTO;
 import com.app.AnnoncesAPI.entities.Annonce;
@@ -313,13 +314,13 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AnnonceDTO> getAllAnnonces(StatutAnnonce statut, Boolean cloturee, String q, Pageable pageable) {
+    public Page<AdminAnnonceDTO> getAllAnnonces(StatutAnnonce statut, Boolean cloturee, String q, Pageable pageable) {
         String cloture = cloturee == null ? "TOUTES" : cloturee ? "CLOTUREES" : "OUVERTES";
         String texte = q == null ? "" : q.trim();
         // statut ignoré quand tousStatuts=true : valeur quelconque non nulle.
         return bienImmoRepository.rechercherPourAdmin(
                         statut == null, statut != null ? statut : StatutAnnonce.PUBLIEE, cloture, texte, pageable)
-                .map(annonceMapper::bienImmoEntityToDTO);
+                .map(annonceMapper::toAdminDTO);
     }
 
     @Override

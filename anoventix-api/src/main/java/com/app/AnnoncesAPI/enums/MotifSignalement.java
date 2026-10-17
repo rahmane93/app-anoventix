@@ -2,7 +2,7 @@ package com.app.AnnoncesAPI.enums;
 
 public enum MotifSignalement {
 
-    CONTENU_INAPPROPRIE("Conenu inaproprié"),
+    CONTENU_INAPPROPRIE("Contenu inapproprié"),
     DEJA_VENDU_LOUE("Déjà vendu / loué"),
     ARNAQUE_FRAUDE("Arnaque / fraude"),
     ANNONCE_EN_DOUBLE("Annonce en double"),

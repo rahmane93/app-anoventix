@@ -193,7 +193,7 @@ public class AuthControllerSecuredTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(changePayload)))
             .andExpect(MockMvcResultMatchers.status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Erreur: Mot de passe trop faible."));
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value(com.app.AnnoncesAPI.Utilities.MotDePasse.MESSAGE));
     }
 
     /**

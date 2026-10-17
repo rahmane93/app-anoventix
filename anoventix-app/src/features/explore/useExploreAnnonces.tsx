@@ -1,4 +1,5 @@
 import { filterAnnonces, getPublicAnnonces } from '@/src/api/annonce.api';
+import { parametresSaisie } from '@/src/lib/recherche';
 import { useAnnonceStore } from '@/src/stores/annonce.store';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { useFavorisStore } from '@/src/stores/favoris.store';
@@ -118,7 +119,7 @@ export function useExploreAnnonces() {
   ) => {
     const replace = pageToLoad === 0;
     const requestId = ++requestIdRef.current;
-    return filterAnnonces({ ...f, q, page: pageToLoad, size: PAGE_SIZE })
+    return filterAnnonces({ ...f, ...parametresSaisie(q), page: pageToLoad, size: PAGE_SIZE })
       .then((page) => {
         if (requestId !== requestIdRef.current) return;
         const data = Array.isArray(page.data) ? page.data : [];
