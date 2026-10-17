@@ -75,7 +75,7 @@ export const TYPE_USAGES: TypeUsage[] = ['HABITATION', 'COMMERCIAL', 'AGRICOLE',
 export const DOCUMENTS: DocumentsDisponibles[] = ['TITRE_FONCIER', 'DONATION', 'ACTE_DE_VENTE', 'CERTIFICAT_USAGE_FONCIER', 'AUTRE'];
 
 // ─── Dépendances typeAnnonce → TypeBien autorisés ────────────────────────────────
-// Source : FEATURES.md §11
+// Source : docs/specifications/00-SFG-vue-ensemble.md §7.2
 export const ANNONCE_BIENS_MAP: Record<TypeAnnonce, TypeBien[]> = {
   VENTE:    ['APPARTEMENT', 'MAISON', 'VILLA', 'TERRAIN', 'DOMAINE', 'MAGASIN', 'BUREAU', 'ENTREPOT', 'AUTRE'],
   LOCATION: ['APPARTEMENT', 'MAISON', 'VILLA', 'TERRAIN', 'MAGASIN', 'BUREAU', 'ENTREPOT', 'AUTRE'],

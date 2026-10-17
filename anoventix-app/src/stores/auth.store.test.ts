@@ -3,6 +3,12 @@
 
 const mockUserReset = jest.fn();
 
+// Brouillons de publication effacés à la déconnexion (features/publier/brouillon).
+jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock est hissé avant les imports
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 jest.mock('../api/auth.api', () => ({
   signin: jest.fn(),
   reactivateAccount: jest.fn(),

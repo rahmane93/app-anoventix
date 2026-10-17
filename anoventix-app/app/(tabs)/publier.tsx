@@ -341,19 +341,9 @@ export default function PublierScreen() {
         <View style={[s.gateIcon, s.successIcon]}>
           <Ionicons name="checkmark-circle" size={48} color={colors.success} />
         </View>
-        {success.statut === 'EN_ATTENTE' ? (
-          <>
-            <AppText style={s.gateTitle}>Annonce envoyée</AppText>
-            <AppText style={s.gateSub}>
-              Elle sera visible par tous dès sa validation par notre équipe.
-            </AppText>
-          </>
-        ) : (
-          <>
-            <AppText style={s.gateTitle}>Annonce publiée</AppText>
-            <AppText style={s.gateSub}>Elle est en ligne et visible par tous.</AppText>
-          </>
-        )}
+        {/* Pas de modération préalable : une annonce créée est en ligne aussitôt (DEC-11). */}
+        <AppText style={s.gateTitle}>Annonce publiée</AppText>
+        <AppText style={s.gateSub}>Elle est en ligne et visible par tous.</AppText>
         <View style={s.successRef}>
           <AppText style={s.successRefText}>Référence : {success.reference}</AppText>
         </View>

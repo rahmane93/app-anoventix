@@ -4,6 +4,7 @@ import com.app.AnnoncesAPI.enums.TypeUsage;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +25,8 @@ public class BienImmoRequest extends AnnonceRequest {
    /** Surface totale en m². */
     private Double surfaceTotal;
 
-    /** Usage du terrain (AGRICOLE, RESIDENTIEL, COMMERCIAL…). */
+    /** Usage du bien (HABITATION, COMMERCIAL…) : obligatoire, colonne NOT NULL (ECART-09). */
+    @NotNull(message = "L'usage du bien est obligatoire")
     private TypeUsage typeUsage;
 
     /** Nombre de pièces (biens bâtis uniquement, ignoré pour TERRAIN / DOMAINE). */

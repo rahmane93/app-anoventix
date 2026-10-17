@@ -31,11 +31,11 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 public class BienImmo extends Annonce {
 
-      /** Surface totale en m². Obligatoire pour tous les types. */
+    /** Surface totale en m². Facultative. */
     @Column
     private Double surfaceTotal;
 
-    /** Usage du terrain (AGRICOLE, RESIDENTIEL, COMMERCIAL…). Renseigné si typeBien = TERRAIN. */
+    /** Usage du bien (HABITATION, COMMERCIAL…), obligatoire pour tous les types ; valeurs autorisées selon le type de bien (SFG §7.2). */
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private TypeUsage typeUsage;

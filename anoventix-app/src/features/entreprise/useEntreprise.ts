@@ -107,7 +107,6 @@ export function useEntreprise() {
       telephone: entreprise?.telephone ?? '',
       email: entreprise?.email ?? '',
       adresse: entreprise?.adresse ?? '',
-      pays: entreprise?.pays ?? '',
       numeroRCCM: entreprise?.numeroRCCM ?? '',
     },
   });
@@ -187,7 +186,6 @@ export function useEntreprise() {
       telephone: data.telephone || undefined,
       email: data.email || undefined,
       adresse: data.adresse || undefined,
-      pays: data.pays || undefined,
       numeroRCCM: data.numeroRCCM || undefined,
     };
     try {
@@ -203,7 +201,6 @@ export function useEntreprise() {
           telephone: created.telephone ?? '',
           email: created.email ?? '',
           adresse: created.adresse ?? '',
-          pays: created.pays ?? '',
           numeroRCCM: created.numeroRCCM ?? '',
         });
         flash('Entreprise créée avec succès !');

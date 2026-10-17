@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.AnnoncesAPI.dto.AdminAnnonceDTO;
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.UserDTO;
 import com.app.AnnoncesAPI.enums.ActionAudit;
@@ -74,7 +75,7 @@ public class AdminController {
     @Operation(summary = "Lister toutes les annonces",
                description = "Retourne toutes les annonces. Filtres optionnels : statut (PUBLIEE, MASQUEE, REJETEE, DESACTIVEE), "
                            + "cloturee (true / false) et q (titre, référence, email / nom du propriétaire). Réservé aux ADMIN/MOD.")
-    public ResponseEntity<PageResponse<AnnonceDTO>> getAllAnnonces(
+    public ResponseEntity<PageResponse<AdminAnnonceDTO>> getAllAnnonces(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "dateCreation") String sort,

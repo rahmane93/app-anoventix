@@ -108,6 +108,10 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
+        // Même forme que les téléphones des comptes (+224…) : sans quoi « 00224… » et
+        // « +224… » passeraient tous deux le contrôle d'unicité (ECART-44).
+        request.setTelephone(Identifiants.normaliserTelephone(request.getTelephone()));
+
         // Vérifier que le téléphone n'est pas déjà utilisé par une autre entreprise
         if (request.getTelephone() != null && entrepriseRepository.existsByTelephone(request.getTelephone())) {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé par une autre entreprise");
@@ -147,7 +151,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
-        // Vérifier le téléphone si modifié
+        // Vérifier le téléphone si modifié (normalisé comme à la création, ECART-44)
+        request.setTelephone(Identifiants.normaliserTelephone(request.getTelephone()));
         if (request.getTelephone() != null && !request.getTelephone().equals(entreprise.getTelephone())
                 && entrepriseRepository.existsByTelephoneAndIdNot(request.getTelephone(), id)) {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé par une autre entreprise");

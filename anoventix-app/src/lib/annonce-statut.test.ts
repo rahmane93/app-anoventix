@@ -12,7 +12,6 @@ describe('getStatutChip', () => {
 
   it('signale la modération avant l\'état actif', () => {
     expect(getStatutChip({ statutModeration: 'REJETEE', motifCloture: null, actif: false })?.text).toBe('Rejetée');
-    expect(getStatutChip({ statutModeration: 'EN_ATTENTE', motifCloture: null, actif: true })?.text).toBe('En attente');
   });
 
   it("signale une annonce publiée mais inactive", () => {

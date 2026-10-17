@@ -32,7 +32,6 @@ class EntrepriseRequestValidationTest {
                 "Agence immobilière à Conakry",
                 "RC-GN-2024-001",
                 "Kipé, Ratoma, Conakry",
-                null, // pays : facultatif
                 "+224622757044",
                 "contact@anoventix.com");
     }
@@ -45,13 +44,13 @@ class EntrepriseRequestValidationTest {
     }
 
     @Test
-    void accepteUneEntrepriseCompleteSansPays() {
+    void accepteUneEntrepriseComplete() {
         assertThat(champsEnErreur(complete())).isEmpty();
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "nom", "description", "numeroRCCM", "adresse", "telephone", "email" })
-    void exigeChaqueChampSaufLePays(String champ) {
+    void exigeChaqueChamp(String champ) {
         for (String valeur : new String[] { null, "", "   " }) {
             EntrepriseRequest request = complete();
             setter(request, champ).accept(valeur);

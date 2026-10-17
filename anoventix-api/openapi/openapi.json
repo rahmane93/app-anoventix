@@ -151,7 +151,7 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
+                  "$ref" : "#/components/schemas/PageResponseAdminAnnonceDTO"
                 }
               }
             },
@@ -4380,6 +4380,146 @@
         },
         "required" : [ "cle" ]
       },
+      "AdminAnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "actif" : {
+            "type" : "boolean"
+          },
+          "annonceur" : {
+            "$ref" : "#/components/schemas/AnnonceurDTO"
+          },
+          "complementAdresse" : {
+            "type" : "string"
+          },
+          "dateCloture" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateCreation" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateExpiration" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "documentsDisponibles" : {
+            "type" : "string"
+          },
+          "fraisHonoraire" : {
+            "type" : "number"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "latitude" : {
+            "type" : "number"
+          },
+          "localisation" : {
+            "$ref" : "#/components/schemas/LocalisationDTO"
+          },
+          "longitude" : {
+            "type" : "number"
+          },
+          "medias" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MediaDTO"
+            }
+          },
+          "motifCloture" : {
+            "type" : "string",
+            "enum" : [ "VENDU", "LOUE", "RETIRE", "EXPIREE" ]
+          },
+          "motifModeration" : {
+            "type" : "string"
+          },
+          "nbChambres" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nbFavoris" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nbPieces" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nbSallesBain" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "prix" : {
+            "type" : "number"
+          },
+          "prixRevise" : {
+            "type" : "number"
+          },
+          "proprietaireEmail" : {
+            "type" : "string"
+          },
+          "proprietaireId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "proprietaireMasque" : {
+            "type" : "boolean"
+          },
+          "proprietaireNom" : {
+            "type" : "string"
+          },
+          "publicId" : {
+            "type" : "string"
+          },
+          "referenceAnnonce" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "statutModeration" : {
+            "type" : "string",
+            "enum" : [ "PUBLIEE", "MASQUEE", "REJETEE", "DESACTIVEE" ]
+          },
+          "surfaceTotal" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "titre" : {
+            "type" : "string"
+          },
+          "typeAnnonce" : {
+            "type" : "string",
+            "enum" : [ "VENTE", "LOCATION", "BAIL" ]
+          },
+          "typeBien" : {
+            "type" : "string",
+            "enum" : [ "APPARTEMENT", "MAISON", "VILLA", "TERRAIN", "DOMAINE", "MAGASIN", "BUREAU", "ENTREPOT", "AUTRE" ]
+          },
+          "typeUsage" : {
+            "type" : "string",
+            "enum" : [ "AGRICOLE", "HABITATION", "COMMERCIAL", "LOISIR", "PROFESSIONNEL", "AUTRE" ]
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "vueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "AdminStatsAvanceesResponse" : {
         "type" : "object",
         "properties" : {
@@ -4868,7 +5008,7 @@
             "enum" : [ "AGRICOLE", "HABITATION", "COMMERCIAL", "LOISIR", "PROFESSIONNEL", "AUTRE" ]
           }
         },
-        "required" : [ "description", "documentsDisponibles", "localisationId", "prix", "titre", "typeAnnonce", "typeBien" ]
+        "required" : [ "description", "documentsDisponibles", "localisationId", "prix", "titre", "typeAnnonce", "typeBien", "typeUsage" ]
       },
       "ChangePasswordRequest" : {
         "type" : "object",
@@ -5006,9 +5146,6 @@
             "type" : "string",
             "format" : "uuid"
           },
-          "codePostal" : {
-            "type" : "string"
-          },
           "dateCreation" : {
             "type" : "string",
             "format" : "date-time"
@@ -5037,9 +5174,6 @@
           "numeroRCCM" : {
             "type" : "string"
           },
-          "pays" : {
-            "type" : "string"
-          },
           "photoProfil" : {
             "type" : "string"
           },
@@ -5057,13 +5191,7 @@
           "quotaAnnoncesPersonnalise" : {
             "type" : "boolean"
           },
-          "siteWeb" : {
-            "type" : "string"
-          },
           "telephone" : {
-            "type" : "string"
-          },
-          "ville" : {
             "type" : "string"
           }
         }
@@ -5119,11 +5247,6 @@
             "minLength" : 0
           },
           "numeroRCCM" : {
-            "type" : "string",
-            "maxLength" : 50,
-            "minLength" : 0
-          },
-          "pays" : {
             "type" : "string",
             "maxLength" : 50,
             "minLength" : 0
@@ -5626,6 +5749,29 @@
         },
         "required" : [ "actif" ]
       },
+      "PageResponseAdminAnnonceDTO" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminAnnonceDTO"
+            }
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "PageResponseAnnonceDTO" : {
         "type" : "object",
         "properties" : {
@@ -5985,8 +6131,7 @@
           },
           "newPassword" : {
             "type" : "string",
-            "maxLength" : 100,
-            "minLength" : 6
+            "minLength" : 1
           },
           "token" : {
             "type" : "string",
@@ -6119,7 +6264,7 @@
           "email" : {
             "type" : "string",
             "format" : "email",
-            "maxLength" : 50,
+            "maxLength" : 100,
             "minLength" : 0
           },
           "nom" : {
@@ -6129,8 +6274,7 @@
           },
           "password" : {
             "type" : "string",
-            "maxLength" : 40,
-            "minLength" : 8
+            "minLength" : 1
           },
           "prenom" : {
             "type" : "string",
@@ -6139,7 +6283,7 @@
           },
           "role" : {
             "type" : "string",
-            "pattern" : "PARTICULIER|PROFESSIONNEL"
+            "pattern" : "(?i)PARTICULIER|PROFESSIONNEL"
           },
           "telephone" : {
             "type" : "string",
@@ -6240,7 +6384,9 @@
         "type" : "object",
         "properties" : {
           "motif" : {
-            "type" : "string"
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
           },
           "statut" : {
             "type" : "string",
@@ -6341,7 +6487,9 @@
         "type" : "object",
         "properties" : {
           "motifRejet" : {
-            "type" : "string"
+            "type" : "string",
+            "maxLength" : 255,
+            "minLength" : 0
           },
           "statut" : {
             "type" : "string",

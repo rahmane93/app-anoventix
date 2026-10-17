@@ -33,7 +33,6 @@ export const ANNONCE_TONE: Record<StatutAnnonce, Tone> = {
   PUBLIEE: 'success',
   MASQUEE: 'warning',
   REJETEE: 'danger',
-  EN_ATTENTE: 'info',
   CLOTUREE: 'neutral',
   DESACTIVEE: 'neutral',
 };

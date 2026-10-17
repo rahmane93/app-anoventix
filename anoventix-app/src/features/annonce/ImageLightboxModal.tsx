@@ -3,7 +3,7 @@ import { colors, radius } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
     NativeScrollEvent,
     Platform,
@@ -45,7 +45,7 @@ export function ImageLightboxModal({
     requestAnimationFrame(() => {
       listRef.current?.scrollTo({ x: initialIndex * SCREEN_W, animated: false });
     });
-  }, [visible, initialIndex]);
+  }, [visible, initialIndex, SCREEN_W]);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
@@ -58,21 +58,18 @@ export function ImageLightboxModal({
     setActiveIndex(next);
   };
 
-  // Web : navigation au clavier (← → Échap).
-  const goToRef = useRef(goTo);
-  goToRef.current = goTo;
-  const indexRef = useRef(activeIndex);
-  indexRef.current = activeIndex;
+  // Web : navigation au clavier (← → Échap). Événement d'effet : lit l'index et
+  // les callbacks courants sans réabonner l'écouteur à chaque rendu.
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') goTo(activeIndex - 1);
+    else if (e.key === 'ArrowRight') goTo(activeIndex + 1);
+    else if (e.key === 'Escape') onClose();
+  });
   useEffect(() => {
     if (Platform.OS !== 'web' || !visible) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') goToRef.current(indexRef.current - 1);
-      else if (e.key === 'ArrowRight') goToRef.current(indexRef.current + 1);
-      else if (e.key === 'Escape') onClose();
-    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [visible, onClose]);
+  }, [visible]);
 
   return (
     <FullscreenOverlay visible={visible} onRequestClose={onClose}>

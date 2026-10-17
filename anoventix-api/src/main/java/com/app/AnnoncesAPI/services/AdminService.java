@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.app.AnnoncesAPI.dto.AdminAnnonceDTO;
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.UserDTO;
 import com.app.AnnoncesAPI.enums.StatutAnnonce;
@@ -61,7 +62,7 @@ public interface AdminService {
      * statut de modération, clôture (true = clôturées, false = non clôturées),
      * texte sur titre, référence ou propriétaire.
      */
-    Page<AnnonceDTO> getAllAnnonces(StatutAnnonce statut, Boolean cloturee, String q, Pageable pageable);
+    Page<AdminAnnonceDTO> getAllAnnonces(StatutAnnonce statut, Boolean cloturee, String q, Pageable pageable);
 
     /** Retourne l'historique de modération d'une annonce. */
     List<HistoriqueAnnonceResponse> getHistoriqueAnnonce(Long annonceId);

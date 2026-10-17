@@ -9,12 +9,8 @@ export interface EntrepriseProfilDTO {
   description: string | null;
   numeroRCCM: string | null;
   adresse: string | null;
-  ville: string | null;
-  codePostal: string | null;
-  pays: string | null;
   telephone: string | null;
   email: string | null;
-  siteWeb: string | null;
   photoProfil: string | null;
   quotaAnnonces: number;
   quotaAgents: number;
@@ -55,7 +51,6 @@ export interface EntrepriseDTO {
   telephone: string | null;
   email: string | null;
   adresse: string | null;
-  pays: string | null;
   numeroRCCM: string | null;
   photoUrl: string | null;
   proprietaireId: string;
@@ -71,7 +66,6 @@ export interface CreateEntrepriseRequest {
   telephone?: string;
   email?: string;
   adresse?: string;
-  pays?: string;
   numeroRCCM?: string;
 }
 

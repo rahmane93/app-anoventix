@@ -328,6 +328,51 @@ public class AuthControllerTest {
             .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
+    // ECART-36 : un compte suspendu ne reçoit pas de code, et un code émis avant la
+    // suspension ne sert plus ; la réponse reste celle d'un email inconnu.
+    @Test
+    public void testForgotPassword_compteSuspendu_aucunCodeUtilisable() throws Exception {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("email", "suspendu@example.com");
+        payload.put("nom", "User");
+        payload.put("prenom", "Suspendu");
+        payload.put("password", "Test123!");
+        payload.put("role", "particulier");
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(payload)))
+            .andExpect(MockMvcResultMatchers.status().isCreated());
+
+        // Code obtenu pendant que le compte était encore en règle…
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/forgot-password")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(Map.of("email", "suspendu@example.com"))))
+            .andExpect(MockMvcResultMatchers.status().isOk());
+        var user = userRepository.findByEmail("suspendu@example.com").orElseThrow();
+        String ancienCode = user.getResetPasswordToken();
+        // …puis suspension par la modération.
+        user.setStatut(com.app.AnnoncesAPI.enums.StatutUtilisateur.SUSPENDU);
+        user.setResetPasswordToken(null);
+        userRepository.save(user);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/forgot-password")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(Map.of("email", "suspendu@example.com"))))
+            .andExpect(MockMvcResultMatchers.status().isOk());
+        org.assertj.core.api.Assertions.assertThat(
+                userRepository.findByEmail("suspendu@example.com").orElseThrow().getResetPasswordToken()).isNull();
+
+        user = userRepository.findByEmail("suspendu@example.com").orElseThrow();
+        user.setResetPasswordToken(ancienCode);
+        user.setResetPasswordTokenExpiry(System.currentTimeMillis() + 60_000);
+        userRepository.save(user);
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/reset-password")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(Map.of(
+                "email", "suspendu@example.com", "token", ancienCode, "newPassword", "Nouveau123!"))))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
     // Vérifie que le reset réussit si l'email et le token sont valides
     @Test
     public void testResetPasswordSuccess() throws Exception {

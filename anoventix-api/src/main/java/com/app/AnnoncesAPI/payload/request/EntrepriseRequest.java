@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request pour créer ou modifier une entreprise.
- * Tous les champs sont obligatoires sauf le pays (même règle que l'app mobile).
+ * Tous les champs sont obligatoires (même règle que l'app mobile).
  */
 @Data
 @NoArgsConstructor
@@ -33,8 +33,6 @@ public class EntrepriseRequest {
     @Size(max = 100, message = "L'adresse ne peut pas dépasser 100 caractères")
     private String adresse;
     
-    @Size(max = 50, message = "Le pays ne peut pas dépasser 50 caractères")
-    private String pays;
     
     @NotBlank(message = "Le téléphone est obligatoire")
     @Pattern(regexp = "^(\\+|00)[1-9]\\d{6,14}$", message = "Le téléphone doit être au format international (+22462457411 ou 0022462457411)")

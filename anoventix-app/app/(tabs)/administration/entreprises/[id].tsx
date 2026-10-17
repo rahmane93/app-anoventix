@@ -243,11 +243,10 @@ export default function EntrepriseDetailScreen() {
 
       <Section title="Propriétaire">
         <ListRow
-          leading={<Avatar name={entreprise.annonceurProfessionnelUsername} />}
-          title={entreprise.annonceurProfessionnelUsername}
-          subtitle={entreprise.annonceurProfessionnelEmail}
+          leading={<Avatar name={entreprise.annonceurProfessionnelEmail} />}
+          title={entreprise.annonceurProfessionnelEmail}
           onPress={() => ouvrirFiche(entreprise.annonceurProfessionnelId)}
-          accessibilityLabel={`Propriétaire ${entreprise.annonceurProfessionnelUsername}, ouvrir sa fiche`}
+          accessibilityLabel={`Propriétaire ${entreprise.annonceurProfessionnelEmail}, ouvrir sa fiche`}
         />
       </Section>
 
@@ -256,10 +255,7 @@ export default function EntrepriseDetailScreen() {
           onPress={entreprise.telephone ? () => Linking.openURL(`tel:${entreprise.telephone}`) : undefined} />
         <FieldRow label="Email" value={entreprise.email}
           onPress={entreprise.email ? () => Linking.openURL(`mailto:${entreprise.email}`) : undefined} />
-        <FieldRow label="Site web" value={entreprise.siteWeb}
-          onPress={entreprise.siteWeb ? () => Linking.openURL(entreprise.siteWeb!) : undefined} />
         <FieldRow label="Adresse" value={entreprise.adresse} />
-        <FieldRow label="Ville" value={[entreprise.ville, entreprise.pays].filter(Boolean).join(', ')} />
         <FieldRow label="RCCM" value={entreprise.numeroRCCM} />
         <FieldRow label="Créée le" value={formatDateLongue(entreprise.dateCreation)}
           last={!entreprise.dateModification} />

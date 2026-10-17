@@ -109,10 +109,10 @@ function AnnonceItem({ item }: { item: AdminAnnonce }) {
           style={s.owner}
           onPress={() => router.push(`/(tabs)/administration/users/${item.proprietaireId}` as any)}
           accessibilityRole="link"
-          accessibilityLabel={`Propriétaire ${item.proprietaireUsername ?? ''}, ouvrir sa fiche`}
+          accessibilityLabel={`Propriétaire ${item.proprietaireNom ?? item.proprietaireEmail ?? ''}, ouvrir sa fiche`}
         >
           <Ionicons name="person-outline" size={13} color={colors.textMuted} />
-          <AppText style={s.ownerLink} numberOfLines={1}>{item.proprietaireUsername ?? item.proprietaireId}</AppText>
+          <AppText style={s.ownerLink} numberOfLines={1}>{item.proprietaireNom ?? item.proprietaireEmail ?? item.proprietaireId}</AppText>
         </TouchableOpacity>
         <Button
           title={item.actif ? 'Désactiver' : 'Activer'}

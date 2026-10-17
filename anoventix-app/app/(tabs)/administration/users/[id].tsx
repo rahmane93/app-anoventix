@@ -106,6 +106,7 @@ function RejetModal({
           onChangeText={setMotif}
           multiline
           numberOfLines={3}
+          maxLength={255}
         />
         <View style={s.modalActions}>
           <Button
@@ -154,6 +155,7 @@ function AvertissementModal({
           onChangeText={setMotif}
           multiline
           numberOfLines={3}
+          maxLength={200}
         />
         <View style={s.modalActions}>
           <Button

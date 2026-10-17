@@ -179,7 +179,9 @@ export interface AdminAnnonce {
   localisation: AdminAnnonceLocalisation | null;
   medias: AdminAnnonceMedia[];
   proprietaireId: string;
-  proprietaireUsername?: string | null;
+  proprietaireEmail?: string | null;
+  /** Prénom et nom du propriétaire. */
+  proprietaireNom?: string | null;
   entrepriseId: string | null;
   /** Annonces du propriétaire masquées par l'administrateur (masquage système). */
   proprietaireMasque?: boolean;
@@ -206,12 +208,8 @@ export interface AdminEntreprise {
   description: string | null;
   numeroRCCM: string | null;
   adresse: string | null;
-  ville: string | null;
-  codePostal: string | null;
-  pays: string | null;
   telephone: string | null;
   email: string | null;
-  siteWeb: string | null;
   photoProfil: string | null;
   quotaAnnonces: number;
   quotaAgents: number;
@@ -219,7 +217,6 @@ export interface AdminEntreprise {
   dateCreation: string;
   dateModification: string | null;
   annonceurProfessionnelId: string;
-  annonceurProfessionnelUsername: string;
   annonceurProfessionnelEmail: string;
   nombreAgents: number;
   annoncesRestantes: number;

@@ -62,8 +62,9 @@ public class User {
     private LocalDateTime createdAt;
 
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 100)
     @Email
+    @Column(length = 100)
     private String email;
 
     @NotBlank

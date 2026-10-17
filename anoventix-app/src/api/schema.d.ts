@@ -1964,6 +1964,64 @@ export interface components {
         ActivationLicenceRequest: {
             cle: string;
         };
+        AdminAnnonceDTO: {
+            actif?: boolean;
+            annonceur?: components["schemas"]["AnnonceurDTO"];
+            complementAdresse?: string;
+            /** Format: date-time */
+            dateCloture?: string;
+            /** Format: date-time */
+            dateCreation?: string;
+            /** Format: date-time */
+            dateExpiration?: string;
+            /** Format: date-time */
+            dateModification?: string;
+            description?: string;
+            documentsDisponibles?: string;
+            fraisHonoraire?: number;
+            /** Format: int64 */
+            id?: number;
+            latitude?: number;
+            localisation?: components["schemas"]["LocalisationDTO"];
+            longitude?: number;
+            medias?: components["schemas"]["MediaDTO"][];
+            /** @enum {string} */
+            motifCloture?: "VENDU" | "LOUE" | "RETIRE" | "EXPIREE";
+            motifModeration?: string;
+            /** Format: int32 */
+            nbChambres?: number;
+            /** Format: int32 */
+            nbFavoris?: number;
+            /** Format: int32 */
+            nbPieces?: number;
+            /** Format: int32 */
+            nbSallesBain?: number;
+            prix?: number;
+            prixRevise?: number;
+            proprietaireEmail?: string;
+            /** Format: uuid */
+            proprietaireId?: string;
+            proprietaireMasque?: boolean;
+            proprietaireNom?: string;
+            publicId?: string;
+            referenceAnnonce?: string;
+            slug?: string;
+            /** @enum {string} */
+            statutModeration?: "PUBLIEE" | "MASQUEE" | "REJETEE" | "DESACTIVEE";
+            /** Format: double */
+            surfaceTotal?: number;
+            titre?: string;
+            /** @enum {string} */
+            typeAnnonce?: "VENTE" | "LOCATION" | "BAIL";
+            /** @enum {string} */
+            typeBien?: "APPARTEMENT" | "MAISON" | "VILLA" | "TERRAIN" | "DOMAINE" | "MAGASIN" | "BUREAU" | "ENTREPOT" | "AUTRE";
+            /** @enum {string} */
+            typeUsage?: "AGRICOLE" | "HABITATION" | "COMMERCIAL" | "LOISIR" | "PROFESSIONNEL" | "AUTRE";
+            /** Format: uuid */
+            userId?: string;
+            /** Format: int64 */
+            vueCount?: number;
+        };
         AdminStatsAvanceesResponse: {
             annonceParRegion?: components["schemas"]["StatParCategorie"][];
             annonceParTypeAnnonce?: components["schemas"]["StatParCategorie"][];
@@ -2148,7 +2206,7 @@ export interface components {
             /** @enum {string} */
             typeBien: "APPARTEMENT" | "MAISON" | "VILLA" | "TERRAIN" | "DOMAINE" | "MAGASIN" | "BUREAU" | "ENTREPOT" | "AUTRE";
             /** @enum {string} */
-            typeUsage?: "AGRICOLE" | "HABITATION" | "COMMERCIAL" | "LOISIR" | "PROFESSIONNEL" | "AUTRE";
+            typeUsage: "AGRICOLE" | "HABITATION" | "COMMERCIAL" | "LOISIR" | "PROFESSIONNEL" | "AUTRE";
         };
         ChangePasswordRequest: {
             newPassword: string;
@@ -2206,7 +2264,6 @@ export interface components {
             annonceurProfessionnelEmail?: string;
             /** Format: uuid */
             annonceurProfessionnelId?: string;
-            codePostal?: string;
             /** Format: date-time */
             dateCreation?: string;
             /** Format: date-time */
@@ -2219,7 +2276,6 @@ export interface components {
             /** Format: int32 */
             nombreAgents?: number;
             numeroRCCM?: string;
-            pays?: string;
             photoProfil?: string;
             /** Format: int32 */
             quotaAgents?: number;
@@ -2227,9 +2283,7 @@ export interface components {
             /** Format: int32 */
             quotaAnnonces?: number;
             quotaAnnoncesPersonnalise?: boolean;
-            siteWeb?: string;
             telephone?: string;
-            ville?: string;
         };
         EntrepriseProfilDTO: {
             annonces?: components["schemas"]["AnnonceDTO"][];
@@ -2248,7 +2302,6 @@ export interface components {
             email: string;
             nom: string;
             numeroRCCM: string;
-            pays?: string;
             telephone: string;
         };
         EquipeStats: {
@@ -2439,6 +2492,15 @@ export interface components {
         };
         ModeLicenceRequest: {
             actif: boolean;
+        };
+        PageResponseAdminAnnonceDTO: {
+            /** Format: int32 */
+            currentPage?: number;
+            data?: components["schemas"]["AdminAnnonceDTO"][];
+            /** Format: int64 */
+            totalItems?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         PageResponseAnnonceDTO: {
             /** Format: int32 */
@@ -2784,7 +2846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PageResponseAnnonceDTO"];
+                    "*/*": components["schemas"]["PageResponseAdminAnnonceDTO"];
                 };
             };
         };

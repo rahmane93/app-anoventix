@@ -95,7 +95,7 @@ public class BienImmoController {
     @Operation(summary = "Mettre à jour une annonce immobilière")
     public ResponseEntity<AnnonceDTO> updateBienImmo(
             @PathVariable Long id,
-            @RequestBody BienImmoRequest request,
+            @Valid @RequestBody BienImmoRequest request,
             Authentication authentication) {
         AnnonceDTO updated = bienImmoService.updateAnnonce(id, request, authentication);
         return ResponseEntity.ok(updated);

@@ -13,7 +13,7 @@
 Marketplace immobilière pour la Guinée. Permet la publication, recherche, mise en relation et modération d'annonces de biens immobiliers (Vente / Location / Bail). Prix en GNF, UI 100 % en français.
 
 ### 1.2 Stack technique
-- **Frontend :** Expo SDK 54, React Native 0.81, Expo Router v6 (file-based), Zustand pour le state, React Hook Form + Zod pour la validation, Axios + Fetch pour l'API.
+- **Frontend :** Expo SDK 57, React Native 0.86, Expo Router (file-based), Zustand pour le state, React Hook Form + Zod pour la validation, Axios + Fetch pour l'API.
 - **Messagerie :** REST uniquement (pas de WebSocket). Mise à jour via pull/refresh + rechargement à l'ouverture d'écran.
 - **Persistance locale :** `expo-secure-store` (tokens), `AsyncStorage`.
 - **Police :** Nunito (400/500/600/700/800).
@@ -53,7 +53,7 @@ app/
 ```
 
 ### 1.5 Modules métier
-1. **Authentification** — signup, signin, activation par code, reset par email, change password obligatoire à la première connexion (`mustChangePassword`).
+1. **Authentification** — signup, signin, activation par lien reçu par email, reset par code reçu par email, change password obligatoire à la première connexion (`mustChangePassword`).
 2. **Catalogue & recherche** — explore, filtres (typeAnnonce, typeBien, prix, localisation), tri, recherche full-text, nearby (GPS), similaires.
 3. **Annonces** — CRUD, médias (upload 1 par 1 pour éviter 413 nginx), clôture (VENDU/LOUE/RETIRE), réactivation, toggle visibilité, historique modifications, stats vues.
 4. **Favoris** — particulier uniquement.
@@ -641,6 +641,5 @@ TC lié : TC-XXX-NN
 
 - **Upload média :** vérifier qu'aucune régression ne ré-introduit l'upload groupé multipart (cause de 413 nginx).
 - **Hydratation auth :** `isAuthenticated` ne doit jamais passer à `true` avant la résolution de `/me` (évite tout appel API ultérieur avec un token périmé).
-- **Code mort à nettoyer :** `src/lib/messagerieSocket.ts` n'est plus importé nulle part et la dépendance `@stomp/stompjs` reste dans `package.json` — vestige du retrait WebSocket, à supprimer.
 - **TLS :** si app affiche "Network Error" alors que Postman fonctionne, suspecter un mismatch de certificat côté serveur (cf. mémoire projet) avant de toucher l'app.
 - **Domaine API :** confirmer que toutes les requêtes pointent sur `anoventix.com` (et plus sur `api.anoventix.com` — migration effectuée).

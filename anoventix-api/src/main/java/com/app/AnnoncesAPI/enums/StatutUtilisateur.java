@@ -3,10 +3,12 @@ package com.app.AnnoncesAPI.enums;
 /**
  * Énumération des statuts possibles pour un utilisateur
  * 
- * ACTIF : Utilisateur actif et peut se connecter
- * DESACTIVE : Utilisateur désactivé (par admin ou annonceur pro)
- * SUSPENDU : Utilisateur temporairement suspendu
- * EN_ATTENTE_ACTIVATION : Compte créé mais email non vérifié
+ * EN_ATTENTE_ACTIVATION : compte créé, lien d'activation non utilisé (ou agent dont
+ *                         le mot de passe temporaire n'a pas encore été changé)
+ * ACTIF    : peut se connecter
+ * INACTIF  : suppression demandée par le titulaire (délai de grâce, puis anonymisation),
+ *            désactivation par la modération, ou agent retiré par son entreprise
+ * SUSPENDU : suspendu par la modération (ou au 3e avertissement)
  */
 public enum StatutUtilisateur {
     EN_ATTENTE_ACTIVATION,       // Email non vérifié

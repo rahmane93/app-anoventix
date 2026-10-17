@@ -30,7 +30,7 @@ export type TypeBien =
  * Statut de modération côté backend (spec API).
  * `CLOTUREE` est dérivé côté client quand `motifCloture != null`.
  */
-export type StatutAnnonce = 'EN_ATTENTE' | 'PUBLIEE' | 'MASQUEE' | 'REJETEE' | 'CLOTUREE' | 'DESACTIVEE';
+export type StatutAnnonce = 'PUBLIEE' | 'MASQUEE' | 'REJETEE' | 'CLOTUREE' | 'DESACTIVEE';
 
 /** EXPIREE : clôture automatique en fin de validité (jamais choisie par l'utilisateur). */
 export type MotifCloture = 'VENDU' | 'LOUE' | 'RETIRE' | 'EXPIREE';
@@ -233,7 +233,6 @@ export const TYPE_BIEN_LABELS: Record<TypeBien, string> = {
 };
 
 export const STATUT_ANNONCE_LABELS: Record<StatutAnnonce, string> = {
-  EN_ATTENTE: 'En attente',
   PUBLIEE: 'Publiée',
   MASQUEE: 'Masquée',
   REJETEE: 'Rejetée',

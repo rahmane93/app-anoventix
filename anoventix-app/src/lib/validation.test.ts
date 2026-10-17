@@ -3,6 +3,8 @@ import {
   changePasswordSchema,
   entrepriseSchema,
   forgotPasswordSchema,
+  PASSWORD_CHECKS,
+  passwordRules,
   resetPasswordSchema,
   signinSchema,
   signupSchema,
@@ -18,6 +20,21 @@ function errorsByPath(error: { issues: { path: PropertyKey[]; message: string }[
 }
 
 const STRONG_PWD = 'Abcdef1!';
+
+// Cas limites partagés avec l'API (MotDePasseTest) : même verdict des deux côtés (ECART-01).
+const CAS_MOTS_DE_PASSE: { valides: string[]; invalides: string[] } = require('../../../anoventix-api/src/test/resources/cas-mots-de-passe.json');
+
+describe('passwordRules (règle commune avec l’API)', () => {
+  it.each(CAS_MOTS_DE_PASSE.valides)('accepte %p', (motDePasse) => {
+    expect(passwordRules.safeParse(motDePasse).success).toBe(true);
+    expect(PASSWORD_CHECKS.every((c) => c.test(motDePasse))).toBe(true);
+  });
+
+  it.each(CAS_MOTS_DE_PASSE.invalides)('refuse %p', (motDePasse) => {
+    expect(passwordRules.safeParse(motDePasse).success).toBe(false);
+    expect(PASSWORD_CHECKS.every((c) => c.test(motDePasse))).toBe(false);
+  });
+});
 
 describe('signupSchema', () => {
   const valid = {
@@ -192,9 +209,8 @@ describe('entrepriseSchema', () => {
     numeroRCCM: 'RC-GN-2024-001',
   };
 
-  it('accepte une entreprise complète, pays facultatif', () => {
+  it('accepte une entreprise complète', () => {
     expect(entrepriseSchema.safeParse(valid).success).toBe(true);
-    expect(entrepriseSchema.safeParse({ ...valid, pays: '' }).success).toBe(true);
   });
 
   it.each(['nom', 'description', 'telephone', 'email', 'adresse', 'numeroRCCM'] as const)(

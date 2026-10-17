@@ -40,7 +40,7 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         authService.registerUser(signUpRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new MessageResponse("Votre compte a été créé. Le code d'activation a été envoyé par email."));
+                .body(new MessageResponse("Votre compte a été créé. Un lien d'activation vous a été envoyé par email."));
     }
 
     /**

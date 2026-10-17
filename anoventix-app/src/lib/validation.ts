@@ -11,17 +11,28 @@ const PHONE_INVALID_MSG = 'Numéro de téléphone invalide (ex: +224622757044 ou
 // Règles uniques (inscription, réinitialisation, changement) — aussi affichées
 // en checklist sous le champ. « Spécial » = tout caractère non alphanumérique
 // (- _ . ! @ …), et pas seulement une liste restreinte.
+// Identique à la règle de l'API (MotDePasse.java) : les deux sont testées sur les
+// mêmes cas limites (anoventix-api/src/test/resources/cas-mots-de-passe.json).
+
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 64;
 
 export const PASSWORD_CHECKS: { label: string; test: (v: string) => boolean }[] = [
-  { label: '8 caractères minimum', test: (v) => v.length >= 8 },
+  {
+    label: `Entre ${PASSWORD_MIN} et ${PASSWORD_MAX} caractères`,
+    test: (v) => v.length >= PASSWORD_MIN && v.length <= PASSWORD_MAX,
+  },
+  { label: 'Une minuscule', test: (v) => /[a-z]/.test(v) },
   { label: 'Une majuscule', test: (v) => /[A-Z]/.test(v) },
   { label: 'Un chiffre', test: (v) => /[0-9]/.test(v) },
   { label: 'Un caractère spécial (- _ ! @ …)', test: (v) => /[^A-Za-z0-9]/.test(v) },
 ];
 
-const passwordRules = z
+export const passwordRules = z
   .string()
-  .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+  .min(PASSWORD_MIN, `Le mot de passe doit contenir au moins ${PASSWORD_MIN} caractères`)
+  .max(PASSWORD_MAX, `Le mot de passe ne peut pas dépasser ${PASSWORD_MAX} caractères`)
+  .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
   .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
   .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre')
   .regex(/[^A-Za-z0-9]/, 'Le mot de passe doit contenir au moins un caractère spécial');
@@ -41,6 +52,7 @@ export const signupSchema = z
     email: z
       .string()
       .email('Adresse email invalide')
+      .max(100, "L'email ne peut pas dépasser 100 caractères")
       .toLowerCase(),
     // Optionnel : permet ensuite de se connecter par téléphone.
     // Le champ est pré-rempli « +224 » : l'indicatif seul vaut champ vide.
@@ -126,8 +138,7 @@ export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 // ─── Entreprise Schema ──────────────────────────────────────────
 
-// Tous les champs affichés dans le formulaire sont obligatoires (marqués « * ») ;
-// seul « pays », absent du formulaire, reste facultatif.
+// Tous les champs du formulaire sont obligatoires (marqués « * »).
 export const entrepriseSchema = z.object({
   nom: z.string().trim().min(1, "Le nom de l'entreprise est obligatoire").max(100, 'Le nom ne peut pas dépasser 100 caractères'),
   description: z.string().trim().min(1, 'La description est obligatoire').max(200, 'La description ne peut pas dépasser 200 caractères'),
@@ -142,7 +153,6 @@ export const entrepriseSchema = z.object({
     ),
   email: z.string().trim().min(1, "L'email est obligatoire").email("Format d'email invalide").max(100, "L'email ne peut pas dépasser 100 caractères"),
   adresse: z.string().trim().min(1, "L'adresse est obligatoire").max(100, "L'adresse ne peut pas dépasser 100 caractères"),
-  pays: z.string().max(50, 'Le pays ne peut pas dépasser 50 caractères').optional().or(z.literal('')),
   numeroRCCM: z.string().trim().min(1, 'Le numéro RCCM est obligatoire').max(50, 'Le numéro RCCM ne peut pas dépasser 50 caractères'),
 });
 

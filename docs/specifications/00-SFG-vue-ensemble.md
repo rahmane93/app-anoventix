@@ -266,7 +266,7 @@ ParametrePlateforme (clé / valeur : mode licence, tarifs, quotas globaux)
 | `User` | `account` | Compte | Email unique (≤ 50), téléphone unique au format international, un rôle, statut, pièce d'identité (🆕 selfie, dates et auteur de la décision : EVO-01), indicateurs RGPD et masquage |
 | `Role` | `roles` | Référentiel des 5 rôles | Créé au démarrage (`DataLoader`) |
 | `Entreprise` | `entreprises` | Agence | Nom, description, RCCM unique, téléphone unique, email, photo, quotas propres facultatifs, `active`, 🆕 statut de vérification et justificatif RCCM (DEC-04) |
-| `Annonce` / `BienImmo` | `annonce` / `bien_immo` (héritage JOINED) | Annonce immobilière | `publicId` (12 caractères hexadécimaux), référence `VE/LO/BA-MMjj-XXXX`, prix, type d'annonce, type de bien, usage, composition, localisation, GPS, statut de modération, `actif`, clôture, expiration, vues |
+| `Annonce` / `BienImmo` | `annonce` / `bien_immo` (héritage JOINED) | Annonce immobilière | `publicId` (12 caractères hexadécimaux), référence `VE/LO/BA-aammjj-XXXX`, prix, type d'annonce, type de bien, usage, composition, localisation, GPS, statut de modération, `actif`, clôture, expiration, vues |
 | `Media` | `medias` | Photo d'annonce | URL, type MIME, ordre (non exploité) |
 | `HistoriqueAnnonce` | `historique_annonce` | Traçabilité | Un enregistrement par champ modifié (titre, prix, description, statut, motif) |
 | `Signalement` | `signalements` | Signalement d'annonce | Un seul par couple (annonce, signaleur), retrait possible, statut, modérateur et note interne |
@@ -474,7 +474,7 @@ Les documents parlent de « RGPD », mais le service vise la Guinée. Le cadre a
 | Quartier | Niveau le plus fin du référentiel de localisation (Région > Préfecture > Commune > Quartier) ; obligatoire pour chaque annonce |
 | Quota | Nombre maximal d'agents ou d'annonces actives d'une entreprise |
 | RCCM | Registre du Commerce et du Crédit Mobilier (identifiant légal d'une entreprise) |
-| Référence d'annonce | Code lisible `VE/LO/BA-MMjj-XXXX` affiché à l'annonceur et utilisable dans la recherche de l'administration |
+| Référence d'annonce | Code lisible `VE/LO/BA-aammjj-XXXX` (`VE/LO/BA-MMjj-XXXX` pour les annonces créées avant le 17/10/2026) affiché à l'annonceur, reconnu par le champ de recherche de l'accueil et par celle de l'administration |
 | Rejet | Retrait par la modération pour infraction, avec un motif communiqué. Réversible par la modération uniquement |
 | Suppression (annonce) | Désactivation par le propriétaire : statut DESACTIVEE, invisible pour lui, restaurable uniquement par la modération |
 | Zone active | Commune qui compte le plus d'annonces visibles, proposée comme raccourci de recherche sur l'accueil (module 04, RG-04-07) |

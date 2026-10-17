@@ -71,8 +71,9 @@ public class ProStatsServiceImpl implements ProStatsService {
 
     private PortefeuilleStats buildPortefeuille(UUID userId, LocalDateTime startOfMonth) {
         long publiees  = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.PUBLIEE);
-        long masquees  = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.MASQUEE);
-        long rejetees  = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.REJETEE);
+        // Masquer et rejeter mettent actif = false : compter sans ce filtre (ECART-07).
+        long masquees  = bienImmoRepository.countByOwnerIdAndStatutModeration(userId, StatutAnnonce.MASQUEE);
+        long rejetees  = bienImmoRepository.countByOwnerIdAndStatutModeration(userId, StatutAnnonce.REJETEE);
 
         long vendu  = bienImmoRepository.countCloturesByOwnerAndMotifSince(userId, MotifCloture.VENDU,  startOfMonth);
         long loue   = bienImmoRepository.countCloturesByOwnerAndMotifSince(userId, MotifCloture.LOUE,   startOfMonth);
@@ -195,9 +196,8 @@ public class ProStatsServiceImpl implements ProStatsService {
     }
 
     private ConformiteStats buildConformite(User user, UUID userId) {
-        long annoncesActives = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.PUBLIEE)
-                + bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.MASQUEE)
-                + bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.REJETEE);
+        // Annonces en ligne (une annonce masquée ou rejetée n'est jamais actif = true).
+        long annoncesActives = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.PUBLIEE);
 
         int quotaMax = 0;
         int annoncesRestantes = 0;

@@ -7,9 +7,12 @@
  * compilation au lieu d'un écran. Les champs y sont facultatifs tant que l'API ne
  * les déclare pas obligatoires (@Schema(requiredMode = REQUIRED)).
  */
-import type { components } from './schema';
+import type { components, operations } from './schema';
 
 export type Schema<Nom extends keyof components['schemas']> = components['schemas'][Nom];
+
+/** Opération de l'API (paramètres, corps, réponses), par son operationId. */
+export type Operation<Id extends keyof operations> = operations[Id];
 
 /** Format unique des erreurs de l'API. */
 export type ErreurApi = Schema<'ErreurApi'>;
