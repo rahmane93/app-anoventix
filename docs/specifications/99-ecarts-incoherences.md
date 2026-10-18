@@ -17,6 +17,16 @@
 | 🟠 Majeur | 39 | 07 à 36, 52, 53, 57, 58, 60 à 64 |
 | 🟡 Mineur | 20 | 37 à 51, 54 à 56, 59, 65 |
 
+### Avancement des corrections
+
+Mis à jour le 18/10/2026. Les écarts non listés restent ouverts. Détail du comportement corrigé : modules concernés.
+
+| Lot | Écarts corrigés | Décisions développées |
+|---|---|---|
+| Phase 0 (socle) | 04 (installation sur base vierge), 40 (pagination), 63 (journal d'audit, hors administration des entreprises, licences, quotas et localisations) | — (file d'envoi des emails, DEC-31) |
+| Phase 1 (corrections) | 01, 07, 08, 09, 10, 11, 12, 18, 19, 20, 36, 37, 38, 39, 44, 48, 56, 57 | — |
+| Phase 2 (sécurité et conformité) | 05, 15, 21, 31, 32, 41, 47, 51, 54 (CSP en mode rapport), 60, 64 ; 06 (page de politique de confidentialité rédigée, à faire valider par un juriste) | DEC-02, DEC-03, DEC-14, DEC-26 (sauf pièces d'identité, selfies et comptes inactifs) |
+
 **Les points à traiter en premier**
 
 Mis à jour après la relecture croisée des modules et les décisions du 17/10/2026 (SFG §17).

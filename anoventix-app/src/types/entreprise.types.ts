@@ -2,26 +2,20 @@
 
 import type { BienImmo } from './annonce.types';
 
-/** Réponse du endpoint public GET /api/entreprises/{id}/profil */
+/**
+ * Réponse du endpoint public GET /api/entreprises/{id}/profil : ce que le public voit d'une agence.
+ * Le téléphone et l'email ne sont fournis qu'à un utilisateur connecté (DEC-14) ; ni RCCM, ni quotas,
+ * ni email du propriétaire (ECART-31).
+ */
 export interface EntrepriseProfilDTO {
   id: string;
   nom: string;
   description: string | null;
-  numeroRCCM: string | null;
   adresse: string | null;
   telephone: string | null;
   email: string | null;
   photoProfil: string | null;
-  quotaAnnonces: number;
-  quotaAgents: number;
-  active: boolean;
-  dateCreation: string;
-  dateModification: string | null;
-  annonceurProfessionnelId: string;
-  annonceurProfessionnelEmail: string | null;
   nombreAgents: number;
-  annoncesRestantes: number;
-  agentsRestants: number;
 }
 
 export interface EntrepriseProfilResponse {

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mentions légales — AnoventiX</title>
+    <meta
+      name="description"
+      content="Mentions légales de l'application AnoventiX : éditeur, hébergeur et propriété intellectuelle."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --blue: #1e3a6e;
+        --blue-light: #e6ecf7;
+        --gold: #c9960c;
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #4b5563;
+        --border: #e5e7eb;
+        --todo-bg: #fff4d6;
+        --todo-text: #7a4d00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --blue: #9db8ea;
+          --blue-light: #1b2740;
+          --bg: #0f1420;
+          --card: #161d2c;
+          --text: #e8ecf3;
+          --muted: #a5afc0;
+          --border: #273047;
+          --todo-bg: #3a2e10;
+          --todo-text: #f2cf7a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.65;
+        font-size: 16px;
+      }
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+      }
+      .bar {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .logo {
+        font-weight: 800;
+        font-size: 20px;
+        color: var(--blue);
+        text-decoration: none;
+        letter-spacing: -0.5px;
+      }
+      .logo span { color: var(--gold); }
+      .bar a.back { color: var(--blue); font-weight: 600; font-size: 14px; }
+      main {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.5px; }
+      .updated { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+      .toc, section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+      }
+      .toc h2 { font-size: 15px; margin: 0 0 8px; }
+      .toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; font-size: 14px; }
+      .toc a { color: var(--blue); text-decoration: none; }
+      .toc a:hover { text-decoration: underline; }
+      section h2 { font-size: 19px; margin: 0 0 8px; color: var(--blue); scroll-margin-top: 16px; }
+      section h3 { font-size: 16px; margin: 16px 0 4px; }
+      p, li { color: var(--text); }
+      ul { padding-left: 20px; }
+      .todo {
+        background: var(--todo-bg);
+        color: var(--todo-text);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+      .note {
+        background: var(--blue-light);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      footer { text-align: center; color: var(--muted); font-size: 14px; padding: 0 16px 32px; }
+      footer a { color: var(--blue); }
+      @media (max-width: 600px) {
+        h1 { font-size: 24px; }
+        .toc ol { columns: 1; }
+        .toc, section { padding: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <a class="logo" href="/">Anovent<span>iX</span></a>
+        <a class="back" href="/">← Retour à l'accueil</a>
+      </div>
+    </header>
+
+    <main>
+      <h1>Mentions légales</h1>
+      <p class="updated">Dernière mise à jour : 18 octobre 2026</p>
+
+      <section id="editeur">
+        <h2>Éditeur</h2>
+        <p>
+          L'application mobile AnoventiX et le site www.anoventix.com sont édités par Anoventix SARL,
+          société à responsabilité limitée au capital de 2 000 000 GNF, dont le siège est situé à
+          Matoto, Conakry, République de Guinée.
+        </p>
+        <p>
+          Immatriculation au RCCM : <span class="todo">[À compléter : numéro RCCM, société en cours d'immatriculation]</span>.<br />
+          Directeur de la publication : <span class="todo">[À compléter : nom du responsable de publication]</span>.<br />
+          Contact : <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>.
+        </p>
+      </section>
+
+      <section id="hebergeur">
+        <h2>Hébergeur</h2>
+        <p>OVH SAS (OVHcloud), 2 rue Kellermann, 59100 Roubaix, France.</p>
+      </section>
+
+      <section id="donnees">
+        <h2>Données personnelles</h2>
+        <p>Le traitement de vos données est décrit dans la <a href="/confidentialite">politique de confidentialité</a>.</p>
+      </section>
+
+      <section id="propriete">
+        <h2>Propriété intellectuelle</h2>
+        <p>
+          La marque, le logo, l'interface et le code de la Plateforme sont la propriété d'Anoventix SARL.
+          Les annonces et leurs photos restent la propriété de leurs auteurs, qui concèdent à la
+          Plateforme le droit de les afficher, comme précisé dans les
+          <a href="/cgu">conditions générales d'utilisation</a>. Les cartes utilisent les données
+          d'OpenStreetMap, © contributeurs OpenStreetMap.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      © 2026 AnoventiX · <a href="/">Accueil</a> ·
+      <a href="/cgu">Conditions d'utilisation</a> ·
+      <a href="/confidentialite">Confidentialité</a> ·
+      <a href="/mentions-legales">Mentions légales</a>
+    </footer>
+  </body>
+</html>

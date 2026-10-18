@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService {
     private final CompteSuppressionService compteSuppressionService;
     private final EmailNotificationService emailNotificationService;
     private final AuditService audit;
+    private final SessionService sessionService;
 
     public UserServiceImpl(UserRepository userRepository,
                            MediaService mediaService,
@@ -58,7 +59,9 @@ public class UserServiceImpl implements UserService {
                            AvertissementRepository avertissementRepository,
                            CompteSuppressionService compteSuppressionService,
                            EmailNotificationService emailNotificationService,
-                           AuditService audit) {
+                           AuditService audit,
+                           SessionService sessionService) {
+        this.sessionService = sessionService;
         this.emailNotificationService = emailNotificationService;
         this.audit = audit;
         this.userRepository = userRepository;
@@ -341,6 +344,10 @@ public class UserServiceImpl implements UserService {
         // d'anonymisation effacerait un compte que l'admin vient de réactiver.
         target.setDateSuppressionDemandee(null);
         UserDTO dto = toDTO(userRepository.save(target));
+        if (request.getStatut() != StatutUtilisateur.ACTIF) {
+            // Suspendu ou désactivé : ses appareils sont déconnectés et ne reviennent pas à la levée.
+            sessionService.fermerToutesLesSessions(userId);
+        }
         audit.enregistrer(ActionAudit.COMPTE_STATUT_MODIFIE, userId,
                 ancienStatut + " → " + request.getStatut()
                         + (request.getMotif() == null ? "" : " — " + request.getMotif()));

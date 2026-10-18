@@ -111,10 +111,22 @@ annonce:
 
 app:
   base-url: ${APP_BASE_URL}
+  # Adresse à contacter en cas de connexion suspecte (email d'alerte du staff).
+  support-email: ${SUPPORT_EMAIL:support@anoventix.com}
+  cgu:
+    # Version des CGU en vigueur, enregistrée avec le consentement à l'inscription. À changer à chaque
+    # mise à jour de landing/cgu.html (date de « Dernière mise à jour »).
+    version: ${CGU_VERSION:2026-09}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081,http://localhost:4200}
   security:
     trust-xff: ${TRUST_XFF:false}
+    # Double authentification par email des modérateurs et administrateurs (DEC-03). Actif par
+    # défaut ; ne se désactive que dans les tests (src/test/resources/application.yml).
+    staff-2fa-actif: true
+    # Cookie du jeton de rafraîchissement du site web (SessionCookie): Secure = HTTPS seulement.
+    # À mettre à false uniquement pour un développement web en HTTP hors localhost.
+    cookie-secure: ${COOKIE_SECURE:true}
     bcrypt:
       strength: ${APP_SECURITY_BCRYPT_STRENGTH:12}
   # Pages d'annonce partagées (aperçu réseaux sociaux, cf. SharePageService).

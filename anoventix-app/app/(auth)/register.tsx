@@ -48,7 +48,7 @@ export default function RegisterScreen() {
     setApiError(null);
     setIsLoading(true);
     try {
-      await signup({ nom: data.nom, prenom: data.prenom, email: data.email, telephone: data.telephone || undefined, password: data.password, role: data.role });
+      await signup({ nom: data.nom, prenom: data.prenom, email: data.email, telephone: data.telephone || undefined, password: data.password, role: data.role, acceptCgu: data.acceptCgu });
       setRegisteredEmail(data.email);
     } catch (err: unknown) {
       const error = err as { message?: string };

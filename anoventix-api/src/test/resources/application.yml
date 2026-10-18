@@ -72,7 +72,11 @@ app:
   base-url: http://localhost:8080
   cors:
     allowed-origins: http://localhost:3000,http://localhost:8081,http://localhost:4200
-  # Pas d'envoi planifié pendant les tests : FileEmailsTest déclenche l'envoi lui-même.
+  security:
+    # Les tests de connexion du staff n'ont pas à passer par l'email : DoubleAuthentificationTest
+    # réactive la double authentification.
+    staff-2fa-actif: false
+  # Pas d'envoi planifié pendant les tests: FileEmailsTest déclenche l'envoi lui-même.
   email:
     file:
       envoi-actif: false

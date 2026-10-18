@@ -188,12 +188,6 @@ export default function EntreprisePubliqueScreen() {
                   </AppText>
                 </View>
               ) : null}
-              {entreprise.numeroRCCM ? (
-                <View style={s.infoItem}>
-                  <Ionicons name="document-text-outline" size={14} color={colors.textMuted} />
-                  <AppText style={s.infoText}>RCCM : {entreprise.numeroRCCM}</AppText>
-                </View>
-              ) : null}
             </View>
 
             <View style={s.statRow}>

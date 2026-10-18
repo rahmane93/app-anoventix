@@ -310,6 +310,50 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/activate"))
             .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
+    // ECART-41 : le consentement aux CGU est enregistré avec la date et la version en vigueur.
+    @Test
+    public void testInscription_enregistreLeConsentementAuxCgu() throws Exception {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("email", "cgu1@example.com");
+        payload.put("nom", "User");
+        payload.put("prenom", "Cgu");
+        payload.put("password", "Test123!");
+        payload.put("acceptCgu", true);
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(payload)))
+            .andExpect(MockMvcResultMatchers.status().isCreated());
+
+        var user = userRepository.findByEmail("cgu1@example.com").orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(user.getCguAccepteesLe()).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(user.getCguVersion()).isNotBlank();
+    }
+
+    // Un refus explicite bloque l'inscription ; une application plus ancienne, qui n'envoie pas le
+    // champ (sa case à cocher était déjà obligatoire), reste acceptée et le consentement est enregistré.
+    @Test
+    public void testInscription_refusDesCguBloque_champAbsentAccepte() throws Exception {
+        Map<String, Object> refus = new HashMap<>();
+        refus.put("email", "cgu2@example.com");
+        refus.put("nom", "User");
+        refus.put("prenom", "Refus");
+        refus.put("password", "Test123!");
+        refus.put("acceptCgu", false);
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(refus)))
+            .andExpect(MockMvcResultMatchers.status().isBadRequest());
+        org.assertj.core.api.Assertions.assertThat(userRepository.findByEmail("cgu2@example.com")).isEmpty();
+
+        refus.remove("acceptCgu");
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(refus)))
+            .andExpect(MockMvcResultMatchers.status().isCreated());
+        org.assertj.core.api.Assertions.assertThat(userRepository.findByEmail("cgu2@example.com").orElseThrow()
+                .getCguAccepteesLe()).isNotNull();
+    }
+
     // Vérifie que le reset retourne toujours 200 (sécurité : ne révèle pas si l'email existe)
     @Test
     public void testForgotPasswordWithUnknownEmail() throws Exception {

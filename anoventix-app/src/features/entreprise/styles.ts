@@ -268,6 +268,16 @@ export const styles = StyleSheet.create({
     gap: spacing.xs,
     flexShrink: 0,
   },
+  agentResendLink: {
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  agentResendText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.primary,
+  },
   agentActionBtn: {
     minWidth: 104,
     flexDirection: 'row',

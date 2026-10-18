@@ -17,6 +17,8 @@ jest.mock('../api/auth.api', () => ({
   forgotPassword: jest.fn(),
   resetPassword: jest.fn(),
   changePassword: jest.fn(),
+  verifierCode: jest.fn(),
+  renvoyerCode: jest.fn(),
   logout: jest.fn(async () => {}),
 }));
 
@@ -49,6 +51,8 @@ const INITIAL = {
   isAuthenticated: false,
   mustChangePassword: false,
   isLoading: true,
+  verification: null,
+  codesSecoursARemettre: null,
 };
 
 beforeEach(() => {
@@ -184,5 +188,93 @@ describe('hydrateFromStorage', () => {
     await pending;
 
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+});
+
+describe('double authentification du staff', () => {
+  const verification = {
+    verificationRequise: true,
+    verificationId: 'defi-1',
+    methode: 'EMAIL',
+    expireDansSecondes: 600,
+    message: 'Un code vous a été envoyé.',
+  };
+  const session = (extra = {}) => ({
+    token: 'jwt-staff',
+    refreshToken: 'refresh-staff',
+    id: 'u1',
+    email: 'mod@b.com',
+    role: ['ROLE_MODERATEUR'],
+    ...extra,
+  });
+
+  it('n’ouvre aucune session tant que le code n’est pas saisi', async () => {
+    (authApi.signin as jest.Mock).mockResolvedValue(verification);
+
+    const resultat = await useAuthStore.getState().signin({ identifier: 'mod@b.com', password: 'x' });
+
+    expect(resultat).toEqual(verification);
+    expect(client.saveToken).not.toHaveBeenCalled();
+    const s = useAuthStore.getState();
+    expect(s.isAuthenticated).toBe(false);
+    expect(s.verification).toEqual(verification);
+  });
+
+  it('ouvre la session avec le bon code', async () => {
+    useAuthStore.setState({ verification: verification as never });
+    (authApi.verifierCode as jest.Mock).mockResolvedValue(session());
+
+    await useAuthStore.getState().verifierCode(' 123456 ');
+
+    expect(authApi.verifierCode).toHaveBeenCalledWith('defi-1', '123456');
+    const s = useAuthStore.getState();
+    expect(s.isAuthenticated).toBe(true);
+    expect(s.verification).toBeNull();
+    expect(client.saveToken).toHaveBeenCalledWith('jwt-staff');
+  });
+
+  it('retient la session jusqu’à ce que les codes de secours aient été vus', async () => {
+    useAuthStore.setState({ verification: verification as never });
+    const codes = ['ABCD-EFGH', 'JKLM-NPQR'];
+    (authApi.verifierCode as jest.Mock).mockResolvedValue(session({ codesSecours: codes }));
+
+    await useAuthStore.getState().verifierCode('123456');
+
+    let s = useAuthStore.getState();
+    expect(s.isAuthenticated).toBe(false);
+    expect(client.saveToken).not.toHaveBeenCalled();
+    expect(s.codesSecoursARemettre?.codes).toEqual(codes);
+
+    await useAuthStore.getState().confirmerCodesSecours();
+
+    s = useAuthStore.getState();
+    expect(s.isAuthenticated).toBe(true);
+    expect(s.codesSecoursARemettre).toBeNull();
+    expect(client.saveToken).toHaveBeenCalledWith('jwt-staff');
+  });
+
+  it('un mauvais code laisse la vérification en cours', async () => {
+    useAuthStore.setState({ verification: verification as never });
+    (authApi.verifierCode as jest.Mock).mockRejectedValue({ message: 'Code incorrect.', status: 401 });
+
+    await expect(useAuthStore.getState().verifierCode('000000')).rejects.toMatchObject({ status: 401 });
+
+    const s = useAuthStore.getState();
+    expect(s.isAuthenticated).toBe(false);
+    expect(s.verification).toEqual(verification);
+  });
+
+  it('remplace le défi quand le code est renvoyé', async () => {
+    useAuthStore.setState({ verification: verification as never });
+    (authApi.renvoyerCode as jest.Mock).mockResolvedValue({ ...verification, verificationId: 'defi-2' });
+
+    await useAuthStore.getState().renvoyerCode();
+
+    expect(authApi.renvoyerCode).toHaveBeenCalledWith('defi-1');
+    expect(useAuthStore.getState().verification?.verificationId).toBe('defi-2');
+  });
+
+  it('refuse de vérifier sans connexion préalable', async () => {
+    await expect(useAuthStore.getState().verifierCode('123456')).rejects.toMatchObject({ status: 400 });
   });
 });

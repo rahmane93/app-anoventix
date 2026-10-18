@@ -181,8 +181,8 @@ Les parcours relient les modules. Chaque étape renvoie à la règle qui la gouv
 |---|---|---|---|
 | 1 | Inscription avec le rôle Professionnel, activation, pièce validée | Professionnel | P1, étapes 2 à 6 |
 | 2 | Création de l'entreprise (nom, RCCM unique, téléphone unique) | Professionnel | Module 07 |
-| 3 | Invitation d'un agent : compte créé, mot de passe temporaire envoyé par email | Professionnel | RG-07-09, RG-07-10 |
-| 4 | Première connexion de l'agent : changement de mot de passe obligatoire | Agent | RG-01-24 |
+| 3 | Invitation d'un agent : compte créé, lien d'invitation (usage unique, 7 jours) envoyé par email | Professionnel | RG-07-09, RG-07-10 |
+| 4 | L'agent ouvre le lien et choisit son mot de passe : son compte devient actif | Agent | RG-07-10 |
 | 5 | L'agent fait valider sa propre pièce d'identité (🆕 avec son selfie) | Agent, modération | RG-02-10, 🆕 RG-02-23 |
 | 6 | L'agent publie dans la limite du quota de l'entreprise | Agent | RG-03-01 (5), module 08 |
 | 7 | Suivi de l'équipe dans le tableau de bord ; suspension ou retrait d'agents | Professionnel | Module 07 |

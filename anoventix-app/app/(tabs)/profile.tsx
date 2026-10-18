@@ -302,6 +302,13 @@ export default function ProfileScreen() {
           label="Changer mon mot de passe"
           onPress={() => router.push('/(auth)/change-password')}
         />
+        {isModerationRole && (
+          <MenuRow
+            iconName="key-outline"
+            label="Codes de secours (double authentification)"
+            onPress={() => router.push('/regenerer-codes-secours')}
+          />
+        )}
         {!isModerationRole && (
           <MenuRow
             iconName="flag-outline"
@@ -453,6 +460,11 @@ export default function ProfileScreen() {
           iconName="shield-outline"
           label="Politique de confidentialité"
           onPress={() => WebBrowser.openBrowserAsync(LEGAL_LINKS.confidentialite)}
+        />
+        <MenuRow
+          iconName="information-circle-outline"
+          label="Mentions légales"
+          onPress={() => WebBrowser.openBrowserAsync(LEGAL_LINKS.mentionsLegales)}
         />
         <MenuRow
           iconName="download-outline"

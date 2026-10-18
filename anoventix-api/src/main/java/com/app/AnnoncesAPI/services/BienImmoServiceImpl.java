@@ -39,6 +39,7 @@ import com.app.AnnoncesAPI.repositories.AnnonceRepository;
 import com.app.AnnoncesAPI.repositories.BienImmoRepository;
 import com.app.AnnoncesAPI.repositories.HistoriqueAnnonceRepository;
 import com.app.AnnoncesAPI.repositories.LocalisationRepository;
+import com.app.AnnoncesAPI.repositories.MediaRepository;
 import com.app.AnnoncesAPI.repositories.SignalementRepository;
 import com.app.AnnoncesAPI.repositories.UserRepository;
 import com.app.AnnoncesAPI.security.VueCountTracker;
@@ -67,6 +68,7 @@ public class BienImmoServiceImpl implements BienImmoService {
     private final AnnonceExpirationService annonceExpirationService;
     private final LicenceService licenceService;
     private final QuotaEntrepriseService quotaService;
+    private final MediaRepository mediaRepository;
 
     public BienImmoServiceImpl(BienImmoRepository bienImmoRepository,
                                AnnonceRepository annonceRepository,
@@ -79,7 +81,9 @@ public class BienImmoServiceImpl implements BienImmoService {
                                VueCountTracker vueCountTracker,
                                AnnonceExpirationService annonceExpirationService,
                                LicenceService licenceService,
-                               QuotaEntrepriseService quotaService) {
+                               QuotaEntrepriseService quotaService,
+                               MediaRepository mediaRepository) {
+        this.mediaRepository = mediaRepository;
         this.bienImmoRepository = bienImmoRepository;
         this.annonceRepository = annonceRepository;
         this.annonceMapper = annonceMapper;
@@ -715,6 +719,12 @@ public class BienImmoServiceImpl implements BienImmoService {
         if (bienImmo.getStatutModeration() != StatutAnnonce.PUBLIEE) {
             throw new IllegalStateException(
                     "Cette annonce a été retirée par la modération et ne peut pas être réactivée.");
+        }
+        // Les photos d'une annonce clôturée depuis plus de 12 mois sont supprimées (DEC-26) : elle ne
+        // repasse pas en ligne sans photo.
+        if (mediaRepository.findByAnnonceId(bienImmo.getId()).isEmpty()) {
+            throw new IllegalStateException(
+                    "Cette annonce n'a plus de photos (supprimées 12 mois après sa clôture) : publiez une nouvelle annonce.");
         }
         verifierQuotaEntreprise(bienImmo.getOwner());
         MasquageCompte.verifierAnnoncesNonMasquees(bienImmo.getOwner());

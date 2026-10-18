@@ -95,8 +95,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL', 'MODERATEUR', 'ADMINISTRATEUR')")
     @Operation(summary = "Récupérer une entreprise par ID",
                description = "Affiche les détails d'une entreprise")
-    public ResponseEntity<EntrepriseDTO> getEntrepriseById(@PathVariable UUID id) {
-        EntrepriseDTO entreprise = entrepriseService.getEntrepriseById(id);
+    public ResponseEntity<EntrepriseDTO> getEntrepriseById(@PathVariable UUID id, Authentication authentication) {
+        EntrepriseDTO entreprise = entrepriseService.getEntrepriseById(id, authentication);
         return ResponseEntity.ok(entreprise);
     }
     
@@ -107,8 +107,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL', 'MODERATEUR', 'ADMINISTRATEUR')")
     @Operation(summary = "Récupérer l'entreprise d'un utilisateur",
                description = "Trouve l'entreprise associée à un utilisateur")
-    public ResponseEntity<EntrepriseDTO> getEntrepriseByUser(@PathVariable UUID userId) {
-        EntrepriseDTO entreprise = entrepriseService.getEntrepriseByUser(userId);
+    public ResponseEntity<EntrepriseDTO> getEntrepriseByUser(@PathVariable UUID userId, Authentication authentication) {
+        EntrepriseDTO entreprise = entrepriseService.getEntrepriseByUser(userId, authentication);
         return ResponseEntity.ok(entreprise);
     }
     
@@ -213,6 +213,21 @@ public class EntrepriseController {
     }
 
     /**
+     * Renvoie l'invitation d'un agent en attente d'activation
+     */
+    @PostMapping("/{entrepriseId}/agents/{agentId}/invitation")
+    @PreAuthorize("hasRole('PROFESSIONNEL')")
+    @Operation(summary = "Renvoyer l'invitation d'un agent",
+               description = "Envoie un nouveau lien d'invitation (valable 7 jours, usage unique) à un agent qui n'a pas "
+                           + "encore choisi son mot de passe ; le lien précédent cesse de fonctionner.")
+    public ResponseEntity<AgentDTO> renvoyerInvitation(
+            @PathVariable UUID entrepriseId,
+            @PathVariable UUID agentId,
+            Authentication authentication) {
+        return ResponseEntity.ok(entrepriseService.renvoyerInvitation(entrepriseId, agentId, authentication));
+    }
+
+    /**
      * Suspend un agent de l'entreprise
      */
     @PutMapping("/{entrepriseId}/agents/{agentId}/suspendre")
@@ -247,8 +262,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL')")
     @Operation(summary = "Vérifier le quota d'annonces",
                description = "Vérifie si l'entreprise peut créer une nouvelle annonce")
-    public ResponseEntity<Boolean> canCreateAnnonce(@PathVariable UUID entrepriseId) {
-        boolean can = entrepriseService.canCreateAnnonce(entrepriseId);
+    public ResponseEntity<Boolean> canCreateAnnonce(@PathVariable UUID entrepriseId, Authentication authentication) {
+        boolean can = entrepriseService.canCreateAnnonce(entrepriseId, authentication);
         return ResponseEntity.ok(can);
     }
     
@@ -259,8 +274,8 @@ public class EntrepriseController {
     @PreAuthorize("hasRole('PROFESSIONNEL')")
     @Operation(summary = "Vérifier le quota d'agents",
                description = "Vérifie si l'entreprise peut ajouter un nouvel agent")
-    public ResponseEntity<Boolean> canAddAgent(@PathVariable UUID entrepriseId) {
-        boolean can = entrepriseService.canAddAgent(entrepriseId);
+    public ResponseEntity<Boolean> canAddAgent(@PathVariable UUID entrepriseId, Authentication authentication) {
+        boolean can = entrepriseService.canAddAgent(entrepriseId, authentication);
         return ResponseEntity.ok(can);
     }
     

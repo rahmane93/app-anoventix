@@ -119,6 +119,18 @@ public class User {
     @Column(name = "must_change_password", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean mustChangePassword = false;
 
+    /** Acceptation des CGU à l'inscription (ECART-41) ; null pour un compte créé avant leur enregistrement. */
+    @Column(name = "cgu_acceptees_le")
+    private LocalDateTime cguAccepteesLe;
+
+    /** Version des CGU acceptées (app.cgu.version au moment de l'inscription). */
+    @Column(name = "cgu_version", length = 20)
+    private String cguVersion;
+
+    /** Remise des codes de secours (double authentification du staff); null tant qu'ils n'ont pas été remis. */
+    @Column(name = "codes_secours_generes_le")
+    private LocalDateTime codesSecoursGeneresLe;
+
     @Column(name = "motif_statut", length = 500)
     private String motifStatut;
 

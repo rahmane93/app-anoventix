@@ -1,7 +1,10 @@
 package com.app.AnnoncesAPI.security;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -27,6 +30,7 @@ public class JwtUtils {
     public static final String CLAIM_TYPE = "type";
     public static final String TYPE_ACCESS = "access";
     public static final String TYPE_REFRESH = "refresh";
+    public static final String CLAIM_FAMILLE = "fam";
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -49,14 +53,26 @@ public class JwtUtils {
         return buildAccessToken(userPrincipal.getUsername());
     }
 
-    public String generateRefreshToken(String username) {
+    /**
+     * Jeton de rafraîchissement d'une session. {@code jti} l'identifie dans la table
+     * refresh_token (usage unique, rotation) et {@code famille} regroupe les jetons successifs
+     * d'une même session d'appareil (révocation en bloc si un jeton est rejoué).
+     */
+    public String generateRefreshToken(String username, UUID jti, UUID famille, Instant expiration) {
         return Jwts.builder()
+                .id(jti.toString())
                 .subject(username)
                 .claim(CLAIM_TYPE, TYPE_REFRESH)
+                .claim(CLAIM_FAMILLE, famille.toString())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .expiration(Date.from(expiration))
                 .signWith(signingKey())
                 .compact();
+    }
+
+    /** Durée de vie standard d'un jeton de rafraîchissement (7 jours par défaut). */
+    public Duration dureeRefresh() {
+        return Duration.ofMillis(refreshExpirationMs);
     }
 
     public String buildAccessToken(String username) {

@@ -54,13 +54,16 @@ public class CompteSuppressionService {
     private final MediaRepository mediaRepository;
     private final MediaService mediaService;
     private final PasswordEncoder passwordEncoder;
+    private final SessionService sessionService;
 
     public CompteSuppressionService(UserRepository userRepository,
                                     AnnonceRepository annonceRepository,
                                     EntrepriseRepository entrepriseRepository,
                                     MediaRepository mediaRepository,
                                     MediaService mediaService,
-                                    PasswordEncoder passwordEncoder) {
+                                    PasswordEncoder passwordEncoder,
+                                    SessionService sessionService) {
+        this.sessionService = sessionService;
         this.userRepository = userRepository;
         this.annonceRepository = annonceRepository;
         this.entrepriseRepository = entrepriseRepository;
@@ -77,6 +80,7 @@ public class CompteSuppressionService {
         user.setMotifStatut(MOTIF_SUPPRESSION_DEMANDEE);
         user.setDateSuppressionDemandee(LocalDateTime.now());
         userRepository.save(user);
+        sessionService.fermerToutesLesSessions(user.getId());
 
         // Un PROFESSIONNEL emporte son entreprise : sinon ses agents continueraient à publier
         // sous une entreprise orpheline.
@@ -88,6 +92,7 @@ public class CompteSuppressionService {
                 agent.setStatut(StatutUtilisateur.INACTIF);
                 agent.setMotifStatut(MOTIF_ENTREPRISE_SUPPRIMEE);
                 userRepository.save(agent);
+                sessionService.fermerToutesLesSessions(agent.getId());
             }
         });
         logger.info("Suppression de compte demandée pour l'utilisateur ID={}", user.getId());
@@ -105,7 +110,7 @@ public class CompteSuppressionService {
             entrepriseRepository.save(entreprise);
             for (User agent : userRepository.findByEntrepriseId(entreprise.getId())) {
                 if (MOTIF_ENTREPRISE_SUPPRIMEE.equals(agent.getMotifStatut())) {
-                    agent.setStatut(Boolean.TRUE.equals(agent.getMustChangePassword())
+                    agent.setStatut(Boolean.TRUE.equals(agent.getMustChangePassword()) || agent.getActivationCode() != null
                             ? StatutUtilisateur.EN_ATTENTE_ACTIVATION
                             : StatutUtilisateur.ACTIF);
                     agent.setMotifStatut(null);
@@ -121,6 +126,16 @@ public class CompteSuppressionService {
      */
     @Transactional
     public void supprimerParAdministrateur(User user) {
+        effacerCompteEtEntreprise(user);
+        logger.info("Compte ID={} supprimé par un administrateur", user.getId());
+    }
+
+    /**
+     * Efface le compte et, pour un PROFESSIONNEL, son entreprise et tous ses agents : annonces
+     * désactivées, photos et pièces d'identité supprimées du disque, données personnelles anonymisées.
+     * Commun à la suppression par un administrateur et à l'échéance du délai de grâce (ECART-15).
+     */
+    private void effacerCompteEtEntreprise(User user) {
         entrepriseRepository.findByAnnonceurProfessionnel(user).ifPresent(entreprise -> {
             for (User agent : userRepository.findByEntrepriseId(entreprise.getId())) {
                 if (!agent.getId().equals(user.getId())) {
@@ -130,7 +145,6 @@ public class CompteSuppressionService {
             anonymiserEntreprise(entreprise);
         });
         effacerCompte(user);
-        logger.info("Compte ID={} supprimé par un administrateur", user.getId());
     }
 
     /** Annonces (désactivées, photos effacées) puis données personnelles du compte. */
@@ -180,7 +194,9 @@ public class CompteSuppressionService {
                 userRepository.save(user);
                 continue;
             }
-            anonymiser(user);
+            // Un professionnel emporte son entreprise et ses agents : avant ce correctif, seul son
+            // compte était anonymisé et ses agents gardaient leurs données personnelles (ECART-15).
+            effacerCompteEtEntreprise(user);
         }
         if (!comptes.isEmpty()) {
             logger.info("{} compte(s) anonymisé(s) (délai de grâce RGPD écoulé)", comptes.size());
@@ -189,6 +205,7 @@ public class CompteSuppressionService {
 
     /** Efface irréversiblement les données personnelles du compte. */
     void anonymiser(User user) {
+        sessionService.fermerToutesLesSessions(user.getId());
         // Fichiers d'abord : une fois les chemins effacés en base, ils seraient introuvables.
         if (user.getPhotoProfil() != null) {
             mediaService.deleteMediaFromDisk(user.getPhotoProfil());

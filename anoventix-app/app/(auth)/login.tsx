@@ -5,6 +5,7 @@ import { Input } from '@/src/components/ui/input';
 import { LOGIN_REASON_MESSAGES, clearReturnTo, type LoginReason } from '@/src/lib/auth-redirect';
 import { SigninFormData, signinSchema } from '@/src/lib/validation';
 import { useAuthStore } from '@/src/stores/auth.store';
+import { estVerificationRequise } from '@/src/types/auth.types';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -85,7 +86,9 @@ export default function LoginScreen() {
     try {
       // La navigation post-connexion (retour à l'écran d'origine ou accueil)
       // est gérée par le layout racine dès que la session est active.
-      await signin(data);
+      const resultat = await signin(data);
+      // Modérateur ou administrateur : pas de session avant le code reçu par email.
+      if (estVerificationRequise(resultat)) router.push('/(auth)/verification');
     } catch (err: unknown) {
       const error = err as { message?: string; status?: number };
       if (error?.status === 403) {

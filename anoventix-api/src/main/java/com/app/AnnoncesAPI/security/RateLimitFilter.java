@@ -2,8 +2,8 @@ package com.app.AnnoncesAPI.security;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,31 +24,60 @@ import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Rate limiting par IP sur tous les endpoints d'authentification.
- * - /signin, /signup, /logout : 10 req/min
- * - /forgot-password, /reset-password, /refresh, /reactivate : 5 req/15min (endpoints sensibles)
+ * Limitation de débit par adresse IP sur les endpoints d'authentification.
+ *
+ * Les opérateurs mobiles guinéens partagent une même IP publique entre de nombreux abonnés
+ * (CGNAT) : une limite serrée par IP déconnecte des utilisateurs sans rapport (ECART-05).
+ * Les seuils sont donc des garde-fous contre l'inondation, pas contre l'essai de mots de
+ * passe : celui-ci est limité par compte (LoginAttemptTracker : verrouillage après 5 échecs).
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final Set<String> STANDARD_PATHS = Set.of(
-            "/api/auth/signin", "/api/auth/signup", "/api/auth/logout"
-    );
+    /** Catégories de routes, chacune avec sa capacité par fenêtre. */
+    private enum Palier {
+        /** Connexion, inscription, déconnexion : 30 requêtes par minute. */
+        CONNEXION(30, Duration.ofMinutes(1)),
+        /** Envoi d'emails et de codes (abus et coût) : 5 requêtes par 15 minutes. */
+        SENSIBLE(5, Duration.ofMinutes(15)),
+        /**
+         * Renouvellement de session : un utilisateur actif le fait environ 4 fois par heure, et un
+         * jeton volé ne se devine pas (signature). 120 par minute laisse passer tout un quartier
+         * derrière la même IP et bloque seulement une inondation.
+         */
+        SESSION(120, Duration.ofMinutes(1));
 
-    private static final Set<String> SENSITIVE_PATHS = Set.of(
-            "/api/auth/forgot-password", "/api/auth/reset-password",
-            "/api/auth/refresh", "/api/auth/reactivate", "/api/auth/resend-activation",
-            "/activate"
-    );
+        final int capacite;
+        final Duration fenetre;
 
-    private static final int STANDARD_CAPACITY = 10;
-    private static final int SENSITIVE_CAPACITY = 5;
+        Palier(int capacite, Duration fenetre) {
+            this.capacite = capacite;
+            this.fenetre = fenetre;
+        }
 
-    /** Buckets standard : 10 req/min */
-    private final Map<String, Bucket> standardBuckets = new ConcurrentHashMap<>();
+        Bucket nouveauBucket() {
+            return Bucket.builder()
+                    .addLimit(Bandwidth.classic(capacite, Refill.greedy(capacite, fenetre)))
+                    .build();
+        }
+    }
 
-    /** Buckets sensibles : 5 req/15min */
-    private final Map<String, Bucket> sensitiveBuckets = new ConcurrentHashMap<>();
+    private static final Map<String, Palier> PALIER_PAR_ROUTE = Map.ofEntries(
+            Map.entry("/api/auth/signin", Palier.CONNEXION),
+            Map.entry("/api/auth/signup", Palier.CONNEXION),
+            Map.entry("/api/auth/logout", Palier.CONNEXION),
+            Map.entry("/api/auth/refresh", Palier.SESSION),
+            Map.entry("/api/auth/verification-code", Palier.CONNEXION),
+            Map.entry("/api/auth/verification-code/renvoyer", Palier.CONNEXION),
+            Map.entry("/api/auth/forgot-password", Palier.SENSIBLE),
+            Map.entry("/api/auth/reset-password", Palier.SENSIBLE),
+            Map.entry("/api/auth/reactivate", Palier.SENSIBLE),
+            Map.entry("/api/auth/resend-activation", Palier.SENSIBLE),
+            Map.entry("/api/auth/accept-invitation", Palier.SENSIBLE),
+            Map.entry("/activate", Palier.SENSIBLE));
+
+    /** Un bucket par palier et par IP. */
+    private final Map<Palier, Map<String, Bucket>> buckets = new EnumMap<>(Palier.class);
 
     private final AdresseClient adresseClient;
     private final ObjectMapper mapper;
@@ -56,12 +85,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
     public RateLimitFilter(AdresseClient adresseClient, ObjectMapper mapper) {
         this.adresseClient = adresseClient;
         this.mapper = mapper;
+        for (Palier palier : Palier.values()) {
+            buckets.put(palier, new ConcurrentHashMap<>());
+        }
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return !STANDARD_PATHS.contains(path) && !SENSITIVE_PATHS.contains(path);
+        return !PALIER_PAR_ROUTE.containsKey(request.getServletPath());
     }
 
     @Override
@@ -70,12 +101,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String ip = adresseClient.de(request);
         String path = request.getServletPath();
-
-        Bucket bucket = SENSITIVE_PATHS.contains(path)
-                ? sensitiveBuckets.computeIfAbsent(ip, k -> newSensitiveBucket())
-                : standardBuckets.computeIfAbsent(ip, k -> newStandardBucket());
+        Palier palier = PALIER_PAR_ROUTE.get(path);
+        Bucket bucket = buckets.get(palier).computeIfAbsent(adresseClient.de(request), ip -> palier.nouveauBucket());
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
@@ -91,19 +119,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     @Scheduled(fixedDelay = 600_000)
     public void purgeIdleBuckets() {
-        standardBuckets.values().removeIf(b -> b.getAvailableTokens() >= STANDARD_CAPACITY);
-        sensitiveBuckets.values().removeIf(b -> b.getAvailableTokens() >= SENSITIVE_CAPACITY);
-    }
-
-    private Bucket newStandardBucket() {
-        return Bucket.builder()
-                .addLimit(Bandwidth.classic(STANDARD_CAPACITY, Refill.greedy(STANDARD_CAPACITY, Duration.ofMinutes(1))))
-                .build();
-    }
-
-    private Bucket newSensitiveBucket() {
-        return Bucket.builder()
-                .addLimit(Bandwidth.classic(SENSITIVE_CAPACITY, Refill.greedy(SENSITIVE_CAPACITY, Duration.ofMinutes(15))))
-                .build();
+        buckets.forEach((palier, parIp) ->
+                parIp.values().removeIf(b -> b.getAvailableTokens() >= palier.capacite));
     }
 }

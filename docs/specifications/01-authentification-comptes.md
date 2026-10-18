@@ -73,9 +73,9 @@ Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P
 | RG-01-15 | Après **5 échecs en 15 min** sur un même identifiant, celui-ci est verrouillé jusqu'à la fin de la fenêtre (429). Les identifiants inconnus comptent comme des échecs (anti-énumération). | `LoginAttemptTracker.java` |
 | RG-01-16 | Statut et connexion : ACTIF → autorisé ; EN_ATTENTE_ACTIVATION → refusé (« Votre compte n'est pas activé… »), **sauf pour un agent qui doit changer son mot de passe** ; SUSPENDU → refusé ; INACTIF → refusé, avec la date limite de réactivation si une suppression a été demandée et que le mot de passe est correct. | `AuthServiceImpl.java:100-128` |
 | RG-01-17 | Une connexion réussie renvoie : identifiant, email, jeton d'accès (15 min), jeton de rafraîchissement (7 j), rôles (`ROLE_xxx`) et l'indicateur `mustChangePassword`. | `AuthServiceImpl.java:148-154` |
-| RG-01-18 | Rafraîchissement : le jeton doit être de type « refresh », le compte doit être actif et le jeton émis après le dernier changement de mot de passe. Seul un nouveau jeton d'accès est renvoyé (pas de rotation du jeton de rafraîchissement). | `AuthServiceImpl.java:229-246` |
-| RG-01-19 | Déconnexion : le jeton d'accès et, s'il est fourni, le jeton de rafraîchissement sont révoqués. La liste de révocation est gardée en mémoire (**ECART-21**). | `AuthController.java:109-123` |
-| RG-01-20 | Limitation par IP : 10 req/min sur la connexion, l'inscription et la déconnexion ; 5 req/15 min sur mot de passe oublié, réinitialisation, **rafraîchissement**, réactivation, renvoi d'activation et activation (**ECART-05**). | `RateLimitFilter.java` |
+| RG-01-18 | Rafraîchissement (corrigé, ECART-21 et ECART-51) : chaque jeton de rafraîchissement est enregistré en base (`refresh_token`) et **ne sert qu'une fois** : le rafraîchissement renvoie un nouveau jeton d'accès **et** un nouveau jeton de rafraîchissement de la même session (rotation). Le compte doit être actif et le jeton émis après le dernier changement de mot de passe. Un jeton déjà utilisé, présenté plus de 10 secondes après (deux onglets ou un réessai réseau rapproché sont tolérés), est un **rejeu** : toute la session est révoquée. Les jetons émis avant ce mécanisme sont acceptés une dernière fois, jusqu'à leur expiration. | `SessionService.java`, migration V22 |
+| RG-01-19 | Déconnexion : la session de l'appareil est révoquée **en base** (elle survit à un redémarrage de l'API) et le jeton d'accès (15 min) est mis en liste noire en mémoire. Un changement de mot de passe, une suspension, une désactivation ou une suppression de compte révoquent toutes les sessions du compte. | `SessionService.java`, `AuthController.java` |
+| RG-01-20 | Limitation par IP (corrigé, ECART-05) : 30 req/min sur la connexion, l'inscription et la déconnexion ; **120 req/min sur le rafraîchissement** (les opérateurs mobiles partagent une IP entre de nombreux abonnés) ; 5 req/15 min sur mot de passe oublié, réinitialisation, réactivation, renvoi d'activation et activation. L'essai de mots de passe reste limité par compte (RG-01-14). | `RateLimitFilter.java` |
 
 ### 4.4 Mot de passe
 
@@ -84,7 +84,7 @@ Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P
 | RG-01-21 | Mot de passe oublié : réponse identique que l'email existe ou non. Un **code à 8 chiffres valable 15 min** est envoyé par email. Chaque nouveau code remet à zéro le compteur d'essais. | `AuthServiceImpl.java:393-426` |
 | RG-01-22 | Réinitialisation : email + code + nouveau mot de passe. Au plus 5 codes erronés par email sur 15 min. En cas de succès, le code est effacé et **toutes les sessions sont invalidées**. | `AuthServiceImpl.java:429-468` |
 | RG-01-23 | Changement (connecté) : l'ancien mot de passe doit être correct ; le nouveau respecte RG-01-05. Toutes les sessions sont invalidées et de nouveaux jetons sont renvoyés à l'appelant. L'application impose en plus que le nouveau mot de passe soit différent de l'ancien. | `AuthServiceImpl.java:471-518`, `validation.ts` |
-| RG-01-24 | Mot de passe temporaire (agent) : tant que `mustChangePassword = true`, toute requête renvoie **423 Locked**, sauf changement de mot de passe, déconnexion, rafraîchissement et `GET /api/users/me`. L'application redirige d'office vers l'écran de changement. Après le changement, l'agent passe ACTIF. | `MustChangePasswordFilter.java`, `APP/app/_layout.tsx:96` |
+| RG-01-24 | Mot de passe à changer (administrateur initial, et agents invités avant l'invitation par lien, ECART-47) : tant que `mustChangePassword = true`, toute requête renvoie **423 Locked**, sauf changement de mot de passe, déconnexion, rafraîchissement et `GET /api/users/me`. L'application redirige d'office vers l'écran de changement. Après le changement, l'agent passe ACTIF. | `MustChangePasswordFilter.java`, `APP/app/_layout.tsx:96` |
 
 ### 4.5 Réactivation d'un compte en cours de suppression
 
@@ -112,7 +112,9 @@ Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P
 | RG-01-33 | Le téléphone n'est pas vérifié. Si un tiers a réservé un numéro, son vrai titulaire ne peut ni s'inscrire avec ce numéro ni le récupérer. Pour l'email, le vrai titulaire reçoit les liens : il peut activer le compte (renvoi du lien) ou en reprendre la main (mot de passe oublié) (ECART-53). | `AuthServiceImpl.java:282-285` |
 | RG-01-34 | Mot de passe oublié et réinitialisation ne contrôlent pas le statut du compte : un compte suspendu ou désactivé peut recevoir un code et changer son mot de passe, sans pouvoir se connecter ensuite (ECART-36). La réinitialisation ne lève pas l'obligation de changement d'un agent (`mustChangePassword`), seul le changement de mot de passe connecté le fait. | `AuthServiceImpl.java:393-468, 495-501` |
 
-### 4.8 🆕 Double authentification du staff (cible DEC-03)
+### 4.8 Double authentification du staff (DEC-03) — développée
+
+> **Développée** (phase 2). Écarts avec le texte initial : le renvoi du code est une route dédiée (`/verification-code/renvoyer`), et la régénération des codes de secours redemande le mot de passe. L'administrateur initial doit changer son mot de passe à sa première connexion (RG-01-41). Le contrôle est actif par défaut ; seule la configuration de test le désactive.
 
 | ID | Règle | Source |
 |---|---|---|
@@ -157,7 +159,7 @@ Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P
 
 Parcours de garde (`app/_layout.tsx`) : un utilisateur connecté qui arrive sur un écran d'authentification est renvoyé vers les onglets ; si `mustChangePassword` vaut vrai, il est renvoyé vers le changement de mot de passe. Après une connexion demandée depuis une fiche, l'utilisateur revient sur la fiche (`src/lib/auth-redirect.ts`).
 
-Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement sur une réponse 401, puis la requête est rejouée ; une seule demande de rafraîchissement part à la fois, les requêtes concurrentes l'attendent (RG-01-29). Les jetons sont stockés dans `expo-secure-store` sur Android, mais dans le **`localStorage` sur le web**, lisible par tout script de la page (ECART-54).
+Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement sur une réponse 401, puis la requête est rejouée ; une seule demande de rafraîchissement part à la fois, les requêtes concurrentes l'attendent (RG-01-29). Sur Android, les jetons sont dans `expo-secure-store`. Sur le **web**, seul le jeton d'accès (15 min) est dans le `localStorage` ; le jeton de rafraîchissement est dans un **cookie `HttpOnly`, `Secure`, `SameSite=Strict`** limité à `/api/auth`, posé par l'API quand la requête porte l'en-tête `X-Client: web` (ECART-54 corrigé). Un ancien jeton resté dans le `localStorage` est converti en cookie au premier rafraîchissement, puis supprimé.
 
 ### 5.1 Emails du module
 
@@ -177,7 +179,11 @@ Côté client (`src/api/client.ts`) : le jeton est rafraîchi automatiquement su
 | GET | `/activate?token=` | public | jeton | Page HTML de succès ou d'erreur |
 | POST | `/api/auth/resend-activation` | public | `{email}` | 200 (toujours) / 429 |
 | POST | `/api/auth/signin` | public | `{identifier, password}` | 200 `JwtResponse` ; 401 ; 403 (compte inactif) ; 429 |
-| POST | `/api/auth/refresh` | public | `{refreshToken}` | 200 `{token, type}` ; 401 ; 403 |
+| POST | `/api/auth/verification-code` | public | `{verificationId, code}` (code email ou code de secours) | 200 `JwtResponse` (+ `codesSecours` la première fois) ; 401 ; 403 |
+| POST | `/api/auth/verification-code/renvoyer` | public | `{verificationId}` | 200 `{verificationId, …}` ; 401 ; 429 |
+| POST | `/api/users/me/codes-secours` | modérateur, administrateur | `{password}` | 200 `{codesSecours}` ; 401 |
+| POST | `/api/auth/accept-invitation` | public | `{token, password}` | 200 ; 400 |
+| POST | `/api/auth/refresh` | public | `{refreshToken}` (application) ou cookie + `X-Client: web` (site) | 200 `{token, refreshToken, type}` (`refreshToken` absent pour le site, il est dans le cookie) ; 401 ; 403 |
 | POST | `/api/auth/logout` | public | `{refreshToken}` facultatif | 200 |
 | POST | `/api/auth/forgot-password` | public | `{email}` | 200 (toujours) |
 | POST | `/api/auth/reset-password` | public | `{email, token, newPassword}` | 200 ; 400 ; 429 |

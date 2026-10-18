@@ -69,6 +69,7 @@ public class AdminServiceImpl implements AdminService {
     private final AnnonceExpirationService annonceExpirationService;
     private final CompteSuppressionService compteSuppressionService;
     private final AuditService audit;
+    private final SessionService sessionService;
 
     public AdminServiceImpl(UserRepository userRepository,
                             RoleRepository roleRepository,
@@ -84,7 +85,9 @@ public class AdminServiceImpl implements AdminService {
                             EmailNotificationService emailNotificationService,
                             AnnonceExpirationService annonceExpirationService,
                             CompteSuppressionService compteSuppressionService,
-                            AuditService audit) {
+                            AuditService audit,
+                            SessionService sessionService) {
+        this.sessionService = sessionService;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bienImmoRepository = bienImmoRepository;
@@ -386,6 +389,9 @@ public class AdminServiceImpl implements AdminService {
         String ancienRole = user.getRole() == null ? null : user.getRole().getName().name();
         user.setRole(roleEntity);
         userRepository.save(user);
+        // Sessions fermées : un compte promu modérateur passe à la double authentification dès sa
+        // connexion suivante, un compte rétrogradé perd ses accès (RG-01-41).
+        sessionService.fermerToutesLesSessions(userId);
         audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, ancienRole + " → " + role);
     }
 
@@ -409,6 +415,7 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(roleRepository.findByName(TypeRole.PARTICULIER)
                 .orElseThrow(() -> new IllegalStateException("Rôle PARTICULIER introuvable en base.")));
         userRepository.save(user);
+        sessionService.fermerToutesLesSessions(userId);
         audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, role + " → " + TypeRole.PARTICULIER);
     }
 
@@ -465,6 +472,7 @@ public class AdminServiceImpl implements AdminService {
             user.setStatut(StatutUtilisateur.SUSPENDU);
             user.setMotifStatut("Suspension automatique suite à " + (count + 1) + " avertissements.");
             userRepository.save(user);
+            sessionService.fermerToutesLesSessions(userId);
         }
 
         Avertissement avert = new Avertissement();
@@ -536,6 +544,11 @@ public class AdminServiceImpl implements AdminService {
     // Pas readOnly : la lecture d'une conversation privée est elle-même journalisée (DEC-02).
     @Transactional
     public Page<MessageModerationResponse> getMessagesConversationAdmin(Long conversationId, Pageable pageable) {
+        // DEC-02 : une conversation privée n'est lisible que si l'un de ses messages a été signalé.
+        // Même réponse qu'une conversation inexistante : l'identifiant, séquentiel, ne se sonde pas.
+        if (!messageRepository.existsByConversationIdAndDateSignalementIsNotNull(conversationId)) {
+            throw new ResourceNotFoundException("Conversation introuvable.");
+        }
         Page<MessageModerationResponse> messages = messageRepository.findByConversationIdAdmin(conversationId, pageable)
                 .map(this::toMessageModerationResponse);
         audit.enregistrer(ActionAudit.CONVERSATION_CONSULTEE, conversationId,

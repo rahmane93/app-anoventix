@@ -1073,6 +1073,34 @@
         "tags" : [ "Administration" ]
       }
     },
+    "/api/auth/accept-invitation" : {
+      "post" : {
+        "operationId" : "accepterInvitation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AcceptInvitationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
     "/api/auth/activate" : {
       "get" : {
         "operationId" : "activateAccount",
@@ -1220,15 +1248,14 @@
                 "$ref" : "#/components/schemas/RefreshTokenRequest"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/RefreshResponse"
                 }
               }
             },
@@ -1316,7 +1343,17 @@
                 }
               }
             },
-            "description" : "OK"
+            "description" : "Session ouverte"
+          },
+          "202" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoubleAuthentificationResponse"
+                }
+              }
+            },
+            "description" : "Modérateur ou administrateur : un code a été envoyé par email, à saisir via /verification-code"
           }
         },
         "tags" : [ "auth-controller" ]
@@ -1341,6 +1378,62 @@
               "*/*" : {
                 "schema" : {
                   "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/verification-code" : {
+      "post" : {
+        "operationId" : "verifierCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerificationCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JwtResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/verification-code/renvoyer" : {
+      "post" : {
+        "operationId" : "renvoyerCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RenvoiCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoubleAuthentificationResponse"
                 }
               }
             },
@@ -2602,6 +2695,43 @@
           }
         },
         "summary" : "Réactiver un agent",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{entrepriseId}/agents/{agentId}/invitation" : {
+      "post" : {
+        "description" : "Envoie un nouveau lien d'invitation (valable 7 jours, usage unique) à un agent qui n'a pas encore choisi son mot de passe ; le lien précédent cesse de fonctionner.",
+        "operationId" : "renvoyerInvitation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "agentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Renvoyer l'invitation d'un agent",
         "tags" : [ "Entreprises" ]
       }
     },
@@ -3982,6 +4112,42 @@
         "tags" : [ "Utilisateurs" ]
       }
     },
+    "/api/users/me/codes-secours" : {
+      "post" : {
+        "description" : "Réservé aux comptes de modération et d'administration. Annule les codes précédents et renvoie 8 nouveaux codes à usage unique, affichés une seule fois. Le mot de passe est redemandé.",
+        "operationId" : "regenererCodesSecours",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CodesSecoursRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Régénérer mes codes de secours (double authentification)",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
     "/api/users/me/export" : {
       "get" : {
         "description" : "Profil, annonces, favoris, conversations, signalements, en JSON.",
@@ -4370,6 +4536,20 @@
   },
   "components" : {
     "schemas" : {
+      "AcceptInvitationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "password", "token" ]
+      },
       "ActivationLicenceRequest" : {
         "type" : "object",
         "properties" : {
@@ -5024,6 +5204,16 @@
         },
         "required" : [ "newPassword", "oldPassword" ]
       },
+      "CodesSecoursRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "password" ]
+      },
       "ConformiteStats" : {
         "type" : "object",
         "properties" : {
@@ -5122,6 +5312,28 @@
         },
         "required" : [ "annonceId" ]
       },
+      "DoubleAuthentificationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "expireDansSecondes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "methode" : {
+            "type" : "string"
+          },
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "verificationRequise" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "EntrepriseDTO" : {
         "type" : "object",
         "properties" : {
@@ -5210,7 +5422,7 @@
             "format" : "int32"
           },
           "entreprise" : {
-            "$ref" : "#/components/schemas/EntrepriseDTO"
+            "$ref" : "#/components/schemas/EntreprisePubliqueDTO"
           },
           "totalItems" : {
             "type" : "integer",
@@ -5219,6 +5431,37 @@
           "totalPages" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "EntreprisePubliqueDTO" : {
+        "type" : "object",
+        "properties" : {
+          "adresse" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "nombreAgents" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "photoProfil" : {
+            "type" : "string"
+          },
+          "telephone" : {
+            "type" : "string"
           }
         }
       },
@@ -5396,6 +5639,12 @@
       "JwtResponse" : {
         "type" : "object",
         "properties" : {
+          "codesSecours" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "email" : {
             "type" : "string"
           },
@@ -6095,15 +6344,27 @@
           }
         }
       },
+      "RefreshResponse" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
       "RefreshTokenRequest" : {
         "type" : "object",
         "properties" : {
           "refreshToken" : {
-            "type" : "string",
-            "minLength" : 1
+            "type" : "string"
           }
-        },
-        "required" : [ "refreshToken" ]
+        }
       },
       "ReglagesLicenceDTO" : {
         "type" : "object",
@@ -6121,6 +6382,16 @@
             "format" : "int64"
           }
         }
+      },
+      "RenvoiCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "verificationId" ]
       },
       "ResetPasswordRequest" : {
         "type" : "object",
@@ -6261,6 +6532,9 @@
       "SignupRequest" : {
         "type" : "object",
         "properties" : {
+          "acceptCgu" : {
+            "type" : "boolean"
+          },
           "email" : {
             "type" : "string",
             "format" : "email",
@@ -6497,6 +6771,21 @@
           }
         },
         "required" : [ "statut" ]
+      },
+      "VerificationCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "code", "verificationId" ]
       },
       "VisibiliteStats" : {
         "type" : "object",

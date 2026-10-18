@@ -32,4 +32,11 @@ public class SignupRequest {
 
     @NotBlank(message = "Le mot de passe est obligatoire.")
     private String password;
+
+    /**
+     * Acceptation des CGU. Les versions de l'application antérieures à l'enregistrement du
+     * consentement n'envoient pas ce champ (leur formulaire imposait pourtant la case à cocher) :
+     * absent = accepté, un refus explicite (false) bloque l'inscription.
+     */
+    private Boolean acceptCgu;
 }

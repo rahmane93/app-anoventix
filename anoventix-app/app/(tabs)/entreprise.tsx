@@ -72,6 +72,7 @@ export default function EntrepriseScreen() {
     onSubmitAgent,
     handleRemoveAgent,
     handleToggleAgentStatus,
+    handleResendInvitation,
   } = useEntreprise();
 
   const toggleEdit = () => {
@@ -420,6 +421,7 @@ export default function EntrepriseScreen() {
               key={agent.id}
               agent={agent}
               onToggleStatus={() => handleToggleAgentStatus(agent)}
+              onResendInvitation={canManageEntreprise ? () => handleResendInvitation(agent) : undefined}
               onRemove={() => handleRemoveAgent(agent)}
               isToggling={togglingAgentId === agent.id}
               isRemoving={removingAgentId === agent.id}

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EntrepriseProfilDTO {
-    private EntrepriseDTO entreprise;
+    private EntreprisePubliqueDTO entreprise;
     private java.util.List<AnnonceDTO> annonces;
     private int currentPage;
     private long totalItems;
@@ -17,7 +17,7 @@ public class EntrepriseProfilDTO {
 
     public static EntrepriseProfilDTO of(EntrepriseDTO entreprise, Page<AnnonceDTO> page) {
         return new EntrepriseProfilDTO(
-                entreprise,
+                EntreprisePubliqueDTO.de(entreprise),
                 page.getContent(),
                 page.getNumber(),
                 page.getTotalElements(),

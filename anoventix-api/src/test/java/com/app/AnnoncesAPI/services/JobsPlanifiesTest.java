@@ -124,7 +124,8 @@ class JobsPlanifiesTest {
         PasswordEncoder encoder = mock(PasswordEncoder.class);
         when(encoder.encode(anyString())).thenReturn("hash");
         return new CompteSuppressionService(userRepo, mock(AnnonceRepository.class),
-                mock(EntrepriseRepository.class), mock(MediaRepository.class), media, encoder);
+                mock(EntrepriseRepository.class), mock(MediaRepository.class), media, encoder,
+                mock(SessionService.class));
     }
 
     private static User compteSupprime(StatutUtilisateur statut) {
@@ -160,6 +161,46 @@ class JobsPlanifiesTest {
         assertEquals(CompteSuppressionService.MOTIF_ANONYMISE, u.getMotifStatut());
         verify(media).deleteMediaFromDisk("/uploads/public/x/photo.jpg");
         verify(media).deletePieceIdentite("private/piece-identite/x/piece.jpg");
+    }
+
+    // ECART-15 : à l'échéance, un professionnel emporte ses agents et son entreprise, comme lors
+    // d'une suppression par un administrateur.
+    @Test
+    void anonymiserComptesExpires_unProfessionnelEmporteSesAgentsEtSonEntreprise() {
+        UserRepository userRepo = mock(UserRepository.class);
+        EntrepriseRepository entrepriseRepo = mock(EntrepriseRepository.class);
+        MediaService media = mock(MediaService.class);
+        PasswordEncoder encoder = mock(PasswordEncoder.class);
+        when(encoder.encode(anyString())).thenReturn("hash");
+        CompteSuppressionService service = new CompteSuppressionService(userRepo, mock(AnnonceRepository.class),
+                entrepriseRepo, mock(MediaRepository.class), media, encoder, mock(SessionService.class));
+
+        User pro = compteSupprime(StatutUtilisateur.INACTIF);
+        User agent = compteSupprime(StatutUtilisateur.INACTIF);
+        agent.setEmail("agent@example.com");
+        agent.setTelephone("+224620000001");
+        agent.setDateSuppressionDemandee(null);
+        agent.setPhotoProfil("/uploads/public/agent/photo.jpg");
+        com.app.AnnoncesAPI.entities.Entreprise entreprise = new com.app.AnnoncesAPI.entities.Entreprise();
+        entreprise.setId(UUID.randomUUID());
+        entreprise.setNom("Agence Kaloum");
+        entreprise.setTelephone("+224621000000");
+        entreprise.setPhotoProfil("/uploads/public/entreprise/logo.jpg");
+        when(userRepo.findByDateSuppressionDemandeeBefore(any())).thenReturn(List.of(pro));
+        when(entrepriseRepo.findByAnnonceurProfessionnel(pro)).thenReturn(java.util.Optional.of(entreprise));
+        when(userRepo.findByEntrepriseId(entreprise.getId())).thenReturn(List.of(pro, agent));
+
+        service.anonymiserComptesExpires();
+
+        assertTrue(pro.getEmail().endsWith("@anonyme.invalid"));
+        assertTrue(agent.getEmail().endsWith("@anonyme.invalid"));
+        assertNull(agent.getTelephone());
+        assertEquals(CompteSuppressionService.MOTIF_ANONYMISE, agent.getMotifStatut());
+        assertEquals(CompteSuppressionService.NOM_ENTREPRISE_SUPPRIMEE, entreprise.getNom());
+        assertNull(entreprise.getTelephone());
+        assertFalse(entreprise.getActive());
+        verify(media).deleteMediaFromDisk("/uploads/public/agent/photo.jpg");
+        verify(media).deleteMediaFromDisk("/uploads/public/entreprise/logo.jpg");
     }
 
     @Test

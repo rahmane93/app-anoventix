@@ -506,6 +506,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/accept-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["accepterInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/activate": {
         parameters: {
             query?: never;
@@ -660,6 +676,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["registerUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verification-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["verifierCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verification-code/renvoyer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["renvoyerCode"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1195,6 +1243,26 @@ export interface paths {
          */
         put: operations["activerAgent"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/entreprises/{entrepriseId}/agents/{agentId}/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Renvoyer l'invitation d'un agent
+         * @description Envoie un nouveau lien d'invitation (valable 7 jours, usage unique) à un agent qui n'a pas encore choisi son mot de passe ; le lien précédent cesse de fonctionner.
+         */
+        post: operations["renvoyerInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1741,6 +1809,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/codes-secours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Régénérer mes codes de secours (double authentification)
+         * @description Réservé aux comptes de modération et d'administration. Annule les codes précédents et renvoie 8 nouveaux codes à usage unique, affichés une seule fois. Le mot de passe est redemandé.
+         */
+        post: operations["regenererCodesSecours"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/export": {
         parameters: {
             query?: never;
@@ -1961,6 +2049,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptInvitationRequest: {
+            password: string;
+            token: string;
+        };
         ActivationLicenceRequest: {
             cle: string;
         };
@@ -2212,6 +2304,9 @@ export interface components {
             newPassword: string;
             oldPassword: string;
         };
+        CodesSecoursRequest: {
+            password: string;
+        };
         ConformiteStats: {
             /** Format: int64 */
             annoncesActives?: number;
@@ -2254,6 +2349,15 @@ export interface components {
             /** Format: int64 */
             annonceId: number;
         };
+        DoubleAuthentificationResponse: {
+            /** Format: int64 */
+            expireDansSecondes?: number;
+            message?: string;
+            methode?: string;
+            /** Format: uuid */
+            verificationId?: string;
+            verificationRequise?: boolean;
+        };
         EntrepriseDTO: {
             active?: boolean;
             adresse?: string;
@@ -2289,11 +2393,23 @@ export interface components {
             annonces?: components["schemas"]["AnnonceDTO"][];
             /** Format: int32 */
             currentPage?: number;
-            entreprise?: components["schemas"]["EntrepriseDTO"];
+            entreprise?: components["schemas"]["EntreprisePubliqueDTO"];
             /** Format: int64 */
             totalItems?: number;
             /** Format: int32 */
             totalPages?: number;
+        };
+        EntreprisePubliqueDTO: {
+            adresse?: string;
+            description?: string;
+            email?: string;
+            /** Format: uuid */
+            id?: string;
+            nom?: string;
+            /** Format: int32 */
+            nombreAgents?: number;
+            photoProfil?: string;
+            telephone?: string;
         };
         EntrepriseRequest: {
             adresse: string;
@@ -2359,6 +2475,7 @@ export interface components {
             nouvelleValeur?: string;
         };
         JwtResponse: {
+            codesSecours?: string[];
             email?: string;
             /** Format: uuid */
             id?: string;
@@ -2631,8 +2748,13 @@ export interface components {
             /** Format: int32 */
             quotaAnnonces?: number;
         };
+        RefreshResponse: {
+            refreshToken?: string;
+            token?: string;
+            type?: string;
+        };
         RefreshTokenRequest: {
-            refreshToken: string;
+            refreshToken?: string;
         };
         ReglagesLicenceDTO: {
             contactTelephone?: string;
@@ -2640,6 +2762,10 @@ export interface components {
             prixParticulier?: number;
             /** Format: int64 */
             prixProfessionnel?: number;
+        };
+        RenvoiCodeRequest: {
+            /** Format: uuid */
+            verificationId: string;
         };
         ResetPasswordRequest: {
             email: string;
@@ -2693,6 +2819,7 @@ export interface components {
             motif?: "ARNAQUE" | "PROPOS_INSULTANTS" | "HARCELEMENT" | "SPAM" | "AUTRE";
         };
         SignupRequest: {
+            acceptCgu?: boolean;
             /** Format: email */
             email: string;
             nom: string;
@@ -2777,6 +2904,11 @@ export interface components {
             motifRejet?: string;
             /** @enum {string} */
             statut: "EN_ATTENTE" | "VALIDEE" | "REJETEE";
+        };
+        VerificationCodeRequest: {
+            code: string;
+            /** Format: uuid */
+            verificationId: string;
         };
         VisibiliteStats: {
             top5ParVues?: components["schemas"]["TopAnnonceItem"][];
@@ -3452,6 +3584,30 @@ export interface operations {
             };
         };
     };
+    accepterInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
     activateAccount: {
         parameters: {
             query?: {
@@ -3577,7 +3733,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["RefreshTokenRequest"];
             };
@@ -3589,7 +3745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["RefreshResponse"];
                 };
             };
         };
@@ -3655,13 +3811,22 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Session ouverte */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["JwtResponse"];
+                };
+            };
+            /** @description Modérateur ou administrateur : un code a été envoyé par email, à saisir via /verification-code */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DoubleAuthentificationResponse"];
                 };
             };
         };
@@ -3686,6 +3851,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    verifierCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["JwtResponse"];
+                };
+            };
+        };
+    };
+    renvoyerCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenvoiCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DoubleAuthentificationResponse"];
                 };
             };
         };
@@ -4422,6 +4635,29 @@ export interface operations {
         };
     };
     activerAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entrepriseId: string;
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AgentDTO"];
+                };
+            };
+        };
+    };
+    renvoyerInvitation: {
         parameters: {
             query?: never;
             header?: never;
@@ -5365,6 +5601,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    regenererCodesSecours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodesSecoursRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string[];
+                    };
+                };
             };
         };
     };

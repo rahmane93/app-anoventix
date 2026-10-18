@@ -278,6 +278,9 @@ export default function AnnonceDetailScreen() {
               onPress={handleOpenConversation}
               isLoading={creatingConversationForAnnonceId === a.id}
             />
+            {!isAuthenticated ? (
+              <AppText style={s.contactHint}>Connectez-vous pour contacter l'annonceur.</AppText>
+            ) : null}
             {a.annonceur?.telephone ? (
               <View style={s.dCtaRow}>
                 <Button
@@ -1064,6 +1067,8 @@ const s = StyleSheet.create({
   dClosed: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dCtas: { gap: spacing.sm },
   dCtaRow: { flexDirection: 'row', gap: spacing.sm },
+  // Visiteur non connecté : les coordonnées de l'annonceur ne sont pas fournies par l'API (DEC-14).
+  contactHint: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
   dCtaHalf: { flex: 1, minHeight: 48, paddingHorizontal: spacing.base },
   dSimilaires: { marginTop: spacing['3xl'], gap: spacing.base },
   dSimTitle: { fontSize: typography.sizes['2xl'], fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.4 },

@@ -30,7 +30,16 @@ public class EmailNotificationService {
      * @param message      texte (sauts de ligne conservés) ; échappé par le template
      */
     public void notifier(User destinataire, String sujet, String titre, String message) {
-        if (destinataire == null || destinataire.getEmail() == null
+        envoyer(destinataire, sujet, titre, message, false);
+    }
+
+    /** Comme {@link #notifier}, pour un message porteur d'un secret (code de connexion) : effacé de la file après l'envoi. */
+    public void notifierSensible(User destinataire, String sujet, String titre, String message) {
+        envoyer(destinataire, sujet, titre, message, true);
+    }
+
+    private void envoyer(User destinataire, String sujet, String titre, String message, boolean sensible) {
+        if (destinataire == null|| destinataire.getEmail() == null
                 || destinataire.getEmail().endsWith("@anonyme.invalid")) {
             return;
         }
@@ -38,6 +47,6 @@ public class EmailNotificationService {
                 Map.of("titre", titre, "message", message),
                 titre,
                 "Vous recevez cet e-mail car vous avez un compte AnoventiX. Retrouvez le détail dans l'application.");
-        notificationService.envoyer(destinataire.getEmail(), sujet, corps, false);
+        notificationService.envoyer(destinataire.getEmail(), sujet, corps, sensible);
     }
 }

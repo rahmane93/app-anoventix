@@ -30,12 +30,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.UserDTO;
+import com.app.AnnoncesAPI.payload.request.CodesSecoursRequest;
 import com.app.AnnoncesAPI.payload.request.UpdateProfileRequest;
 import com.app.AnnoncesAPI.payload.request.UpdateStatutRequest;
 import com.app.AnnoncesAPI.payload.request.ValidationPieceIdentiteRequest;
 import com.app.AnnoncesAPI.services.ExportDonneesService;
 import com.app.AnnoncesAPI.services.PresenceService;
 import com.app.AnnoncesAPI.services.UserService;
+import com.app.AnnoncesAPI.services.VerificationConnexionService;
+import com.app.AnnoncesAPI.services.profiles.UserDetailsImpl;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -51,12 +55,28 @@ public class UserController {
     private final UserService userService;
     private final ExportDonneesService exportDonneesService;
     private final PresenceService presenceService;
+    private final VerificationConnexionService verificationConnexionService;
 
     public UserController(UserService userService, ExportDonneesService exportDonneesService,
-                          PresenceService presenceService) {
+                          PresenceService presenceService, VerificationConnexionService verificationConnexionService) {
         this.userService = userService;
         this.exportDonneesService = exportDonneesService;
         this.presenceService = presenceService;
+        this.verificationConnexionService = verificationConnexionService;
+    }
+
+    @PostMapping("/me/codes-secours")
+    @PreAuthorize("hasAnyRole('MODERATEUR', 'ADMINISTRATEUR')")
+    @Operation(summary = "Régénérer mes codes de secours (double authentification)",
+               description = "Réservé aux comptes de modération et d'administration. Annule les codes précédents et "
+                           + "renvoie 8 nouveaux codes à usage unique, affichés une seule fois. Le mot de passe est redemandé.")
+    public ResponseEntity<Map<String, List<String>>> regenererCodesSecours(
+            @Valid @RequestBody CodesSecoursRequest body,
+            @AuthenticationPrincipal UserDetailsImpl moi) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(Map.of("codesSecours",
+                        verificationConnexionService.regenererCodesSecours(moi.getId(), body.getPassword())));
     }
 
     // -------------------------------------------------------------------------

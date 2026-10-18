@@ -2,14 +2,30 @@ package com.app.AnnoncesAPI.services;
 
 import com.app.AnnoncesAPI.payload.request.LoginRequest;
 import com.app.AnnoncesAPI.payload.request.SignupRequest;
+import com.app.AnnoncesAPI.payload.response.DoubleAuthentificationResponse;
 import com.app.AnnoncesAPI.payload.response.JwtResponse;
+import com.app.AnnoncesAPI.payload.response.RefreshResponse;
 
 public interface AuthService {
     
     /**
      * Authentifie un utilisateur et génère un token JWT
      */
-    JwtResponse authenticateUser(LoginRequest loginRequest);
+    Connexion authenticateUser(LoginRequest loginRequest);
+
+    /**
+     * Issue d'une connexion : session ouverte (jetons), ou, pour un modérateur ou un administrateur,
+     * code de vérification à saisir d'abord (DEC-03).
+     */
+    record Connexion(JwtResponse jwt, DoubleAuthentificationResponse verification) {
+        static Connexion session(JwtResponse jwt) {
+            return new Connexion(jwt, null);
+        }
+
+        static Connexion verificationRequise(DoubleAuthentificationResponse verification) {
+            return new Connexion(null, verification);
+        }
+    }
     
     /**
      * Enregistre un nouvel utilisateur
@@ -38,9 +54,10 @@ public interface AuthService {
     JwtResponse changePassword(String username, String oldPassword, String newPassword);
 
     /**
-     * Génère un nouveau access token à partir d'un refresh token valide
+     * Échange un refresh token valide contre un nouvel access token et un nouveau refresh token
+     * (le précédent n'est plus utilisable : rotation, voir {@link SessionService}).
      */
-    String refreshAccessToken(String refreshToken);
+    RefreshResponse refresh(String refreshToken);
 
     /**
      * Révoque l'access token courant et, s'il est fourni, le refresh token (logout)

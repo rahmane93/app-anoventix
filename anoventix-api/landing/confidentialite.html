@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Politique de confidentialité — AnoventiX</title>
+    <meta
+      name="description"
+      content="Politique de confidentialité de l'application AnoventiX : données collectées, finalités, durées de conservation et droits."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --blue: #1e3a6e;
+        --blue-light: #e6ecf7;
+        --gold: #c9960c;
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #4b5563;
+        --border: #e5e7eb;
+        --todo-bg: #fff4d6;
+        --todo-text: #7a4d00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --blue: #9db8ea;
+          --blue-light: #1b2740;
+          --bg: #0f1420;
+          --card: #161d2c;
+          --text: #e8ecf3;
+          --muted: #a5afc0;
+          --border: #273047;
+          --todo-bg: #3a2e10;
+          --todo-text: #f2cf7a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.65;
+        font-size: 16px;
+      }
+      header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+      }
+      .bar {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .logo {
+        font-weight: 800;
+        font-size: 20px;
+        color: var(--blue);
+        text-decoration: none;
+        letter-spacing: -0.5px;
+      }
+      .logo span { color: var(--gold); }
+      .bar a.back { color: var(--blue); font-weight: 600; font-size: 14px; }
+      main {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.5px; }
+      .updated { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+      .toc, section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+      }
+      .toc h2 { font-size: 15px; margin: 0 0 8px; }
+      .toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; font-size: 14px; }
+      .toc a { color: var(--blue); text-decoration: none; }
+      .toc a:hover { text-decoration: underline; }
+      section h2 { font-size: 19px; margin: 0 0 8px; color: var(--blue); scroll-margin-top: 16px; }
+      section h3 { font-size: 16px; margin: 16px 0 4px; }
+      p, li { color: var(--text); }
+      ul { padding-left: 20px; }
+      .todo {
+        background: var(--todo-bg);
+        color: var(--todo-text);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+      .note {
+        background: var(--blue-light);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      footer { text-align: center; color: var(--muted); font-size: 14px; padding: 0 16px 32px; }
+      footer a { color: var(--blue); }
+      @media (max-width: 600px) {
+        h1 { font-size: 24px; }
+        .toc ol { columns: 1; }
+        .toc, section { padding: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <a class="logo" href="/">Anovent<span>iX</span></a>
+        <a class="back" href="/">← Retour à l'accueil</a>
+      </div>
+    </header>
+
+    <main>
+      <h1>Politique de confidentialité</h1>
+      <p class="updated">Dernière mise à jour : 18 octobre 2026</p>
+
+      <nav class="toc" aria-label="Sommaire">
+        <h2>Sommaire</h2>
+        <ol>
+          <li><a href="#responsable">Responsable du traitement</a></li>
+          <li><a href="#donnees">Données collectées</a></li>
+          <li><a href="#finalites">Pourquoi nous les utilisons</a></li>
+          <li><a href="#destinataires">Qui y a accès</a></li>
+          <li><a href="#conservation">Durées de conservation</a></li>
+          <li><a href="#droits">Vos droits</a></li>
+          <li><a href="#securite">Sécurité</a></li>
+          <li><a href="#cookies">Cookies et mesure d’audience</a></li>
+          <li><a href="#transferts">Hébergement et transferts</a></li>
+          <li><a href="#mineurs">Mineurs</a></li>
+          <li><a href="#evolution">Évolution de cette politique</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <section id="responsable">
+        <h2>1. Responsable du traitement</h2>
+        <p>
+          Les données personnelles collectées par l'application AnoventiX et le site
+          www.anoventix.com sont traitées par Anoventix SARL, dont le siège est situé à Matoto,
+          Conakry, République de Guinée. Contact : <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>.
+        </p>
+        <p>
+          Cette politique s'applique en complément des
+          <a href="/cgu">conditions générales d'utilisation</a>. Elle suit le droit guinéen de
+          protection des données personnelles et, pour les utilisateurs installés dans l'Union
+          européenne, les principes du RGPD.
+          <span class="todo">[À faire valider par un juriste : références exactes de la loi guinéenne applicable et formalités auprès de l'autorité compétente.]</span>
+        </p>
+      </section>
+
+      <section id="donnees">
+        <h2>2. Données collectées</h2>
+        <h3>Compte</h3>
+        <p>Nom, prénom, adresse email, numéro de téléphone, mot de passe (conservé uniquement sous forme chiffrée), rôle (particulier, professionnel, agent), date et version des conditions d'utilisation acceptées.</p>
+        <h3>Vérification d'identité</h3>
+        <p>
+          Pour publier une annonce, une pièce d'identité est demandée : type, numéro et photo du
+          document. Elle n'est jamais affichée publiquement. Seuls l'équipe de modération et le
+          titulaire y accèdent.
+        </p>
+        <p>
+          <span class="todo">[À activer à la mise en service de la vérification par selfie : « Un selfie pris en direct, en tenant votre pièce d'identité, est comparé à la photo de la pièce par un modérateur. Il n'est ni affiché publiquement, ni utilisé comme photo de profil, et aucune reconnaissance faciale automatique n'est effectuée. »]</span>
+        </p>
+        <h3>Annonces et échanges</h3>
+        <p>Annonces publiées (textes, prix, photos, localisation et position GPS si vous la renseignez), favoris, messages échangés avec les autres utilisateurs, signalements que vous faites ou qui vous concernent, avertissements.</p>
+        <h3>Entreprise</h3>
+        <p>Pour les professionnels : nom de l'agence, numéro RCCM, coordonnées, agents rattachés.</p>
+        <h3>Licence</h3>
+        <p>Clé de licence activée, dates de validité.</p>
+        <h3>Appareil et connexion</h3>
+        <p>Adresse IP et horodatage des actions de modération et d'administration, sessions de connexion ouvertes, et, si vous l'autorisez, votre position pour la recherche « autour de moi » (non conservée par le serveur).</p>
+      </section>
+
+      <section id="finalites">
+        <h2>3. Pourquoi nous les utilisons</h2>
+        <ul>
+          <li><strong>Fournir le service</strong> : publier et consulter des annonces, vous mettre en relation par messagerie, gérer votre compte et votre agence (exécution du contrat).</li>
+          <li><strong>Sécuriser la Plateforme et lutter contre la fraude</strong> : vérification d'identité, modération, signalements, avertissements, journal des actions de la modération (intérêt légitime et obligations légales).</li>
+          <li><strong>Vous informer</strong> : emails de service (activation, sécurité, décisions concernant votre compte ou vos annonces).</li>
+          <li><strong>Respecter nos obligations légales</strong> et répondre aux demandes des autorités compétentes.</li>
+        </ul>
+        <p>Nous ne vendons pas vos données et ne les utilisons pas pour de la publicité ciblée.</p>
+      </section>
+
+      <section id="destinataires">
+        <h2>4. Qui y a accès</h2>
+        <ul>
+          <li><strong>Les autres utilisateurs</strong> voient le contenu de vos annonces, votre prénom, la première lettre de votre nom et votre photo de profil. Votre numéro de téléphone n'est affiché qu'aux utilisateurs connectés. Les visiteurs non connectés ne le voient pas.</li>
+          <li><strong>L'équipe de modération</strong> traite les pièces d'identité et les signalements. Elle ne lit une conversation privée que si l'un de ses messages a été signalé ; chaque lecture est enregistrée dans un journal consultable par l'administrateur.</li>
+          <li><strong>Nos prestataires techniques</strong> : hébergeur (OVH, France), service d'envoi d'emails <span class="todo">[À compléter : nom du prestataire d'emails retenu]</span>, fournisseur de cartes (OpenStreetMap, qui reçoit l'adresse IP de votre appareil lors de l'affichage d'une carte).</li>
+          <li><strong>Les autorités</strong>, uniquement sur demande légale.</li>
+        </ul>
+      </section>
+
+      <section id="conservation">
+        <h2>5. Durées de conservation</h2>
+        <p><span class="todo">[Durées proposées, à faire valider par un juriste avant publication.]</span></p>
+        <ul>
+          <li><strong>Compte actif</strong> : tant que le compte existe.</li>
+          <li><strong>Compte supprimé</strong> : désactivé aussitôt, réactivable pendant 30 jours, puis anonymisé définitivement (vos annonces sont retirées, vos photos et votre pièce d'identité effacées).</li>
+          <li><strong>Pièce d'identité</strong> : effacée à la suppression du compte <span class="todo">[cible : 30 jours après la validation du dossier]</span>.</li>
+          <li><strong>Annonces clôturées ou supprimées</strong> : photos et historique effacés 12 mois après la clôture.</li>
+          <li><strong>Messages</strong> : 2 ans après le dernier message d'une conversation ; un message signalé est conservé un an après son signalement.</li>
+          <li><strong>Signalements et avertissements</strong> : 3 ans.</li>
+          <li><strong>Journal des actions de modération</strong> : 3 ans, adresses IP effacées après 90 jours.</li>
+          <li><strong>Sauvegardes</strong> : 14 jours sur le serveur.</li>
+        </ul>
+      </section>
+
+      <section id="droits">
+        <h2>6. Vos droits</h2>
+        <ul>
+          <li><strong>Accès et portabilité</strong> : « Exporter mes données » dans votre profil fournit vos données en JSON.</li>
+          <li><strong>Rectification</strong> : vos informations se modifient depuis votre profil.</li>
+          <li><strong>Suppression</strong> : « Supprimer mon compte » dans votre profil (voir les durées ci-dessus).</li>
+          <li><strong>Opposition et limitation</strong> : écrivez-nous à <a href="mailto:contact@anoventix.com">contact@anoventix.com</a> ; nous répondons sous 30 jours.</li>
+        </ul>
+        <p>
+          Vous pouvez aussi saisir l'autorité de protection des données de votre pays.
+          <span class="todo">[À compléter : nom et coordonnées de l'autorité compétente.]</span>
+        </p>
+      </section>
+
+      <section id="securite">
+        <h2>7. Sécurité</h2>
+        <p>
+          Échanges chiffrés (HTTPS), mots de passe chiffrés, pièces d'identité stockées hors de toute
+          adresse publique et servies uniquement à leur titulaire et à la modération, sessions
+          révocables, double authentification par email pour les comptes de modération et
+          d'administration, limitation des tentatives de connexion, sauvegardes quotidiennes.
+          Aucun système n'est infaillible : en cas d'atteinte à vos données, nous vous
+          informerons dans les meilleurs délais.
+        </p>
+      </section>
+
+      <section id="cookies">
+        <h2>8. Cookies et mesure d'audience</h2>
+        <p>
+          Le site web utilise un seul cookie, strictement nécessaire : il conserve votre session de
+          connexion, ne peut pas être lu par les scripts de la page et n'est envoyé qu'à notre API.
+          Il n'y a aucun cookie publicitaire ni traceur tiers.
+        </p>
+        <p>
+          <span class="todo">[À compléter à la mise en service de la mesure d'audience : « Nous mesurons la fréquentation avec un outil sans cookies (Plausible ou Matomo hébergé par nos soins), sans données personnelles. »]</span>
+        </p>
+      </section>
+
+      <section id="transferts">
+        <h2>9. Hébergement et transferts</h2>
+        <p>
+          Vos données sont hébergées chez OVH (France). Les utilisateurs situés en Guinée ou ailleurs
+          accèdent donc à un service dont les serveurs se trouvent en dehors de la Guinée.
+          <span class="todo">[À faire valider par un juriste : encadrement de ce transfert au regard du droit guinéen.]</span>
+        </p>
+      </section>
+
+      <section id="mineurs">
+        <h2>10. Mineurs</h2>
+        <p>La Plateforme est réservée aux personnes majeures. Si vous pensez qu'un mineur a créé un compte, écrivez-nous : nous le supprimerons.</p>
+      </section>
+
+      <section id="evolution">
+        <h2>11. Évolution de cette politique</h2>
+        <p>Cette politique peut évoluer. Toute modification importante est annoncée dans l'application avant son entrée en vigueur ; la date de dernière mise à jour figure en haut de cette page.</p>
+      </section>
+
+      <section id="contact">
+        <h2>12. Contact</h2>
+        <p>Questions sur vos données : <a href="mailto:contact@anoventix.com">contact@anoventix.com</a>.</p>
+      </section>
+    </main>
+
+    <footer>
+      © 2026 AnoventiX · <a href="/">Accueil</a> ·
+      <a href="/cgu">Conditions d'utilisation</a> ·
+      <a href="/confidentialite">Confidentialité</a> ·
+      <a href="/mentions-legales">Mentions légales</a>
+    </footer>
+  </body>
+</html>
