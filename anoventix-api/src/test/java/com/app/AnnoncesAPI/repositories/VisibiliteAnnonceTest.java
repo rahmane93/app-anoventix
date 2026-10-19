@@ -214,7 +214,7 @@ class VisibiliteAnnonceTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Matam");
-            loc.setQuartier("Taouyah");
+            loc.setQuartier("Taouyah (VisibiliteAnnonceTest)");
             return localisationRepository.save(loc);
         });
     }

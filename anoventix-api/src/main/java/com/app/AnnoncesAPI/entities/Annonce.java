@@ -220,6 +220,7 @@ public abstract class Annonce {
 
     // Relation avec les médias (images, vidéos, etc.)
     @OneToMany(mappedBy = "annonce", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @jakarta.persistence.OrderBy("ordre ASC, id ASC")
     @JsonManagedReference
     private List<Media> medias;
 

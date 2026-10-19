@@ -149,15 +149,6 @@ public class MessagingController {
                 .body(messagingService.sendMessage(conversationId, request, authentication));
     }
 
-    @PutMapping("/messages/{messageId}/read")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Marquer un message comme lu")
-    public ResponseEntity<MessageDTO> markMessageAsRead(
-            @PathVariable Long messageId,
-            Authentication authentication) {
-        return ResponseEntity.ok(messagingService.markMessageAsRead(messageId, authentication));
-    }
-
     @PutMapping("/conversations/{conversationId}/read")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Marquer une conversation comme lue")

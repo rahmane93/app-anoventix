@@ -83,6 +83,8 @@ export interface TraiterSignalementRequest {
 
 export interface EmettrAvertissementRequest {
   motif: string;
+  /** Facultatif : sans choix, le niveau suit le rang parmi les avertissements en vigueur. */
+  niveau?: NiveauAvertissement;
 }
 
 // ─── DTO ──────────────────────────────────────────────────────────────────────
@@ -261,6 +263,12 @@ export interface Avertissement {
   suspenduAutomatiquement: boolean;
   emitPar: string;
   date: string;
+  /** Compte encore pour le niveau et la suspension (6 mois, non levé). */
+  enVigueur?: boolean;
+  dateExpiration?: string | null;
+  dateLevee?: string | null;
+  levePar?: string | null;
+  motifLevee?: string | null;
 }
 
 /** Quotas des comptes pro ; en exception d'entreprise, null = valeur globale. */

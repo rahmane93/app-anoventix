@@ -75,12 +75,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserDTO> getAllUsers(Pageable pageable) {
-        return userRepository.findByDateSuppressionDefinitiveIsNull(pageable).map(this::toDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public UserDTO getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
@@ -476,7 +470,7 @@ public class UserServiceImpl implements UserService {
                 .createdAt(user.getCreatedAt())
                 .statut(user.getStatut())
                 .motifStatut(user.getMotifStatut())
-                .nbAvertissements(avertissementRepository.countByUtilisateurId(user.getId()))
+                .nbAvertissements(avertissementRepository.countEnVigueur(user.getId()))
                 .annoncesMasquees(user.isAnnoncesMasquees())
                 .motifMasquageAnnonces(user.getMotifMasquageAnnonces())
                 .dateMasquageAnnonces(user.getDateMasquageAnnonces())

@@ -9,6 +9,9 @@ export interface Localisation {
   typeCommune?: string;
   /** Entrée « Autre quartier » : l'annonce s'affiche avec sa commune seule (DEC-22). */
   technique?: boolean;
+  /** Point de référence du quartier, pour centrer la carte (ECART-45). */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // ─── Enums Annonce ────────────────────────────────────────────────────────────

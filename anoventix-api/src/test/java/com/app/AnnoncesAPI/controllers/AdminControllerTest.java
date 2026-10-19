@@ -92,7 +92,7 @@ public class AdminControllerTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Kaloum");
-            loc.setQuartier("Almamya");
+            loc.setQuartier("Almamya (AdminControllerTest)");
             localisationRepository.save(loc);
         }
     }
@@ -342,8 +342,7 @@ public class AdminControllerTest {
         for (var requete : java.util.List.of(
                 get("/api/biens-immo"),
                 get("/api/biens-immo/filter"),
-                get("/api/biens-immo/search").param("keyword", "modérer"),
-                get("/api/biens-immo/public/search").param("q", "immobilier"))) {
+                get("/api/biens-immo/filter").param("q", "immobilier"))) {
             var ids = idsPublics(requete);
             assertFalse(ids.contains(visible));
             assertTrue(ids.contains(autre));
@@ -475,9 +474,6 @@ public class AdminControllerTest {
 
         // Fiche de gestion : membres et modération seulement.
         mockMvc.perform(get("/api/entreprises/{id}", entreprise.getId()).header("Authorization", "Bearer " + autreProJwt))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/entreprises/{id}/can-create-annonce", entreprise.getId())
-                        .header("Authorization", "Bearer " + autreProJwt))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/entreprises/{id}", entreprise.getId()).header("Authorization", "Bearer " + proJwt))
                 .andExpect(status().isOk())

@@ -159,7 +159,7 @@ class ProfilPublicTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Ratoma");
-            loc.setQuartier("Kipé");
+            loc.setQuartier("Kipé (ProfilPublicTest)");
             return localisationRepository.save(loc);
         });
     }

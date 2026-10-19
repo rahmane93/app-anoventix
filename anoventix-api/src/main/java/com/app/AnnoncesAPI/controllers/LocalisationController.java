@@ -67,6 +67,13 @@ public class LocalisationController {
         return ResponseEntity.ok(PageResponse.of(localisationService.getAllLocalisations(pageable)));
     }
 
+    @Operation(summary = "Régions du référentiel",
+               description = "Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).")
+    @GetMapping("/regions")
+    public ResponseEntity<java.util.List<String>> getRegions() {
+        return ResponseEntity.ok(localisationService.getRegions());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LocalisationDTO> getLocalisationById(@PathVariable String id) {
         return localisationService.getLocalisationById(id)

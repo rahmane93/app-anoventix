@@ -262,17 +262,6 @@ public class UserController {
     // Administration (ADMIN / MODERATEUR)
     // -------------------------------------------------------------------------
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRATEUR') or hasRole('MODERATEUR')")
-    @Operation(summary = "Lister tous les comptes (paginé)")
-    public ResponseEntity<PageResponse<UserDTO>> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        // Paginé : la liste complète chargeait tous les comptes (et 2 requêtes par compte).
-        return ResponseEntity.ok(PageResponse.of(userService.getAllUsers(
-                PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), Sort.by(Sort.Direction.DESC, "createdAt")))));
-    }
-
     @GetMapping("/{id}/presence")
     @Operation(summary = "Statut en ligne d'un utilisateur",
                description = "ONLINE si une requête authentifiée date de moins de 2 minutes. "

@@ -1,7 +1,7 @@
 import { filterAnnonces } from '@/src/api/annonce.api';
 import { getLocalisationsByRegion } from '@/src/api/localisation.api';
 import { Sheet } from '@/src/components/ui/sheet';
-import { REGIONS_GUINEE } from '@/src/stores/annonce.store';
+import { useRegions } from '@/src/lib/useRegions';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import type { AnnonceFilterParams, Localisation } from '@/src/types/annonce.types';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS } from '@/src/types/annonce.types';
@@ -100,6 +100,7 @@ export function FilterModal({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const regions = useRegions();
   const set = (patch: Partial<AnnonceFilterParams>) => onChange({ ...draft, ...patch });
   const showChambres = !draft.typeBien || champsComposition(draft.typeBien).includes('nbChambres');
   const [quartierQuery, setQuartierQuery] = useState('');
@@ -302,7 +303,7 @@ export function FilterModal({
             {/* Localisation — cascade région → préfecture → commune → quartier */}
             <AppText style={fm.sectionTitle}>Région</AppText>
             <View style={fm.chipRow}>
-              {REGIONS_GUINEE.map((r) => (
+              {regions.map((r) => (
                 <Chip
                   key={r}
                   label={r}

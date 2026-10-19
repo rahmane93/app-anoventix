@@ -110,6 +110,7 @@ export default function PublierScreen() {
     choisirQuartierAbsent,
     chargementAutreQuartier,
     latitude,
+    centreCarte,
     longitude,
     setLatitude,
     setLongitude,
@@ -142,6 +143,7 @@ export default function PublierScreen() {
     pickPhotosForCreate,
     pickAndUploadPhotos,
     removeExistingMedia,
+    deplacerMediaExistant,
     removePhoto,
     setMainPhoto,
     goToStep,
@@ -542,7 +544,29 @@ export default function PublierScreen() {
               <View style={s.photoGrid}>
                 {existingMedias.map((m, i) => (
                   <View key={`existing-${m.id}`} style={s.photoThumb}>
-                    <Image source={{ uri: m.url }} style={s.photoImg} />
+                    <TouchableOpacity
+                      style={s.photoImg}
+                      activeOpacity={0.85}
+                      disabled={isMediaBusy || existingMedias.length <= 1}
+                      onPress={() =>
+                        appAlert("Photo " + (i + 1) + " sur " + existingMedias.length, undefined, [
+                          ...(i > 0
+                            ? [
+                                { text: "Définir comme photo principale", onPress: () => deplacerMediaExistant(i, 0) },
+                                { text: "Déplacer vers la gauche", onPress: () => deplacerMediaExistant(i, i - 1) },
+                              ]
+                            : []),
+                          ...(i < existingMedias.length - 1
+                            ? [{ text: "Déplacer vers la droite", onPress: () => deplacerMediaExistant(i, i + 1) }]
+                            : []),
+                          { text: "Annuler", style: "cancel" as const },
+                        ])
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={i === 0 ? "Photo principale, changer l’ordre" : "Changer l’ordre de cette photo"}
+                    >
+                      <Image source={{ uri: m.url }} style={s.photoImg} />
+                    </TouchableOpacity>
                     {i === 0 && medias.length === 0 && (
                       <View style={s.photoBadge}>
                         <AppText style={s.photoBadgeText}>Principale</AppText>
@@ -1109,6 +1133,7 @@ export default function PublierScreen() {
         visible={mapModalOpen}
         latitude={latitude}
         longitude={longitude}
+        centre={centreCarte}
         onClose={() => setMapModalOpen(false)}
         onConfirm={({ latitude: la, longitude: ln }) => {
           setLatitude(la);

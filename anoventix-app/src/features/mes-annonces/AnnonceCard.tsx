@@ -261,6 +261,16 @@ export const AnnonceCard = React.memo(function AnnonceCard({
           />
         )}
         <Button
+          title="Historique"
+          variant="outline"
+          size="sm"
+          fullWidth={false}
+          style={cardStyles.actionBtn}
+          leftIcon={<Ionicons name="time-outline" size={16} color={colors.primary} />}
+          onPress={() => router.push({ pathname: '/annonce-historique/[id]', params: { id: String(item.id), titre: item.titre } })}
+          accessibilityLabel="Voir l'historique des modifications"
+        />
+        <Button
           title="Supprimer"
           variant="dangerOutline"
           size="sm"

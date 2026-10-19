@@ -259,8 +259,12 @@ public class MediaService {
                 .map(Media::getUrl)
                 .collect(Collectors.toSet());
 
+        // Les nouvelles photos se placent après les existantes (l'ordre renvoyé par saveMediaDTOs part de 1).
+        int dernier = annonce.getMedias().stream().map(Media::getOrdre).filter(java.util.Objects::nonNull)
+                .max(Integer::compare).orElse(0);
         for (Media media : newMedias) {
             if (!existingUrls.contains(media.getUrl())) {
+                media.setOrdre(++dernier);
                 annonce.getMedias().add(media);
             }
         }
@@ -298,9 +302,45 @@ public class MediaService {
 
         // Mise à jour de la liste des médias de l'annonce
         annonce.getMedias().removeIf(m -> m.getId().equals(id));
+        numeroter(annonce.getMedias());
         annonceRepository.save(annonce);
 
         return annonceMapper.toDTO(annonce);
+    }
+
+    /**
+     * Réordonne les photos d'une annonce (ECART-49) : la liste doit contenir exactement tous ses identifiants,
+     * la première devient la photo principale (vignette, aperçu de partage).
+     */
+    @Transactional
+    public AnnonceDTO reordonnerMedias(Long annonceId, List<Long> mediaIds, Authentication authentication) {
+        Annonce annonce = annonceRepository.findById(annonceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Annonce non trouvée avec l'ID: " + annonceId));
+        User user = getCurrentUser(authentication);
+        if (!isOwnerOrModerator(user, annonce)) {
+            throw new AccessDeniedException("Vous n'êtes pas autorisé à modifier les photos de cette annonce");
+        }
+        verifierAnnonceNonRejetee(annonce);
+        MasquageCompte.verifierAnnoncesNonMasquees(user);
+
+        List<Media> medias = annonce.getMedias();
+        java.util.Map<Long, Media> parId = medias.stream()
+                .collect(Collectors.toMap(Media::getId, m -> m));
+        if (mediaIds.size() != medias.size() || !parId.keySet().equals(new java.util.HashSet<>(mediaIds))) {
+            throw new IllegalArgumentException("L'ordre doit contenir toutes les photos de l'annonce, une seule fois chacune.");
+        }
+        List<Media> ordonnees = mediaIds.stream().map(parId::get).collect(Collectors.toList());
+        numeroter(ordonnees);
+        medias.clear();
+        medias.addAll(ordonnees);
+        return annonceMapper.toDTO(annonceRepository.save(annonce));
+    }
+
+    /** Ordre 1..n dans l'ordre de la liste. */
+    private static void numeroter(List<Media> medias) {
+        for (int i = 0; i < medias.size(); i++) {
+            medias.get(i).setOrdre(i + 1);
+        }
     }
 
     /**

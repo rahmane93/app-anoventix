@@ -223,7 +223,7 @@ class MessagerieControleTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Ratoma");
-            loc.setQuartier("Kipé");
+            loc.setQuartier("Kipé (MessagerieControleTest)");
             return localisationRepository.save(loc);
         }));
         b.setOwner(vendeur);

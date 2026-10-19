@@ -94,11 +94,11 @@ Synthèse des effets croisés, établie à partir des modules 01, 02, 03, 09 et 
 
 | Section | Contenu | Règles |
 |---|---|---|
-| Portefeuille | Annonces publiées, masquées, rejetées ; clôtures du mois par motif (vendu, loué, retiré) ; taux de conversion du mois = (vendus + loués) / clôtures × 100 ; répartition par type d'annonce | Calculé sur les annonces **de l'utilisateur seul**, pas de l'entreprise. Les compteurs « masquées » et « rejetées » valent toujours 0 (ECART-07). |
-| Visibilité | Total des vues, top 5 des annonces par vues (vues, favoris), total des favoris | Annonces actives de l'utilisateur |
+| Portefeuille | Annonces publiées, masquées, rejetées ; clôtures du mois par motif (vendu, loué, retiré) ; taux de conversion du mois = (vendus + loués) / clôtures × 100 ; répartition par type d'annonce | 🆕 (ECART-50) Pour un professionnel : **toute l'entreprise** (lui et ses agents, DEC-27), `perimetre = ENTREPRISE` ; pour un agent : ses annonces seules (`PERSONNEL`). Les compteurs « masquées » et « rejetées » valent toujours 0 (ECART-07). |
+| Visibilité | Total des vues, top 5 des annonces par vues (vues, favoris), total des favoris | Même périmètre que le portefeuille |
 | Messagerie | Nombre de conversations, messages non lus, taux de réponse (conversations où il est propriétaire et a répondu) | — |
-| Équipe (PRO seulement) | Agents actifs, suspendus, performances par agent (annonces, vues), meilleur agent (s'il a au moins une vue) | Le propriétaire est compté parmi les « agents » (ECART-50) |
-| Conformité | Statut de la pièce d'identité, nombre d'avertissements, annonces actives, quota maximum, annonces restantes, possibilité de publier, limitation par la licence | Si le mode licence est actif sans licence valide, le quota affiché est celui des annonces gratuites. `canCreateAnnonce` ignore la pièce, le masquage et l'entreprise désactivée. |
+| Équipe (PRO seulement) | Agents actifs, suspendus, performances par agent (annonces, vues), meilleur agent (s'il a au moins une vue) | 🆕 Le professionnel n'y figure pas : l'équipe, ce sont ses agents (ECART-50) |
+| Conformité | Statut de la pièce d'identité, nombre d'avertissements, annonces actives, quota maximum, annonces restantes, possibilité de publier, limitation par la licence | Si le mode licence est actif sans licence valide, le quota affiché est celui des annonces gratuites. 🆕 `canCreateAnnonce` applique les mêmes conditions que la création (pièce validée, annonces non masquées, entreprise active, quota, licence) et `motifPublicationImpossible` dit laquelle bloque (ECART-50). |
 
 Source : `ProStatsServiceImpl.java`.
 

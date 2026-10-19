@@ -3,11 +3,13 @@ import { toJpegUploads, type UploadFile } from "@/src/lib/images";
 import {
   addBienImmoMedias,
   deleteBienImmoMedia,
+  reordonnerBienImmoMedias,
   getAnnonceById,
 } from "@/src/api/annonce.api";
 import { champsComposition, isLoyerMensuel, type ChampComposition } from "@/src/lib/bien";
 import { getRoleFlags } from "@/src/lib/roles";
-import { REGIONS_GUINEE, useAnnonceStore } from "@/src/stores/annonce.store";
+import { useAnnonceStore } from "@/src/stores/annonce.store";
+import { useRegions } from "@/src/lib/useRegions";
 import { useAuthStore } from "@/src/stores/auth.store";
 import { useEntrepriseStore } from "@/src/stores/entreprise.store";
 import { useUserStore } from "@/src/stores/user.store";
@@ -249,7 +251,7 @@ export function usePublierForm() {
   >([]);
 
   // ── Localisation data ─
-  const regions = REGIONS_GUINEE;
+  const regions = useRegions();
   const [locByRegion, setLocByRegion] = useState<Localisation[]>([]);
 
   // Déclarés après tous les états qu'ils réinitialisent (règle React Compiler).
@@ -389,6 +391,14 @@ export function usePublierForm() {
         .sort((a, b) => a.quartier.localeCompare(b.quartier)),
     [locByRegion, prefecture, commune],
   );
+
+  // Point de référence du quartier choisi (ou de la commune), pour ouvrir la carte au bon endroit (ECART-45).
+  const centreCarte = useMemo(() => {
+    const loc = (Array.isArray(locByRegion) ? locByRegion : []).find((l) => l.id === localisationId);
+    return loc?.latitude != null && loc?.longitude != null
+      ? { latitude: Number(loc.latitude), longitude: Number(loc.longitude) }
+      : null;
+  }, [locByRegion, localisationId]);
 
   const handleRegionChange = async (r: string) => {
     clearFieldErrors();
@@ -667,6 +677,25 @@ export function usePublierForm() {
     }
   };
 
+  // Photos déjà en ligne (modification) : nouvel ordre envoyé à l'API, la première est la principale.
+  const deplacerMediaExistant = async (idx: number, vers: number) => {
+    if (!isEditMode || !editId || isMediaBusy) return;
+    if (vers < 0 || vers >= existingMedias.length || vers === idx) return;
+    const ordre = existingMedias.map((m) => m.id);
+    const [deplace] = ordre.splice(idx, 1);
+    ordre.splice(vers, 0, deplace);
+    try {
+      setIsMediaBusy(true);
+      setPrefillError(null);
+      await reordonnerBienImmoMedias(editId, ordre);
+      await refreshAnnonceMedias();
+    } catch (err) {
+      setPrefillError(humanizeMediaError(err, "Impossible de modifier l'ordre des photos."));
+    } finally {
+      setIsMediaBusy(false);
+    }
+  };
+
   const removePhoto = (idx: number) => {
     setMedias((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -933,6 +962,7 @@ export function usePublierForm() {
     prefectures,
     communes,
     quartiers,
+    centreCarte,
     handleRegionChange,
     handlePrefectureChange,
     handleCommuneChange,
@@ -977,6 +1007,7 @@ export function usePublierForm() {
     pickPhotosForCreate,
     pickAndUploadPhotos,
     removeExistingMedia,
+    deplacerMediaExistant,
     removePhoto,
     setMainPhoto,
     // navigation

@@ -35,7 +35,6 @@ import com.app.AnnoncesAPI.payload.request.TraiterSignalementRequest;
 import com.app.AnnoncesAPI.payload.response.AdminStatsAvanceesResponse;
 import com.app.AnnoncesAPI.payload.response.AdminStatsResponse;
 import com.app.AnnoncesAPI.payload.response.AvertissementResponse;
-import com.app.AnnoncesAPI.payload.response.HistoriqueAnnonceResponse;
 import com.app.AnnoncesAPI.payload.response.MessageModerationResponse;
 import com.app.AnnoncesAPI.payload.response.SignalementResponse;
 import com.app.AnnoncesAPI.payload.response.StatParCategorie;
@@ -334,24 +333,6 @@ public class AdminServiceImpl implements AdminService {
                 .map(annonceMapper::toAdminDTO);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<HistoriqueAnnonceResponse> getHistoriqueAnnonce(Long annonceId) {
-        if (!annonceRepository.existsById(annonceId)) {
-            throw new ResourceNotFoundException("Annonce introuvable avec l'ID : " + annonceId);
-        }
-        return historiqueAnnonceRepository.findByAnnonceId(annonceId).stream()
-                .map(h -> HistoriqueAnnonceResponse.builder()
-                        .id(h.getId())
-                        .champ(h.getChamp())
-                        .ancienneValeur(h.getAncienneValeur())
-                        .nouvelleValeur(h.getNouvelleValeur())
-                        .modifiePar(h.getModifiePar())
-                        .dateModification(h.getDateModification())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
     // ─── Utilisateurs ────────────────────────────────────────────────────
 
     @Override
@@ -467,18 +448,18 @@ public class AdminServiceImpl implements AdminService {
             }
         }
 
-        long count = avertissementRepository.countByUtilisateurId(userId);
-        NiveauAvertissement niveau;
-        if (count == 0)      niveau = NiveauAvertissement.LEGER;
-        else if (count == 1) niveau = NiveauAvertissement.MODERE;
-        else                 niveau = NiveauAvertissement.GRAVE;
+        // Seuls les avertissements en vigueur (6 mois, non levés) comptent ; le modérateur peut choisir le niveau.
+        long count = avertissementRepository.countEnVigueur(userId);
+        NiveauAvertissement niveau = request.getNiveau() != null ? request.getNiveau() : niveauSelonRang(count);
 
         boolean suspendu = niveau == NiveauAvertissement.GRAVE
                 && user.getStatut() != StatutUtilisateur.SUSPENDU;
 
         if (suspendu) {
             user.setStatut(StatutUtilisateur.SUSPENDU);
-            user.setMotifStatut("Suspension automatique suite à " + (count + 1) + " avertissements.");
+            user.setMotifStatut(request.getNiveau() == NiveauAvertissement.GRAVE && count < 2
+                    ? "Suspension suite à un avertissement grave : " + request.getMotif()
+                    : "Suspension automatique suite à " + (count + 1) + " avertissements.");
             userRepository.save(user);
             sessionService.fermerToutesLesSessions(userId);
         }
@@ -495,7 +476,50 @@ public class AdminServiceImpl implements AdminService {
         if (suspendu) {
             audit.enregistrer(ActionAudit.COMPTE_SUSPENDU_AUTOMATIQUEMENT, userId, user.getMotifStatut());
         }
+        notifierAvertissement(user, niveau, request.getMotif(), suspendu);
         return response;
+    }
+
+    private static NiveauAvertissement niveauSelonRang(long enVigueur) {
+        if (enVigueur == 0) return NiveauAvertissement.LEGER;
+        if (enVigueur == 1) return NiveauAvertissement.MODERE;
+        return NiveauAvertissement.GRAVE;
+    }
+
+    /** Email au titulaire (module 11, « Avertissement reçu ») : motif, niveau, durée de validité, suspension éventuelle. */
+    private void notifierAvertissement(User user, NiveauAvertissement niveau, String motif, boolean suspendu) {
+        String libelle = switch (niveau) {
+            case LEGER -> "léger";
+            case MODERE -> "modéré";
+            case GRAVE -> "grave";
+        };
+        String message = "La modération vous a adressé un avertissement " + libelle + ".\nMotif : " + motif
+                + "\nIl reste pris en compte pendant " + Avertissement.VALIDITE_MOIS + " mois. "
+                + "Au troisième avertissement sur cette période, le compte est suspendu.";
+        if (suspendu) {
+            message += "\nVotre compte est désormais suspendu : vous ne pouvez plus vous connecter. "
+                    + "Pour contester cette décision, répondez à cet e-mail.";
+        }
+        emailNotificationService.notifier(user, suspendu ? "Avertissement et suspension de votre compte"
+                : "Avertissement de la modération", "Vous avez reçu un avertissement", message);
+    }
+
+    @Override
+    @Transactional
+    public AvertissementResponse leverAvertissement(UUID userId, Long avertissementId, String motif, String adminUsername) {
+        Avertissement a = avertissementRepository.findById(avertissementId)
+                .filter(x -> x.getUtilisateur().getId().equals(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("Avertissement introuvable."));
+        if (a.getDateLevee() != null) {
+            throw new IllegalArgumentException("Cet avertissement a déjà été levé.");
+        }
+        a.setDateLevee(LocalDateTime.now());
+        a.setLevePar(adminUsername);
+        a.setMotifLevee(motif.trim());
+        // La suspension éventuelle n'est pas levée : c'est une décision distincte (statut du compte).
+        audit.enregistrer(ActionAudit.AVERTISSEMENT_LEVE, userId, a.getNiveau() + " du " + a.getDate().toLocalDate()
+                + " — " + a.getMotifLevee());
+        return toAvertissementResponse(avertissementRepository.save(a));
     }
 
     @Override
@@ -626,7 +650,7 @@ public class AdminServiceImpl implements AdminService {
                 .motifStatut(u.getMotifStatut())
                 .createdAt(u.getCreatedAt())
                 .role(u.getRole() == null ? null : u.getRole().getName().name())
-                .nbAvertissements(avertissementRepository.countByUtilisateurId(u.getId()))
+                .nbAvertissements(avertissementRepository.countEnVigueur(u.getId()))
                 .annoncesMasquees(u.isAnnoncesMasquees())
                 .motifMasquageAnnonces(u.getMotifMasquageAnnonces())
                 .dateMasquageAnnonces(u.getDateMasquageAnnonces())
@@ -663,6 +687,11 @@ public class AdminServiceImpl implements AdminService {
                 .niveau(a.getNiveau())
                 .suspenduAutomatiquement(a.getSuspenduAutomatiquement())
                 .date(a.getDate())
+                .enVigueur(a.estEnVigueur(LocalDateTime.now()))
+                .dateExpiration(a.getDate() != null ? a.getDate().plusMonths(Avertissement.VALIDITE_MOIS) : null)
+                .dateLevee(a.getDateLevee())
+                .levePar(a.getLevePar())
+                .motifLevee(a.getMotifLevee())
                 .build();
     }
 

@@ -40,26 +40,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/annonces/{id}/historique": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Historique de modération d'une annonce
-         * @description Retourne toutes les actions de modération effectuées sur une annonce (qui a fait quoi, quand).
-         */
-        get: operations["getHistoriqueAnnonce"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/admin/annonces/{id}/masquer": {
         parameters: {
             query?: never;
@@ -633,9 +613,29 @@ export interface paths {
         put?: never;
         /**
          * Émettre un avertissement
-         * @description Émet un avertissement gradué (LÉGER → MODÉRÉ → GRAVE). Au 3ème avertissement, l'utilisateur est automatiquement suspendu.
+         * @description Émet un avertissement et prévient le titulaire par email. Sans niveau choisi, il suit le rang parmi les avertissements en vigueur (6 mois, non levés) : LÉGER, MODÉRÉ, puis GRAVE. Un avertissement GRAVE suspend le compte.
          */
         post: operations["emettreAvertissement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/utilisateurs/{userId}/avertissements/{avertissementId}/lever": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lever un avertissement (administrateur)
+         * @description Annule un avertissement émis par erreur : il ne compte plus, reste dans l'historique et le journal d'audit. Une suspension éventuelle n'est pas levée.
+         */
+        post: operations["leverAvertissement"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1024,77 +1024,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/biens-immo/public/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Recherche en langage naturel
-         * @description Recherche via PostgreSQL Full-Text Search (configuration 'french'). Accepte une phrase libre (ex: "appartement 3 pièces Conakry"). Résultats triés par pertinence décroissante.
-         */
-        get: operations["naturalLanguageSearch"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/biens-immo/quartier/{localisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Filtrer les biens immobiliers par quartier (localisation) */
-        get: operations["getBiensByQuartier"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/biens-immo/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Rechercher des biens immobiliers par mot-clé */
-        get: operations["searchBiens"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/biens-immo/surface": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Filtrer les biens immobiliers par surface minimale (m²) */
-        get: operations["getBiensBySurface"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/biens-immo/user": {
         parameters: {
             query?: never;
@@ -1236,6 +1165,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/biens-immo/{id}/medias/ordre": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Réordonner les photos d'un bien immobilier
+         * @description Reçoit tous les identifiants des photos de l'annonce dans le nouvel ordre ; la première devient la photo principale. Propriétaire de l'annonce ou ADMIN/MODERATEUR.
+         */
+        put: operations["reordonnerMedias"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/biens-immo/{id}/medias/{mediaId}": {
         parameters: {
             query?: never;
@@ -1332,26 +1281,6 @@ export interface paths {
          * @description Retourne jusqu'à `max` annonces actives du même type, même commune et dans un écart de prix de ±30%. Public.
          */
         get: operations["getSimilaires"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/biens-immo/{id}/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Statistiques de vues d'une annonce
-         * @description Réservé au propriétaire, au PROFESSIONNEL parent (si l'owner est un AGENT), ou à un ADMIN/MOD.
-         */
-        get: operations["getAnnonceStats"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1540,46 +1469,6 @@ export interface paths {
          * @description Retourne toutes les annonces actives publiées par les agents de l'entreprise, avec pagination. Réservé aux membres de l'entreprise et à la modération (le public utilise /{id}/profil).
          */
         get: operations["getAnnoncesByEntreprise"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/entreprises/{entrepriseId}/can-add-agent": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Vérifier le quota d'agents
-         * @description Vérifie si l'entreprise peut ajouter un nouvel agent
-         */
-        get: operations["canAddAgent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/entreprises/{entrepriseId}/can-create-annonce": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Vérifier le quota d'annonces
-         * @description Vérifie si l'entreprise peut créer une nouvelle annonce
-         */
-        get: operations["canCreateAnnonce"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1934,6 +1823,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/localisations/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Régions du référentiel
+         * @description Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).
+         */
+        get: operations["getRegions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/localisations/{id}": {
         parameters: {
             query?: never;
@@ -2104,23 +2013,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/messagerie/messages/{messageId}/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Marquer un message comme lu */
-        put: operations["markMessageAsRead"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/messagerie/messages/{messageId}/signaler": {
         parameters: {
             query?: never;
@@ -2184,23 +2076,6 @@ export interface paths {
          *     - **conformite** : statutPieceIdentite, nbAvertissements, annoncesActives, quotaMax, annoncesRestantes, canCreateAnnonce
          */
         get: operations["getProStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lister tous les comptes (paginé) */
-        get: operations["getAllUsers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2785,13 +2660,6 @@ export interface components {
             /** Format: int64 */
             vueCount?: number;
         };
-        AnnonceStatsResponse: {
-            /** Format: int64 */
-            annonceId?: number;
-            referenceAnnonce?: string;
-            /** Format: int64 */
-            vueCount?: number;
-        };
         AnnonceurDTO: {
             agenceVerifiee?: boolean;
             /** Format: uuid */
@@ -2809,7 +2677,7 @@ export interface components {
             acteurLibelle?: string;
             acteurRole?: string;
             /** @enum {string} */
-            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
             adresseIp?: string;
             cibleId?: string;
             /** @enum {string} */
@@ -2822,14 +2690,23 @@ export interface components {
         };
         AvertissementRequest: {
             motif: string;
+            /** @enum {string} */
+            niveau?: "LEGER" | "MODERE" | "GRAVE";
         };
         AvertissementResponse: {
             /** Format: date-time */
             date?: string;
+            /** Format: date-time */
+            dateExpiration?: string;
+            /** Format: date-time */
+            dateLevee?: string;
             emitPar?: string;
+            enVigueur?: boolean;
             /** Format: int64 */
             id?: number;
+            levePar?: string;
             motif?: string;
+            motifLevee?: string;
             /** @enum {string} */
             niveau?: "LEGER" | "MODERE" | "GRAVE";
             suspenduAutomatiquement?: boolean;
@@ -2882,6 +2759,7 @@ export interface components {
             annoncesRestantes?: number;
             canCreateAnnonce?: boolean;
             limiteParLicence?: boolean;
+            motifPublicationImpossible?: string;
             /** Format: int64 */
             nbAvertissements?: number;
             /** Format: int32 */
@@ -3097,16 +2975,6 @@ export interface components {
             modifiePar?: string;
             nouvelleValeur?: string;
         };
-        HistoriqueAnnonceResponse: {
-            ancienneValeur?: string;
-            champ?: string;
-            /** Format: date-time */
-            dateModification?: string;
-            /** Format: int64 */
-            id?: number;
-            modifiePar?: string;
-            nouvelleValeur?: string;
-        };
         Interrupteurs: {
             alertes?: boolean;
             messages?: boolean;
@@ -3121,6 +2989,9 @@ export interface components {
             role?: string[];
             token?: string;
             type?: string;
+        };
+        LeveeAvertissementRequest: {
+            motif: string;
         };
         LicenceAdminResponse: {
             acheteurEmail?: string;
@@ -3172,6 +3043,8 @@ export interface components {
         LocalisationDTO: {
             commune?: string;
             id?: string;
+            latitude?: number;
+            longitude?: number;
             prefecture?: string;
             quartier?: string;
             region?: string;
@@ -3180,6 +3053,8 @@ export interface components {
         };
         LocalisationRequest: {
             commune: string;
+            latitude?: number;
+            longitude?: number;
             prefecture: string;
             quartier: string;
             region: string;
@@ -3261,6 +3136,9 @@ export interface components {
         };
         ModeLicenceRequest: {
             actif: boolean;
+        };
+        OrdreMediasRequest: {
+            mediaIds: number[];
         };
         PageResponseAdminAnnonceDTO: {
             /** Format: int32 */
@@ -3400,6 +3278,7 @@ export interface components {
             conformite?: components["schemas"]["ConformiteStats"];
             equipe?: components["schemas"]["EquipeStats"];
             messagerie?: components["schemas"]["MessagerieStats"];
+            perimetre?: string;
             portefeuille?: components["schemas"]["PortefeuilleStats"];
             visibilite?: components["schemas"]["VisibiliteStats"];
         };
@@ -3456,16 +3335,6 @@ export interface components {
             email: string;
             newPassword: string;
             token: string;
-        };
-        SearchPageResponseAnnonceDTO: {
-            /** Format: int32 */
-            currentPage?: number;
-            data?: components["schemas"]["AnnonceDTO"][];
-            query?: string;
-            /** Format: int64 */
-            totalItems?: number;
-            /** Format: int32 */
-            totalPages?: number;
         };
         SendMessageRequest: {
             content: string;
@@ -3692,28 +3561,6 @@ export interface operations {
             };
         };
     };
-    getHistoriqueAnnonce: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["HistoriqueAnnonceResponse"][];
-                };
-            };
-        };
-    };
     masquerAnnonce: {
         parameters: {
             query?: {
@@ -3790,7 +3637,7 @@ export interface operations {
                 page?: number;
                 size?: number;
                 acteurId?: string;
-                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
                 cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION";
                 cibleId?: string;
             };
@@ -4447,6 +4294,33 @@ export interface operations {
             };
         };
     };
+    leverAvertissement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                avertissementId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeveeAvertissementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvertissementResponse"];
+                };
+            };
+        };
+    };
     octroierRole: {
         parameters: {
             query?: never;
@@ -5065,103 +4939,6 @@ export interface operations {
             };
         };
     };
-    naturalLanguageSearch: {
-        parameters: {
-            query: {
-                q: string;
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SearchPageResponseAnnonceDTO"];
-                };
-            };
-        };
-    };
-    getBiensByQuartier: {
-        parameters: {
-            query?: {
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path: {
-                localisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageResponseAnnonceDTO"];
-                };
-            };
-        };
-    };
-    searchBiens: {
-        parameters: {
-            query: {
-                keyword: string;
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageResponseAnnonceDTO"];
-                };
-            };
-        };
-    };
-    getBiensBySurface: {
-        parameters: {
-            query: {
-                minSurface: number;
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageResponseAnnonceDTO"];
-                };
-            };
-        };
-    };
     getBiensByUser: {
         parameters: {
             query?: {
@@ -5368,6 +5145,32 @@ export interface operations {
             };
         };
     };
+    reordonnerMedias: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrdreMediasRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnnonceDTO"];
+                };
+            };
+        };
+    };
     deleteMedia: {
         parameters: {
             query?: never;
@@ -5499,28 +5302,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AnnonceDTO"][];
-                };
-            };
-        };
-    };
-    getAnnonceStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["AnnonceStatsResponse"];
                 };
             };
         };
@@ -5775,50 +5556,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseAnnonceDTO"];
-                };
-            };
-        };
-    };
-    canAddAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                entrepriseId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": boolean;
-                };
-            };
-        };
-    };
-    canCreateAnnonce: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                entrepriseId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": boolean;
                 };
             };
         };
@@ -6387,6 +6124,26 @@ export interface operations {
             };
         };
     };
+    getRegions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
     getLocalisationById: {
         parameters: {
             query?: never;
@@ -6722,28 +6479,6 @@ export interface operations {
             };
         };
     };
-    markMessageAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                messageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MessageDTO"];
-                };
-            };
-        };
-    };
     signalerMessage: {
         parameters: {
             query?: never;
@@ -6828,29 +6563,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProStatsResponse"];
-                };
-            };
-        };
-    };
-    getAllUsers: {
-        parameters: {
-            query?: {
-                page?: number;
-                size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageResponseUserDTO"];
                 };
             };
         };

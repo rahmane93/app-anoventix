@@ -18,7 +18,6 @@ import com.app.AnnoncesAPI.payload.request.AvertissementRequest;
 import com.app.AnnoncesAPI.payload.response.AdminStatsAvanceesResponse;
 import com.app.AnnoncesAPI.payload.response.AdminStatsResponse;
 import com.app.AnnoncesAPI.payload.response.AvertissementResponse;
-import com.app.AnnoncesAPI.payload.response.HistoriqueAnnonceResponse;
 import com.app.AnnoncesAPI.payload.response.MessageModerationResponse;
 import com.app.AnnoncesAPI.payload.response.SignalementResponse;
 
@@ -74,9 +73,6 @@ public interface AdminService {
      */
     Page<AdminAnnonceDTO> getAllAnnonces(StatutAnnonce statut, Boolean cloturee, String q, Pageable pageable);
 
-    /** Retourne l'historique de modération d'une annonce. */
-    List<HistoriqueAnnonceResponse> getHistoriqueAnnonce(Long annonceId);
-
     /** Recherche paginée d'utilisateurs par username, email, nom, prénom ou téléphone. L'admin appelant est exclu des résultats. */
     Page<UserDTO> rechercherUtilisateurs(String search, StatutUtilisateur statut, Pageable pageable, UUID adminId);
 
@@ -100,6 +96,9 @@ public interface AdminService {
 
     /** Retourne l'historique des avertissements d'un utilisateur. */
     List<AvertissementResponse> getAvertissements(UUID userId);
+
+    /** Lève un avertissement émis par erreur (administrateur) : il ne compte plus, reste dans l'historique. */
+    AvertissementResponse leverAvertissement(UUID userId, Long avertissementId, String motif, String adminUsername);
 
     // ─── Modération des messages ──────────────────────────────────────────
 

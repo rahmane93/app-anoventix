@@ -37,8 +37,6 @@ public interface MessagingService {
 
     MessageDTO sendMessage(Long conversationId, SendMessageRequest request, Authentication authentication);
 
-    MessageDTO markMessageAsRead(Long messageId, Authentication authentication);
-
     void markConversationAsRead(Long conversationId, Authentication authentication);
 
     /** Signale un message à la modération. Seul un participant de la conversation peut signaler. */

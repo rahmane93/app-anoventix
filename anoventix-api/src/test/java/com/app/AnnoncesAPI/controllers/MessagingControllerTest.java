@@ -81,7 +81,7 @@ public class MessagingControllerTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Dixinn");
-            loc.setQuartier("Landréah");
+            loc.setQuartier("Landréah (MessagingControllerTest)");
             localisationRepository.save(loc);
         }
     }

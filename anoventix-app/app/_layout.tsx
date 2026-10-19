@@ -153,6 +153,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="licence" options={{ ...stackHeader(), title: 'Ma licence' }} />
         <Stack.Screen name="alertes" options={{ ...stackHeader(), title: 'Mes alertes' }} />
+        <Stack.Screen name="annonce-historique/[id]" options={{ ...stackHeader(), title: 'Historique' }} />
         <Stack.Screen name="regenerer-codes-secours" options={{ ...stackHeader(), title: 'Codes de secours' }} />
         <Stack.Screen name="entreprise-publique/[entrepriseId]" options={{ ...stackHeader('detail') }} />
         <Stack.Screen name="profil/[userId]" options={{ ...stackHeader() }} />

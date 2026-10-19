@@ -168,38 +168,6 @@
         "tags" : [ "Administration" ]
       }
     },
-    "/api/admin/annonces/{id}/historique" : {
-      "get" : {
-        "description" : "Retourne toutes les actions de modération effectuées sur une annonce (qui a fait quoi, quand).",
-        "operationId" : "getHistoriqueAnnonce",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/HistoriqueAnnonceResponse"
-                  }
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Historique de modération d'une annonce",
-        "tags" : [ "Administration" ]
-      }
-    },
     "/api/admin/annonces/{id}/masquer" : {
       "put" : {
         "description" : "Rend une annonce invisible temporairement. Le motif (500 car. max) est affiché au propriétaire et enregistré dans l'historique.",
@@ -339,7 +307,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
           }
         }, {
           "in" : "query",
@@ -1290,7 +1258,7 @@
         "tags" : [ "Administration" ]
       },
       "post" : {
-        "description" : "Émet un avertissement gradué (LÉGER → MODÉRÉ → GRAVE). Au 3ème avertissement, l'utilisateur est automatiquement suspendu.",
+        "description" : "Émet un avertissement et prévient le titulaire par email. Sans niveau choisi, il suit le rang parmi les avertissements en vigueur (6 mois, non levés) : LÉGER, MODÉRÉ, puis GRAVE. Un avertissement GRAVE suspend le compte.",
         "operationId" : "emettreAvertissement",
         "parameters" : [ {
           "in" : "path",
@@ -1324,6 +1292,53 @@
           }
         },
         "summary" : "Émettre un avertissement",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/utilisateurs/{userId}/avertissements/{avertissementId}/lever" : {
+      "post" : {
+        "description" : "Annule un avertissement émis par erreur : il ne compte plus, reste dans l'historique et le journal d'audit. Une suspension éventuelle n'est pas levée.",
+        "operationId" : "leverAvertissement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "avertissementId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LeveeAvertissementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AvertissementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lever un avertissement (administrateur)",
         "tags" : [ "Administration" ]
       }
     },
@@ -2279,188 +2294,6 @@
         "tags" : [ "Biens Immobiliers" ]
       }
     },
-    "/api/biens-immo/public/search" : {
-      "get" : {
-        "description" : "Recherche via PostgreSQL Full-Text Search (configuration 'french'). Accepte une phrase libre (ex: \"appartement 3 pièces Conakry\"). Résultats triés par pertinence décroissante.",
-        "operationId" : "naturalLanguageSearch",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "q",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SearchPageResponseAnnonceDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Recherche en langage naturel",
-        "tags" : [ "Biens Immobiliers" ]
-      }
-    },
-    "/api/biens-immo/quartier/{localisationId}" : {
-      "get" : {
-        "operationId" : "getBiensByQuartier",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "localisationId",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Filtrer les biens immobiliers par quartier (localisation)",
-        "tags" : [ "Biens Immobiliers" ]
-      }
-    },
-    "/api/biens-immo/search" : {
-      "get" : {
-        "operationId" : "searchBiens",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "keyword",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Rechercher des biens immobiliers par mot-clé",
-        "tags" : [ "Biens Immobiliers" ]
-      }
-    },
-    "/api/biens-immo/surface" : {
-      "get" : {
-        "operationId" : "getBiensBySurface",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "minSurface",
-          "required" : true,
-          "schema" : {
-            "type" : "number",
-            "format" : "double"
-          }
-        }, {
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PageResponseAnnonceDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Filtrer les biens immobiliers par surface minimale (m²)",
-        "tags" : [ "Biens Immobiliers" ]
-      }
-    },
     "/api/biens-immo/user" : {
       "get" : {
         "operationId" : "getBiensByUser",
@@ -2755,6 +2588,45 @@
         "tags" : [ "Biens Immobiliers" ]
       }
     },
+    "/api/biens-immo/{id}/medias/ordre" : {
+      "put" : {
+        "description" : "Reçoit tous les identifiants des photos de l'annonce dans le nouvel ordre ; la première devient la photo principale. Propriétaire de l'annonce ou ADMIN/MODERATEUR.",
+        "operationId" : "reordonnerMedias",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrdreMediasRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Réordonner les photos d'un bien immobilier",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
     "/api/biens-immo/{id}/medias/{mediaId}" : {
       "delete" : {
         "description" : "Supprime le média (image) identifié par mediaId de l'annonce. Seul le propriétaire de l'annonce ou un ADMIN/MODERATEUR peut effectuer cette opération.",
@@ -2935,35 +2807,6 @@
           }
         },
         "summary" : "Annonces similaires",
-        "tags" : [ "Biens Immobiliers" ]
-      }
-    },
-    "/api/biens-immo/{id}/stats" : {
-      "get" : {
-        "description" : "Réservé au propriétaire, au PROFESSIONNEL parent (si l'owner est un AGENT), ou à un ADMIN/MOD.",
-        "operationId" : "getAnnonceStats",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/AnnonceStatsResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Statistiques de vues d'une annonce",
         "tags" : [ "Biens Immobiliers" ]
       }
     },
@@ -3355,64 +3198,6 @@
           }
         },
         "summary" : "Lister les annonces d'une entreprise",
-        "tags" : [ "Entreprises" ]
-      }
-    },
-    "/api/entreprises/{entrepriseId}/can-add-agent" : {
-      "get" : {
-        "description" : "Vérifie si l'entreprise peut ajouter un nouvel agent",
-        "operationId" : "canAddAgent",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "entrepriseId",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Vérifier le quota d'agents",
-        "tags" : [ "Entreprises" ]
-      }
-    },
-    "/api/entreprises/{entrepriseId}/can-create-annonce" : {
-      "get" : {
-        "description" : "Vérifie si l'entreprise peut créer une nouvelle annonce",
-        "operationId" : "canCreateAnnonce",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "entrepriseId",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Vérifier le quota d'annonces",
         "tags" : [ "Entreprises" ]
       }
     },
@@ -4303,6 +4088,29 @@
         "tags" : [ "Localisations" ]
       }
     },
+    "/api/localisations/regions" : {
+      "get" : {
+        "description" : "Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).",
+        "operationId" : "getRegions",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Régions du référentiel",
+        "tags" : [ "Localisations" ]
+      }
+    },
     "/api/localisations/{id}" : {
       "delete" : {
         "operationId" : "delete",
@@ -4753,34 +4561,6 @@
         "tags" : [ "Messagerie" ]
       }
     },
-    "/api/messagerie/messages/{messageId}/read" : {
-      "put" : {
-        "operationId" : "markMessageAsRead",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "messageId",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MessageDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Marquer un message comme lu",
-        "tags" : [ "Messagerie" ]
-      }
-    },
     "/api/messagerie/messages/{messageId}/signaler" : {
       "post" : {
         "description" : "Seul un participant de la conversation (autre que l'expéditeur) peut signaler un message. Corps : { motif } (ARNAQUE, PROPOS_INSULTANTS, HARCELEMENT, SPAM, AUTRE).",
@@ -4879,44 +4659,6 @@
         },
         "summary" : "Statistiques du tableau de bord pro",
         "tags" : [ "Statistiques PRO" ]
-      }
-    },
-    "/api/users" : {
-      "get" : {
-        "operationId" : "getAllUsers",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PageResponseUserDTO"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Lister tous les comptes (paginé)",
-        "tags" : [ "Utilisateurs" ]
       }
     },
     "/api/users/me" : {
@@ -6146,22 +5888,6 @@
           }
         }
       },
-      "AnnonceStatsResponse" : {
-        "type" : "object",
-        "properties" : {
-          "annonceId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "referenceAnnonce" : {
-            "type" : "string"
-          },
-          "vueCount" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
-      },
       "AnnonceurDTO" : {
         "type" : "object",
         "properties" : {
@@ -6205,7 +5931,7 @@
           },
           "action" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
           },
           "adresseIp" : {
             "type" : "string"
@@ -6237,6 +5963,10 @@
             "type" : "string",
             "maxLength" : 200,
             "minLength" : 0
+          },
+          "niveau" : {
+            "type" : "string",
+            "enum" : [ "LEGER", "MODERE", "GRAVE" ]
           }
         },
         "required" : [ "motif" ]
@@ -6248,14 +5978,31 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateExpiration" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateLevee" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "emitPar" : {
             "type" : "string"
+          },
+          "enVigueur" : {
+            "type" : "boolean"
           },
           "id" : {
             "type" : "integer",
             "format" : "int64"
           },
+          "levePar" : {
+            "type" : "string"
+          },
           "motif" : {
+            "type" : "string"
+          },
+          "motifLevee" : {
             "type" : "string"
           },
           "niveau" : {
@@ -6413,6 +6160,9 @@
           },
           "limiteParLicence" : {
             "type" : "boolean"
+          },
+          "motifPublicationImpossible" : {
+            "type" : "string"
           },
           "nbAvertissements" : {
             "type" : "integer",
@@ -6966,31 +6716,6 @@
           }
         }
       },
-      "HistoriqueAnnonceResponse" : {
-        "type" : "object",
-        "properties" : {
-          "ancienneValeur" : {
-            "type" : "string"
-          },
-          "champ" : {
-            "type" : "string"
-          },
-          "dateModification" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "modifiePar" : {
-            "type" : "string"
-          },
-          "nouvelleValeur" : {
-            "type" : "string"
-          }
-        }
-      },
       "Interrupteurs" : {
         "type" : "object",
         "properties" : {
@@ -7037,6 +6762,17 @@
             "type" : "string"
           }
         }
+      },
+      "LeveeAvertissementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motif" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "motif" ]
       },
       "LicenceAdminResponse" : {
         "type" : "object",
@@ -7156,6 +6892,12 @@
           "id" : {
             "type" : "string"
           },
+          "latitude" : {
+            "type" : "number"
+          },
+          "longitude" : {
+            "type" : "number"
+          },
           "prefecture" : {
             "type" : "string"
           },
@@ -7180,6 +6922,16 @@
             "type" : "string",
             "maxLength" : 100,
             "minLength" : 0
+          },
+          "latitude" : {
+            "type" : "number",
+            "maximum" : 90,
+            "minimum" : -90
+          },
+          "longitude" : {
+            "type" : "number",
+            "maximum" : 180,
+            "minimum" : -180
           },
           "prefecture" : {
             "type" : "string",
@@ -7400,6 +7152,20 @@
           }
         },
         "required" : [ "actif" ]
+      },
+      "OrdreMediasRequest" : {
+        "type" : "object",
+        "properties" : {
+          "mediaIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "minItems" : 1
+          }
+        },
+        "required" : [ "mediaIds" ]
       },
       "PageResponseAdminAnnonceDTO" : {
         "type" : "object",
@@ -7745,6 +7511,9 @@
           "messagerie" : {
             "$ref" : "#/components/schemas/MessagerieStats"
           },
+          "perimetre" : {
+            "type" : "string"
+          },
           "portefeuille" : {
             "$ref" : "#/components/schemas/PortefeuilleStats"
           },
@@ -7903,32 +7672,6 @@
           }
         },
         "required" : [ "email", "newPassword", "token" ]
-      },
-      "SearchPageResponseAnnonceDTO" : {
-        "type" : "object",
-        "properties" : {
-          "currentPage" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "data" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AnnonceDTO"
-            }
-          },
-          "query" : {
-            "type" : "string"
-          },
-          "totalItems" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "totalPages" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
       },
       "SendMessageRequest" : {
         "type" : "object",

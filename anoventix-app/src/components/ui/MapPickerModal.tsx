@@ -17,11 +17,13 @@ interface MapPickerModalProps {
   visible: boolean;
   latitude?: number | null;
   longitude?: number | null;
+  /** Point de référence du quartier choisi : la carte s'y ouvre quand aucune position n'est encore placée. */
+  centre?: { latitude: number; longitude: number } | null;
   onClose: () => void;
   onConfirm: (coords: Coords) => void;
 }
 
-export function MapPickerModal({ visible, latitude, longitude, onClose, onConfirm }: MapPickerModalProps) {
+export function MapPickerModal({ visible, latitude, longitude, centre, onClose, onConfirm }: MapPickerModalProps) {
   const { isDesktop } = useBreakpoint();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<LeafletMapHandle>(null);
@@ -85,8 +87,9 @@ export function MapPickerModal({ visible, latitude, longitude, onClose, onConfir
             ref={mapRef}
             latitude={coords?.latitude ?? null}
             longitude={coords?.longitude ?? null}
+            centre={centre}
             interactive
-            zoom={coords ? 15 : 7}
+            zoom={coords || centre ? 15 : 7}
             fill
             onChange={(c) => setCoords(c)}
           />

@@ -19,4 +19,11 @@ public class Localisation {
     /** Entrée « Autre quartier » d'une commune : jamais proposée dans les listes (DEC-22, RG-05-18). */
     private boolean technique;
 
+    /** Point de référence pour centrer la carte (ECART-45), facultatif. */
+    @jakarta.persistence.Column(precision = 9, scale = 6)
+    private java.math.BigDecimal latitude;
+
+    @jakarta.persistence.Column(precision = 9, scale = 6)
+    private java.math.BigDecimal longitude;
+
 }

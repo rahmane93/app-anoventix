@@ -33,7 +33,6 @@ import com.app.AnnoncesAPI.exceptions.UnauthorizedActionException;
 import com.app.AnnoncesAPI.mappers.AnnonceMapper;
 import com.app.AnnoncesAPI.payload.request.AnnonceRequest;
 import com.app.AnnoncesAPI.payload.request.BienImmoRequest;
-import com.app.AnnoncesAPI.payload.response.AnnonceStatsResponse;
 import com.app.AnnoncesAPI.payload.response.SignalementResponse;
 import com.app.AnnoncesAPI.repositories.AnnonceRepository;
 import com.app.AnnoncesAPI.repositories.BienImmoRepository;
@@ -291,20 +290,6 @@ public class BienImmoServiceImpl implements BienImmoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AnnonceDTO> findAnnoncesByLocalisationId(String localisationId, Pageable pageable) {
-        return bienImmoRepository.findByLocalisationId(localisationId, pageable)
-                .map(annonceMapper::bienImmoEntityToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AnnonceDTO> findAnnoncesByKeyword(String keyword, Pageable pageable) {
-        return bienImmoRepository.searchByKeyword(keyword, pageable)
-                .map(annonceMapper::bienImmoEntityToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<AnnonceDTO> findAnnoncesByUser(Authentication authentication, Pageable pageable) {
         User user = getCurrentUser(authentication);
         // Annonces du propriétaire y compris masquées/rejetées (modération) et clôturées,
@@ -312,23 +297,6 @@ public class BienImmoServiceImpl implements BienImmoService {
         // des mod/admins.
         return bienImmoRepository.findByOwnerIdAndStatutModerationNot(
                 user.getId(), com.app.AnnoncesAPI.enums.StatutAnnonce.DESACTIVEE, pageable)
-                .map(annonceMapper::bienImmoEntityToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AnnonceDTO> naturalLanguageSearch(String query, Pageable pageable) {
-        // Pagination SQL (LIMIT / OFFSET) sur l'index plein texte : plus de chargement de tous les identifiants.
-        List<Long> pageIds = bienImmoRepository.findIdsByFullTextSearchPage(query, pageable.getPageSize(), pageable.getOffset());
-        long total = pageIds.isEmpty() && pageable.getOffset() == 0
-                ? 0 : bienImmoRepository.countByFullTextSearch(query);
-        return new PageImpl<>(chargerDansLOrdre(pageIds), pageable, total);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AnnonceDTO> findBySurface(Double minSurface, Pageable pageable) {
-        return bienImmoRepository.findBySurfaceTotalGreaterThanEqualAndActifTrue(minSurface, pageable)
                 .map(annonceMapper::bienImmoEntityToDTO);
     }
 
@@ -436,19 +404,6 @@ public class BienImmoServiceImpl implements BienImmoService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public AnnonceStatsResponse getAnnonceStats(Long id, Authentication authentication) {
-        BienImmo bienImmo = bienImmoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Bien immobilier introuvable : " + id));
-        User currentUser = getCurrentUser(authentication);
-        if (!isAuthorizedToViewStats(currentUser, bienImmo)) {
-            throw new UnauthorizedActionException("Accès refusé : statistiques réservées au propriétaire ou à un ADMIN/MOD.");
-        }
-        long vueCount = annonceRepository.findVueCountById(id).orElse(0L);
-        return new AnnonceStatsResponse(id, bienImmo.getReferenceAnnonce(), vueCount);
-    }
-
-    @Override
     @Transactional
     public void signalerAnnonce(Long id, com.app.AnnoncesAPI.enums.MotifSignalement motif, String commentaire, Authentication authentication) {
         BienImmo bienImmo = bienImmoRepository.findById(id)
@@ -552,7 +507,7 @@ public class BienImmoServiceImpl implements BienImmoService {
         String commune = bien.getLocalisation().getCommune();
         Pageable limit = PageRequest.of(0, Math.min(max, 20));
         return bienImmoRepository
-                .findSimilaires(id, bien.getTypeBien(), commune, prixMin, prixMax, limit)
+                .findSimilaires(id, bien.getTypeBien(), bien.getLocalisation().getPrefecture(), commune, prixMin, prixMax, limit)
                 .stream()
                 .map(annonceMapper::bienImmoEntityToDTO)
                 .collect(Collectors.toList());

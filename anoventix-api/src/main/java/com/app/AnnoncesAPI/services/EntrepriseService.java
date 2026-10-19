@@ -117,21 +117,7 @@ public interface EntrepriseService {
      */
     AgentDTO renvoyerInvitation(UUID entrepriseId, UUID agentId, Authentication authentication);
 
-    /**
-     * Vérifie si une entreprise peut créer une nouvelle annonce
-     * 
-     * @param entrepriseId L'ID de l'entreprise
-     * @return true si le quota n'est pas atteint
-     */
-    boolean canCreateAnnonce(UUID entrepriseId, Authentication authentication);
     
-    /**
-     * Vérifie si une entreprise peut ajouter un agent
-     * 
-     * @param entrepriseId L'ID de l'entreprise
-     * @return true si le quota n'est pas atteint
-     */
-    boolean canAddAgent(UUID entrepriseId, Authentication authentication);
     
     /**
      * Désactive une entreprise

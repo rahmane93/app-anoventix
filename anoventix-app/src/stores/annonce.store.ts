@@ -5,7 +5,7 @@ import { parseAnnonceParam } from '../lib/annonce-url';
 import type { BienImmo, CreateBienImmoRequest, Localisation, MotifCloture, NearbyParams, UpdateBienImmoRequest } from '../types/annonce.types';
 import { getErrorMessage } from '../utils/format';
 
-// Régions de Guinée — liste fixe (pas d'endpoint GET /api/localisations)
+// Régions de Guinée : liste de secours. L'app charge le référentiel via useRegions (GET /api/localisations/regions).
 export const REGIONS_GUINEE = [
   'Conakry',
   'Boké',

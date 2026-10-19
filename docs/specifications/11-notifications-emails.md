@@ -44,6 +44,7 @@ Informer les utilisateurs des événements qui les concernent. Le seul canal imp
 | 🆕 E19 | Compte non activé à J+5 (DEC-06) | Inscrit | Nouveau lien d'activation ; suppression du compte à J+7 sans activation | à créer | module 01, RG-01-47 |
 | 🆕 E20 | Clé de licence générée (DEC-17) | Acheteur | Reçu : clé, type, montant, moyen et référence de paiement, date | à créer | module 08, RG-08-25 |
 | 🆕 E21 | Activation du mode licence (DEC-18) | Comptes au-delà des annonces gratuites | Date d'effet (J+30), prix, contact de vente | à créer | module 08, RG-08-27 |
+| 🆕 E22 | Avertissement reçu (DEC-33) | Titulaire | Niveau, motif, validité de 6 mois ; suspension éventuelle et moyen de la contester | `AdminServiceImpl.notifierAvertissement` | module 09, RG-09-24 |
 
 Pages HTML associées (hors emails) : `page-activation-success.html`, `page-activation-error.html` (lien d'activation ouvert dans un navigateur).
 
@@ -57,7 +58,7 @@ Liste consolidée des événements sans information de la personne concernée, r
 |---|---|---|---|
 | Nouveau message reçu (au moins un résumé par email, idéalement une notification push) | Participant | **Haute** : clé de la conversion acheteur → vendeur | 06 RG-06-12 |
 | Suspension, réactivation ou désactivation du compte par la modération | Titulaire | **Haute** | 01 RG-01-31, 09 RG-09-27 |
-| Avertissement reçu (et suspension automatique) | Titulaire | **Haute** | 09 RG-09-24, ECART-24 |
+| ~~Avertissement reçu (et suspension automatique)~~ ✅ E22 | Titulaire | — | 09 RG-09-24, ECART-24 |
 | Demande de suppression du compte (confirmation, date limite de réactivation) puis anonymisation | Titulaire | **Haute** (données personnelles) | 02 RG-02-17 |
 | Changement ou réinitialisation du mot de passe (alerte de sécurité) | Titulaire | **Haute** | 01 §5.1 |
 | Connexion d'un compte du staff | Administrateur ou modérateur concerné | **Haute** (sécurité) | 10 RG-10-17, ECART-64 |

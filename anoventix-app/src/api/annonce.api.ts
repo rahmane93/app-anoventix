@@ -142,6 +142,18 @@ export const addBienImmoMedias = async (
 };
 
 /**
+ * Nouvel ordre des photos (tous les identifiants) ; la première devient la photo principale.
+ * Endpoint : PUT /api/biens-immo/{id}/medias/ordre
+ */
+export const reordonnerBienImmoMedias = async (id: number, mediaIds: number[]): Promise<void> => {
+  try {
+    await apiClient.put(`/api/biens-immo/${id}/medias/ordre`, { mediaIds });
+  } catch (err) {
+    rethrowApiError(err, "Impossible de modifier l'ordre des photos.");
+  }
+};
+
+/**
  * Supprime un média par son ID.
  * Endpoint : DELETE /api/biens-immo/{id}/medias/{mediaId}
  */
@@ -221,6 +233,21 @@ export const filterAnnonces = async (
   const data = (res.data.data ?? []).map(normalizeMediaUrls);
   return { ...res.data, data };
 };
+
+/** Modification enregistrée sur une annonce (propriétaire, modération). */
+export interface HistoriqueAnnonce {
+  id: number;
+  annonceId: number;
+  champ: string;
+  ancienneValeur: string | null;
+  nouvelleValeur: string | null;
+  modifiePar: string | null;
+  dateModification: string;
+}
+
+/** Historique d'une annonce : propriétaire, son professionnel, ou modération (ECART-30). */
+export const getHistoriqueAnnonce = async (id: number): Promise<HistoriqueAnnonce[]> =>
+  (await apiClient.get<HistoriqueAnnonce[]>(`/api/biens-immo/${id}/historique`)).data;
 
 /**
  * Récupère une annonce par son ID.

@@ -80,7 +80,7 @@ public class BienImmoControllerTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Matam");
-            loc.setQuartier("Taouyah");
+            loc.setQuartier("Taouyah (BienImmoControllerTest)");
             localisationRepository.save(loc);
         }
     }
@@ -335,13 +335,6 @@ public class BienImmoControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @Test
-    void testSearchBiens_public() throws Exception {
-        // Recherche publique, comme /filter et /public/search.
-        mockMvc.perform(get("/api/biens-immo/search").param("keyword", "appartement"))
-                .andExpect(status().isOk());
-    }
-
     // DEC-14 : le téléphone de l'annonceur n'est fourni qu'aux utilisateurs connectés.
     @Test
     void testTelephoneAnnonceur_reserveAuxUtilisateursConnectes() throws Exception {
@@ -377,7 +370,7 @@ public class BienImmoControllerTest {
         kipe.setRegion("Conakry");
         kipe.setPrefecture("Conakry");
         kipe.setCommune("Ratoma");
-        kipe.setQuartier("Kipé");
+        kipe.setQuartier("Kipé (BienImmoControllerTest)");
         localisationRepository.save(kipe);
         String jwt = signupActivateAndGetJWT("recherche1", "recherche1@test.com", "Test123!");
 
@@ -593,17 +586,17 @@ public class BienImmoControllerTest {
     }
 
     @Test
-    void testRechercheTexte_paginationSql() throws Exception {
+    void testRechercheTexte_pagination() throws Exception {
         String jwt = signupActivateAndGetJWT("texte1", "texte1@test.com", "Test123!");
         for (int i = 1; i <= 3; i++) {
             creerAvecPosition(jwt, "VENTE", "Villa lumineuse numéro " + i, "9.5", "-13.7");
         }
 
-        mockMvc.perform(get("/api/biens-immo/public/search").param("q", "villa lumineuse").param("size", "2").param("page", "1"))
+        mockMvc.perform(get("/api/biens-immo/filter").param("q", "villa lumineuse").param("size", "2").param("page", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(3))
                 .andExpect(jsonPath("$.data.length()").value(1));
-        mockMvc.perform(get("/api/biens-immo/public/search").param("q", "introuvablemot"))
+        mockMvc.perform(get("/api/biens-immo/filter").param("q", "introuvablemot"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(0));
     }

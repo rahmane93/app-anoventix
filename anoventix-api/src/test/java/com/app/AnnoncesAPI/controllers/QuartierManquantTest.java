@@ -59,12 +59,14 @@ class QuartierManquantTest {
     private MockMvc mvc;
     private String jwtAnnonceur;
     private String jwtAdmin;
+    private String locId;
 
     @BeforeEach
     void preparer() throws Exception {
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
         vider();
-        localisationRepository.findById(LOC_ID).orElseGet(() -> {
+        // Kipé fait partie du référentiel (V14) : un quartier n'existe qu'une fois par commune (ECART-45).
+        locId = localisationRepository.trouverQuartier("Conakry", "Conakry", "Ratoma", "Kipé").orElseGet(() -> {
             Localisation loc = new Localisation();
             loc.setId(LOC_ID);
             loc.setRegion("Conakry");
@@ -73,7 +75,7 @@ class QuartierManquantTest {
             loc.setQuartier("Kipé");
             loc.setTypeCommune("Urbaine");
             return localisationRepository.save(loc);
-        });
+        }).getId();
         compte("annonceur@example.com", TypeRole.PARTICULIER);
         compte("admin@example.com", TypeRole.ADMINISTRATEUR);
         jwtAnnonceur = connexion("annonceur@example.com");
@@ -148,11 +150,11 @@ class QuartierManquantTest {
 
         mvc.perform(put("/api/admin/quartiers-demandes/{id}/rattacher", demandeId)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtAdmin).contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(Map.of("localisationId", LOC_ID))))
+                .content(mapper.writeValueAsString(Map.of("localisationId", locId))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.statut").value("RATTACHEE"));
 
         assertThat(jdbc.queryForObject("SELECT localisation_id FROM annonce WHERE id = ?", String.class, annonceId))
-                .isEqualTo(LOC_ID);
+                .isEqualTo(locId);
     }
 
     @Test

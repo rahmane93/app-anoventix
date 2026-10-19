@@ -258,23 +258,6 @@ public class MessagingServiceImpl implements MessagingService {
     }
 
     @Override
-    public MessageDTO markMessageAsRead(Long messageId, Authentication authentication) {
-        User currentUser = getCurrentUser(authentication);
-        Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message non trouvé avec l'ID: " + messageId));
-
-        Conversation conversation = getConversationForParticipant(message.getConversation().getId(), currentUser.getId());
-        if (message.getSender().getId().equals(currentUser.getId())) {
-            return toMessageDTO(message, currentUser.getId());
-        }
-        if (message.getReadAt() == null) {
-            message.setReadAt(LocalDateTime.now());
-            messageRepository.save(message);
-        }
-        return toMessageDTO(message, currentUser.getId());
-    }
-
-    @Override
     public void markConversationAsRead(Long conversationId, Authentication authentication) {
         User currentUser = getCurrentUser(authentication);
         Conversation conversation = getConversationForParticipant(conversationId, currentUser.getId());

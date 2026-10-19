@@ -502,25 +502,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         return toAgentDTO(agent, entreprise);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean canCreateAnnonce(UUID entrepriseId, Authentication authentication) {
-        Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
-        verifierMembreOuModeration(entrepriseId, authentication);
-
-        return quotaService.peutCreerAnnonce(entreprise, quotaService.annoncesActives(entreprise));
-    }
     
-    @Override
-    @Transactional(readOnly = true)
-    public boolean canAddAgent(UUID entrepriseId, Authentication authentication) {
-        Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
-        verifierMembreOuModeration(entrepriseId, authentication);
-
-        return quotaService.peutAjouterAgent(entreprise);
-    }
     
     @Override
     @Transactional(readOnly = true)

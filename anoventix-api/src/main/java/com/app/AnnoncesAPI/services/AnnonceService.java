@@ -42,15 +42,7 @@ public interface AnnonceService {
     /** Même règle de visibilité que {@link #getAnnonceById}, à partir de l'identifiant public. */
     Optional<AnnonceDTO> getAnnonceByPublicId(String publicId, Authentication authentication);
     
-    /**
-     * Recherche des annonces par ID de localisation
-     */
-    Page<AnnonceDTO> findAnnoncesByLocalisationId(String localisationId, Pageable pageable);
     
-    /**
-     * Recherche des annonces par mot-clé
-     */
-    Page<AnnonceDTO> findAnnoncesByKeyword(String keyword, Pageable pageable);
     
     /**
      * Récupère les annonces d'un utilisateur

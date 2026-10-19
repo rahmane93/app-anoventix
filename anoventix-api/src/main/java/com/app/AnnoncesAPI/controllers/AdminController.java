@@ -37,7 +37,6 @@ import com.app.AnnoncesAPI.payload.response.AdminStatsAvanceesResponse;
 import com.app.AnnoncesAPI.payload.response.AdminStatsResponse;
 import com.app.AnnoncesAPI.payload.response.AuditEventResponse;
 import com.app.AnnoncesAPI.payload.response.AvertissementResponse;
-import com.app.AnnoncesAPI.payload.response.HistoriqueAnnonceResponse;
 import com.app.AnnoncesAPI.payload.response.MessageModerationResponse;
 import com.app.AnnoncesAPI.payload.response.MessageResponse;
 import com.app.AnnoncesAPI.payload.response.SignalementResponse;
@@ -112,13 +111,6 @@ public class AdminController {
         String safeSort = SORTABLE_FIELDS.contains(sort) ? sort : "dateCreation";
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, safeSort));
         return ResponseEntity.ok(PageResponse.of(adminService.getAllAnnonces(statut, cloturee, q, pageable)));
-    }
-
-    @GetMapping("/annonces/{id}/historique")
-    @Operation(summary = "Historique de modération d'une annonce",
-               description = "Retourne toutes les actions de modération effectuées sur une annonce (qui a fait quoi, quand).")
-    public ResponseEntity<List<HistoriqueAnnonceResponse>> getHistoriqueAnnonce(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.getHistoriqueAnnonce(id));
     }
 
     @GetMapping("/stats")
@@ -276,7 +268,9 @@ public class AdminController {
 
     @PostMapping("/utilisateurs/{userId}/avertissements")
     @Operation(summary = "Émettre un avertissement",
-               description = "Émet un avertissement gradué (LÉGER → MODÉRÉ → GRAVE). Au 3ème avertissement, l'utilisateur est automatiquement suspendu.")
+               description = "Émet un avertissement et prévient le titulaire par email. Sans niveau choisi, il suit le rang "
+                           + "parmi les avertissements en vigueur (6 mois, non levés) : LÉGER, MODÉRÉ, puis GRAVE. "
+                           + "Un avertissement GRAVE suspend le compte.")
     public ResponseEntity<AvertissementResponse> emettreAvertissement(
             @PathVariable UUID userId,
             @Valid @RequestBody AvertissementRequest request,
@@ -289,6 +283,20 @@ public class AdminController {
     @Operation(summary = "Historique des avertissements d'un utilisateur")
     public ResponseEntity<List<AvertissementResponse>> getAvertissements(@PathVariable UUID userId) {
         return ResponseEntity.ok(adminService.getAvertissements(userId));
+    }
+
+    @PostMapping("/utilisateurs/{userId}/avertissements/{avertissementId}/lever")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    @Operation(summary = "Lever un avertissement (administrateur)",
+               description = "Annule un avertissement émis par erreur : il ne compte plus, reste dans l'historique et le "
+                           + "journal d'audit. Une suspension éventuelle n'est pas levée.")
+    public ResponseEntity<AvertissementResponse> leverAvertissement(
+            @PathVariable UUID userId,
+            @PathVariable Long avertissementId,
+            @Valid @RequestBody com.app.AnnoncesAPI.payload.request.LeveeAvertissementRequest request,
+            @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
+        return ResponseEntity.ok(adminService.leverAvertissement(userId, avertissementId, request.getMotif(),
+                currentAdmin.getUsername()));
     }
 
     // ─── Modération des messages ──────────────────────────────────────────

@@ -54,7 +54,14 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
+    public java.util.List<String> getRegions() {
+        return localisationRepository.findRegions();
+    }
+
+    @Override
     public LocalisationDTO create(LocalisationRequest request) {
+        verifierCoordonnees(request);
+        refuserDoublon(request, null);
         Localisation localisation = new Localisation();
         localisation.setId(UUID.randomUUID().toString());
         localisation.setRegion(request.getRegion());
@@ -62,6 +69,8 @@ public class LocalisationServiceImpl implements LocalisationService {
         localisation.setCommune(request.getCommune());
         localisation.setQuartier(request.getQuartier());
         localisation.setTypeCommune(request.getTypeCommune());
+        localisation.setLatitude(request.getLatitude());
+        localisation.setLongitude(request.getLongitude());
         return annonceMapper.localisationToDTO(localisationRepository.save(localisation));
     }
 
@@ -69,12 +78,32 @@ public class LocalisationServiceImpl implements LocalisationService {
     public LocalisationDTO update(String id, LocalisationRequest request) {
         Localisation localisation = localisationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Localisation non trouvée avec l'ID: " + id));
+        verifierCoordonnees(request);
+        refuserDoublon(request, id);
         localisation.setRegion(request.getRegion());
         localisation.setPrefecture(request.getPrefecture());
         localisation.setCommune(request.getCommune());
         localisation.setQuartier(request.getQuartier());
         localisation.setTypeCommune(request.getTypeCommune());
+        localisation.setLatitude(request.getLatitude());
+        localisation.setLongitude(request.getLongitude());
         return annonceMapper.localisationToDTO(localisationRepository.save(localisation));
+    }
+
+    /** Un quartier n'existe qu'une fois par commune, aux accents et à la casse près (ECART-45). */
+    private void refuserDoublon(LocalisationRequest r, String idModifie) {
+        localisationRepository.trouverQuartier(r.getRegion(), r.getPrefecture(), r.getCommune(), r.getQuartier())
+                .filter(l -> !l.getId().equals(idModifie))
+                .ifPresent(l -> {
+                    throw new IllegalStateException("Le quartier « " + l.getQuartier() + " » existe déjà dans la commune "
+                            + l.getCommune() + ".");
+                });
+    }
+
+    private static void verifierCoordonnees(LocalisationRequest r) {
+        if ((r.getLatitude() == null) != (r.getLongitude() == null)) {
+            throw new IllegalArgumentException("Indiquez la latitude et la longitude, ou aucune des deux.");
+        }
     }
 
     @Override

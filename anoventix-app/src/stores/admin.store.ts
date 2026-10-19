@@ -141,6 +141,7 @@ interface AdminStore {
   changePieceIdentiteStatut: (id: string, body: ChangePieceIdentiteStatutRequest) => Promise<void>;
   loadAvertissements: (userId: string) => Promise<void>;
   emettrAvertissement: (userId: string, body: EmettrAvertissementRequest) => Promise<void>;
+  leverAvertissement: (userId: string, avertissementId: number, motif: string) => Promise<void>;
   octroiRole: (userId: string, role: string) => Promise<void>;
   revoquerRole: (userId: string, role: string) => Promise<void>;
   supprimerCompte: (userId: string) => Promise<void>;
@@ -466,12 +467,17 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   emettrAvertissement: async (userId, body) => {
     const avert = await adminApi.emettrAvertissement(userId, body);
     if (!avert) return;
-    set((s) => ({
-      avertissements: [avert, ...(s.avertissements ?? [])],
-      currentUser: s.currentUser?.id === userId
-        ? { ...s.currentUser, nbAvertissements: (s.currentUser.nbAvertissements ?? 0) + 1 }
-        : s.currentUser,
-    }));
+    set((s) => ({ avertissements: [avert, ...(s.avertissements ?? [])] }));
+    // Compteur en vigueur et statut (suspension éventuelle) recalculés par l'API.
+    const fresh = await adminApi.getUserById(userId);
+    if (fresh) set({ currentUser: fresh });
+  },
+
+  leverAvertissement: async (userId, avertissementId, motif) => {
+    const leve = await adminApi.leverAvertissement(userId, avertissementId, motif);
+    set((s) => ({ avertissements: (s.avertissements ?? []).map((a) => (a.id === leve.id ? leve : a)) }));
+    const fresh = await adminApi.getUserById(userId);
+    if (fresh) set({ currentUser: fresh });
   },
 
   // ── Rôles ──────────────────────────────────────────────────────────────────

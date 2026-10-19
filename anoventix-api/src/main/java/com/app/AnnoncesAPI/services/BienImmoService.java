@@ -14,7 +14,6 @@ import com.app.AnnoncesAPI.enums.MotifCloture;
 import com.app.AnnoncesAPI.enums.TypeAnnonce;
 import com.app.AnnoncesAPI.enums.TypeBien;
 import com.app.AnnoncesAPI.enums.TypeUsage;
-import com.app.AnnoncesAPI.payload.response.AnnonceStatsResponse;
 
 /**
  * Interface définissant les opérations de gestion des biens immobiliers
@@ -28,9 +27,6 @@ public interface BienImmoService extends AnnonceService {
     /** Active ou désactive une annonce (ADMIN/MOD uniquement). */
     void toggleActif(Long id, Authentication authentication);
 
-    /** Retourne les statistiques de vues. Réservé au propriétaire, parent PROFESSIONNEL, ou ADMIN/MOD. */
-    AnnonceStatsResponse getAnnonceStats(Long id, Authentication authentication);
-
     /** Signale une annonce (tout utilisateur authentifié). */
     void signalerAnnonce(Long id, com.app.AnnoncesAPI.enums.MotifSignalement motif, String commentaire, Authentication authentication);
     void retirerSignalement(Long annonceId, Authentication authentication);
@@ -43,15 +39,6 @@ public interface BienImmoService extends AnnonceService {
 
     /** Retourne les annonces similaires (même type, même commune, prix ±30%). Public. */
     List<AnnonceDTO> findSimilaires(Long id, int max);
-
-    /** Rechercher des biens par surface minimale (m²). */
-    Page<AnnonceDTO> findBySurface(Double minSurface, Pageable pageable);
-
-    /**
-     * Recherche en langage naturel via PostgreSQL Full-Text Search.
-     * Les résultats sont triés par pertinence décroissante.
-     */
-    Page<AnnonceDTO> naturalLanguageSearch(String query, Pageable pageable);
 
     /** Recherche multi-critères : texte, référence, types, prix, localisation, composition, surface. */
     Page<AnnonceDTO> filterAnnonces(

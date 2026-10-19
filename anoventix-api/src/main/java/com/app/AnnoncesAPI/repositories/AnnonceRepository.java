@@ -21,7 +21,6 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
 
     Optional<Annonce> findByIdAndActifTrue(Long id);
     
-    Page<Annonce> findByLocalisationId(String quartierId, Pageable pageable);
 
     // Trouver une annonce via la liste des localisations
     // Cette méthode permet de trouver des annonces qui sont associées à une ou plusieurs localisations
@@ -78,20 +77,4 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
             ORDER BY DATE_TRUNC('month', date_creation) ASC
             """, nativeQuery = true)
     java.util.List<Object[]> countByMoisSur12Mois();
-
-    /**
-     * Recherche textuelle dans titre, description et type_bien.
-     * Utilise JPQL (pas de requête native) pour éviter les problèmes de
-     * discriminateur clazz_ avec l'héritage JOINED.
-     */
-    @Query("""
-            SELECT a FROM BienImmo a
-            WHERE a.actif = true
-              AND (
-                LOWER(a.titre)       LIKE LOWER(CONCAT('%', :query, '%'))
-                OR LOWER(a.description) LIKE LOWER(CONCAT('%', :query, '%'))
-              )
-            ORDER BY a.dateCreation DESC
-            """)
-    Page<Annonce> naturalLanguageSearch(@Param("query") String query, Pageable pageable);
 }

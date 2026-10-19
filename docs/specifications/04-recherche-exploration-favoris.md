@@ -40,7 +40,7 @@ Hors périmètre (non implémenté) : alertes et recherches enregistrées, histo
 | RG-04-03 | Texte `q` : recherche plein texte PostgreSQL (dictionnaire français, `plainto_tsquery`) sur titre + description + type de bien, classée par pertinence. Combinée aux filtres, elle restreint aux identifiants trouvés (aucun résultat si aucun identifiant). **Ne sont pas couverts** : la référence de l'annonce, le nom du quartier, de la commune ou de la préfecture (sauf s'ils figurent dans le titre ou la description), le prix. La recherche est sensible aux accents (« Kipe » ne trouve pas « Kipé ») et ne tolère pas les fautes de frappe (ECART-57). | `BienImmoRepository.findIdsByFullTextSearch`, `BienImmoServiceImpl.java:342-353` |
 | RG-04-04 | Le filtre prix porte sur le **prix initial** (le prix révisé n'est pas pris en compte, ECART-42). | `BienImmoSpecification.prixBetween` |
 | RG-04-05 | Tri proposé dans l'app : Plus récent (défaut), Prix croissant, Prix décroissant. Les critères actifs sont affichés en puces supprimables ; le nombre de filtres actifs est indiqué. | `features/explore/filters.ts:84-91`, `explore.tsx` |
-| RG-04-06 | Endpoints de recherche présents dans l'API mais **non utilisés par l'app** : `/search` (LIKE), `/surface`, `/quartier/{id}`, `/public/search` (plein texte seul) (ECART-30). | `BienImmoController.java` |
+| RG-04-06 | 🆕 (ECART-30) Les endpoints de recherche inutilisés (`/search`, `/surface`, `/quartier/{id}`, `/public/search`) ont été **retirés** : `/filter` (avec `q` pour le texte) est la seule recherche. | `BienImmoController` |
 | RG-04-16 | **Champ de recherche de l'accueil** (« Quartier, type de bien, référence… ») : la saisie est envoyée telle quelle dans `q` (RG-04-03), après un court délai sans frappe ou à la validation du clavier. Elle n'est jamais envoyée dans le filtre `reference` ni dans les filtres de localisation : chercher une référence (« VE-1017-AB12 », pourtant reprise dans le message WhatsApp prérempli) ne donne aucun résultat, et chercher un quartier ne trouve que les annonces qui le citent dans leur texte (ECART-57). | `APP/src/features/explore/useExploreAnnonces.tsx:113-121, 223-227` |
 | RG-04-17 | Les requêtes de recherche se chassent : quand les critères changent, la requête en cours est ignorée et la liste repart de la première page, avec des squelettes de chargement. | `useExploreAnnonces.tsx:157-175` |
 
@@ -57,7 +57,7 @@ Hors périmètre (non implémenté) : alertes et recherches enregistrées, histo
 
 | ID | Règle | Source |
 |---|---|---|
-| RG-04-11 | Similaires d'une annonce visible : même type de bien, **même commune**, prix entre −30 % et +30 % (arrondis), hors l'annonce elle-même, les plus récentes d'abord ; 6 par défaut, 20 au plus. La commune est comparée **par son nom seul** : les communes homonymes de deux préfectures sont mélangées (module 05, RG-05-12, ECART-59). | `BienImmoServiceImpl.java:508-522` |
+| RG-04-11 | Similaires d'une annonce visible : même type de bien, **même commune de la même préfecture** (ECART-59), prix entre −30 % et +30 % (arrondis), hors l'annonce elle-même, les plus récentes d'abord ; 6 par défaut, 20 au plus. La commune est comparée **par son nom seul** : les communes homonymes de deux préfectures sont mélangées (module 05, RG-05-12, ECART-59). | `BienImmoServiceImpl.java:508-522` |
 
 ### 4.4 Favoris
 

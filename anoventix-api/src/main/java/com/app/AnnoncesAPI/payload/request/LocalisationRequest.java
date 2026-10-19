@@ -31,4 +31,11 @@ public class LocalisationRequest {
     @NotBlank(message = "Le type de commune est obligatoire")
     @Pattern(regexp = "urbaine|rurale", message = "Le type doit être 'urbaine' ou 'rurale'")
     private String typeCommune;
+
+    /** Point de référence du quartier (facultatif, les deux ou aucun). */
+    @jakarta.validation.constraints.DecimalMin(value = "-90") @jakarta.validation.constraints.DecimalMax(value = "90")
+    private java.math.BigDecimal latitude;
+
+    @jakarta.validation.constraints.DecimalMin(value = "-180") @jakarta.validation.constraints.DecimalMax(value = "180")
+    private java.math.BigDecimal longitude;
 }

@@ -34,6 +34,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -60,29 +62,39 @@ public class ProStatsServiceImpl implements ProStatsService {
 
         LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
 
+        // Le professionnel a tous les droits sur les annonces de ses agents (DEC-27) : son tableau de bord porte sur
+        // toute l'entreprise. Un agent, un particulier ou un professionnel sans entreprise ne voit que ses annonces.
+        boolean entreprise = user.isAnnonceurProfessionnel() && user.getEntreprise() != null;
+        Set<UUID> owners = entreprise
+                ? userRepository.findByEntrepriseId(user.getEntreprise().getId()).stream()
+                        .map(User::getId).collect(Collectors.toCollection(HashSet::new))
+                : new HashSet<>();
+        owners.add(userId);
+
         return ProStatsResponse.builder()
-                .portefeuille(buildPortefeuille(userId, startOfMonth))
-                .visibilite(buildVisibilite(userId))
+                .perimetre(entreprise ? "ENTREPRISE" : "PERSONNEL")
+                .portefeuille(buildPortefeuille(owners, startOfMonth))
+                .visibilite(buildVisibilite(owners))
                 .messagerie(buildMessagerie(userId))
                 .equipe(buildEquipe(user))
                 .conformite(buildConformite(user, userId))
                 .build();
     }
 
-    private PortefeuilleStats buildPortefeuille(UUID userId, LocalDateTime startOfMonth) {
-        long publiees  = bienImmoRepository.countByOwnerIdAndActifTrueAndStatutModeration(userId, StatutAnnonce.PUBLIEE);
+    private PortefeuilleStats buildPortefeuille(Set<UUID> owners, LocalDateTime startOfMonth) {
+        long publiees  = bienImmoRepository.countEnLigneForOwners(owners, StatutAnnonce.PUBLIEE);
         // Masquer et rejeter mettent actif = false : compter sans ce filtre (ECART-07).
-        long masquees  = bienImmoRepository.countByOwnerIdAndStatutModeration(userId, StatutAnnonce.MASQUEE);
-        long rejetees  = bienImmoRepository.countByOwnerIdAndStatutModeration(userId, StatutAnnonce.REJETEE);
+        long masquees  = bienImmoRepository.countByStatutForOwners(owners, StatutAnnonce.MASQUEE);
+        long rejetees  = bienImmoRepository.countByStatutForOwners(owners, StatutAnnonce.REJETEE);
 
-        long vendu  = bienImmoRepository.countCloturesByOwnerAndMotifSince(userId, MotifCloture.VENDU,  startOfMonth);
-        long loue   = bienImmoRepository.countCloturesByOwnerAndMotifSince(userId, MotifCloture.LOUE,   startOfMonth);
-        long retire = bienImmoRepository.countCloturesByOwnerAndMotifSince(userId, MotifCloture.RETIRE, startOfMonth);
+        long vendu  = bienImmoRepository.countCloturesForOwnersSince(owners, MotifCloture.VENDU,  startOfMonth);
+        long loue   = bienImmoRepository.countCloturesForOwnersSince(owners, MotifCloture.LOUE,   startOfMonth);
+        long retire = bienImmoRepository.countCloturesForOwnersSince(owners, MotifCloture.RETIRE, startOfMonth);
         long totalClotures = vendu + loue + retire;
         double tauxConversion = totalClotures > 0 ? (vendu + loue) * 100.0 / totalClotures : 0.0;
 
         Map<String, Long> repartition = new LinkedHashMap<>();
-        for (Object[] row : bienImmoRepository.countByTypeAnnonceForOwner(userId)) {
+        for (Object[] row : bienImmoRepository.countByTypeAnnonceForOwners(owners)) {
             repartition.put(((TypeAnnonce) row[0]).name(), (Long) row[1]);
         }
 
@@ -98,11 +110,11 @@ public class ProStatsServiceImpl implements ProStatsService {
                 .build();
     }
 
-    private VisibiliteStats buildVisibilite(UUID userId) {
-        Long rawVues = bienImmoRepository.sumVueCountByOwnerId(userId);
+    private VisibiliteStats buildVisibilite(Set<UUID> owners) {
+        Long rawVues = bienImmoRepository.sumVueCountForOwners(owners);
         long totalVues = rawVues != null ? rawVues : 0L;
 
-        List<BienImmo> top5 = bienImmoRepository.findTopByVueCountForOwner(userId, PageRequest.of(0, 5));
+        List<BienImmo> top5 = bienImmoRepository.findTopByVueCountForOwners(owners, PageRequest.of(0, 5));
         List<TopAnnonceItem> top5Items = top5.stream()
                 .map(b -> TopAnnonceItem.builder()
                         .id(b.getId())
@@ -116,7 +128,7 @@ public class ProStatsServiceImpl implements ProStatsService {
         return VisibiliteStats.builder()
                 .totalVues(totalVues)
                 .top5ParVues(top5Items)
-                .totalFavoris(bienImmoRepository.countTotalFavorisByOwnerId(userId))
+                .totalFavoris(bienImmoRepository.countTotalFavorisForOwners(owners))
                 .build();
     }
 
@@ -141,8 +153,13 @@ public class ProStatsServiceImpl implements ProStatsService {
 
         UUID entrepriseId = user.getEntreprise().getId();
 
-        long agentsActifs    = userRepository.countByEntrepriseIdAndStatut(entrepriseId, StatutUtilisateur.ACTIF);
-        long agentsSuspendus = userRepository.countByEntrepriseIdAndStatut(entrepriseId, StatutUtilisateur.SUSPENDU);
+        // L'équipe, ce sont les agents : le professionnel n'y figure pas (le quota d'agents l'exclut aussi).
+        List<User> agents = userRepository.findByEntrepriseId(entrepriseId).stream()
+                .filter(agent -> !agent.getId().equals(user.getId()))
+                .filter(agent -> agent.getDateSuppressionDefinitive() == null)
+                .toList();
+        long agentsActifs    = agents.stream().filter(a -> a.getStatut() == StatutUtilisateur.ACTIF).count();
+        long agentsSuspendus = agents.stream().filter(a -> a.getStatut() == StatutUtilisateur.SUSPENDU).count();
 
         Map<UUID, long[]> statsMap = new HashMap<>();
         for (Object[] row : bienImmoRepository.findAgentStatsByEntreprise(entrepriseId)) {
@@ -152,8 +169,7 @@ public class ProStatsServiceImpl implements ProStatsService {
             statsMap.put(agentId, new long[]{nbAnnonces, totalVues});
         }
 
-        List<AgentPerf> performances = userRepository.findByEntrepriseId(entrepriseId).stream()
-                .filter(agent -> agent.getDateSuppressionDefinitive() == null)
+        List<AgentPerf> performances = agents.stream()
                 .map(agent -> {
                     long[] s = statsMap.getOrDefault(agent.getId(), new long[]{0L, 0L});
                     String displayName = buildAgentDisplayName(agent);
@@ -221,9 +237,30 @@ public class ProStatsServiceImpl implements ProStatsService {
             canCreate = canCreate && companyActive < quotaMax;
         }
 
+        // Mêmes conditions que la création d'une annonce (BienImmoServiceImpl.create) : pièce validée, annonces non
+        // masquées, entreprise active, quota et licence.
+        String motif = null;
+        if (user.getStatutPieceIdentite() != com.app.AnnoncesAPI.enums.StatutPieceIdentite.VALIDEE) {
+            motif = "Votre pièce d'identité doit être validée avant de pouvoir publier.";
+        } else if (user.isAnnoncesMasquees()) {
+            motif = "Vos annonces sont masquées par la modération : la publication est suspendue.";
+        } else if (user.isAnnonceurProfessionnel() && entreprise == null) {
+            motif = "Créez votre entreprise avant de publier.";
+        } else if (entreprise != null && !Boolean.TRUE.equals(entreprise.getActive())) {
+            motif = "Votre entreprise est désactivée : la publication est suspendue.";
+        } else if (!canCreate && entreprise != null) {
+            motif = limiteParLicence
+                    ? "Limite des annonces gratuites atteinte : une licence est nécessaire."
+                    : "Quota d'annonces actives atteint (" + quotaMax + " maximum).";
+        }
+        if (entreprise != null) {
+            canCreate = motif == null;
+        }
+
         return ConformiteStats.builder()
+                .motifPublicationImpossible(motif)
                 .statutPieceIdentite(user.getStatutPieceIdentite() != null ? user.getStatutPieceIdentite().name() : null)
-                .nbAvertissements(avertissementRepository.countByUtilisateurId(userId))
+                .nbAvertissements(avertissementRepository.countEnVigueur(userId))
                 .annoncesActives(annoncesActives)
                 .quotaMax(quotaMax)
                 .annoncesRestantes(annoncesRestantes)

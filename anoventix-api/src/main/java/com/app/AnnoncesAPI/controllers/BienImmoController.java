@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.app.AnnoncesAPI.payload.response.PageResponse;
-import com.app.AnnoncesAPI.payload.response.SearchPageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,6 @@ import com.app.AnnoncesAPI.exceptions.ResourceNotFoundException;
 import com.app.AnnoncesAPI.payload.request.BienImmoRequest;
 import com.app.AnnoncesAPI.payload.request.MediaRequest;
 import com.app.AnnoncesAPI.payload.request.SignalementRequest;
-import com.app.AnnoncesAPI.payload.response.AnnonceStatsResponse;
 import com.app.AnnoncesAPI.payload.response.SignalementResponse;
 import com.app.AnnoncesAPI.security.AdresseClient;
 import com.app.AnnoncesAPI.services.BienImmoService;
@@ -182,15 +180,6 @@ public class BienImmoController {
         return "ip:" + (ip != null ? ip : "unknown");
     }
 
-    @GetMapping("/{id}/stats")
-    @Operation(summary = "Statistiques de vues d'une annonce",
-               description = "Réservé au propriétaire, au PROFESSIONNEL parent (si l'owner est un AGENT), ou à un ADMIN/MOD.")
-    public ResponseEntity<AnnonceStatsResponse> getAnnonceStats(
-            @PathVariable Long id,
-            Authentication authentication) {
-        return ResponseEntity.ok(bienImmoService.getAnnonceStats(id, authentication));
-    }
-
     @PutMapping("/{id}/toggle-actif")
     @Operation(summary = "Activer ou désactiver une annonce",
                description = "Masque/affiche une annonce. Accessible au propriétaire (ou au "
@@ -268,63 +257,6 @@ public class BienImmoController {
         size = Math.min(size, MAX_PAGE_SIZE);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateCreation"));
         return ResponseEntity.ok(PageResponse.of(bienImmoService.findAnnoncesByUser(authentication, pageable)));
-    }
-
-    @GetMapping("/quartier/{localisationId}")
-    @Operation(summary = "Filtrer les biens immobiliers par quartier (localisation)")
-    public ResponseEntity<PageResponse<AnnonceDTO>> getBiensByQuartier(
-            @PathVariable String localisationId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        size = Math.min(size, MAX_PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateCreation"));
-        return ResponseEntity.ok(PageResponse.of(bienImmoService.findAnnoncesByLocalisationId(localisationId, pageable)));
-    }
-
-    @GetMapping("/search")
-    @Operation(summary = "Rechercher des biens immobiliers par mot-clé")
-    public ResponseEntity<PageResponse<AnnonceDTO>> searchBiens(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        size = Math.min(size, MAX_PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateCreation"));
-        return ResponseEntity.ok(PageResponse.of(bienImmoService.findAnnoncesByKeyword(keyword, pageable)));
-    }
-
-    @GetMapping("/surface")
-    @Operation(summary = "Filtrer les biens immobiliers par surface minimale (m²)")
-    public ResponseEntity<PageResponse<AnnonceDTO>> getBiensBySurface(
-            @RequestParam Double minSurface,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        size = Math.min(size, MAX_PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dateCreation"));
-        return ResponseEntity.ok(PageResponse.of(bienImmoService.findBySurface(minSurface, pageable)));
-    }
-
-    @GetMapping("/public/search")
-    @Operation(
-        summary = "Recherche en langage naturel",
-        description = "Recherche via PostgreSQL Full-Text Search (configuration 'french'). "
-                    + "Accepte une phrase libre (ex: \"appartement 3 pièces Conakry\"). "
-                    + "Résultats triés par pertinence décroissante."
-    )
-    public ResponseEntity<SearchPageResponse<AnnonceDTO>> naturalLanguageSearch(
-            @RequestParam String q,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        if (q == null || q.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        size = Math.min(size, MAX_PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page, size);
-        Page<AnnonceDTO> results = bienImmoService.naturalLanguageSearch(q.trim(), pageable);
-        return ResponseEntity.ok(SearchPageResponse.of(results, q.trim()));
     }
 
     @GetMapping("/filter")
@@ -450,6 +382,17 @@ public class BienImmoController {
             @ModelAttribute @Valid MediaRequest mediaRequest,
             Authentication authentication) {
         return ResponseEntity.ok(mediaService.addMedias(mediaRequest.getMedias(), id, authentication));
+    }
+
+    @PutMapping(value = "/{id}/medias/ordre", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Réordonner les photos d'un bien immobilier",
+               description = "Reçoit tous les identifiants des photos de l'annonce dans le nouvel ordre ; la première devient "
+                           + "la photo principale. Propriétaire de l'annonce ou ADMIN/MODERATEUR.")
+    public ResponseEntity<AnnonceDTO> reordonnerMedias(
+            @PathVariable Long id,
+            @RequestBody @Valid com.app.AnnoncesAPI.payload.request.OrdreMediasRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(mediaService.reordonnerMedias(id, request.getMediaIds(), authentication));
     }
 
     @DeleteMapping("/{id}/medias/{mediaId}")

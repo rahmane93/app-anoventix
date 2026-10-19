@@ -62,9 +62,13 @@ export interface ProStatsConformite {
   canCreateAnnonce: boolean;
   /** quotaMax = annonces gratuites (mode licence actif, pas de licence valide) au lieu du quota entreprise. */
   limiteParLicence: boolean;
+  /** Raison pour laquelle la publication est impossible (pièce, masquage, entreprise, quota, licence). */
+  motifPublicationImpossible?: string | null;
 }
 
 export interface ProStats {
+  /** ENTREPRISE : le professionnel et ses agents ; PERSONNEL : le compte seul. */
+  perimetre?: 'ENTREPRISE' | 'PERSONNEL';
   portefeuille: ProStatsPortefeuille;
   visibilite: ProStatsVisibilite;
   messagerie: ProStatsMessagerie;

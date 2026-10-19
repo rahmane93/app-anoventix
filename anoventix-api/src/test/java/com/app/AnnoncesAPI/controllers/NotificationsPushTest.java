@@ -332,7 +332,7 @@ class NotificationsPushTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Ratoma");
-            loc.setQuartier("Kipé");
+            loc.setQuartier("Kipé (NotificationsPushTest)");
             return localisationRepository.save(loc);
         });
     }
