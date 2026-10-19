@@ -39,6 +39,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { path: 'entreprises', label: 'Entreprises', icon: 'business-outline' },
       { path: 'annonces', label: 'Annonces', icon: 'home-outline' },
       { path: 'localisations', label: 'Localisations', icon: 'location-outline' },
+      { path: 'quartiers-demandes', label: 'Quartiers demandés', icon: 'map-outline', adminOnly: true },
     ],
   },
   {

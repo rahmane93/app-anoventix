@@ -123,6 +123,7 @@ export default function AdminDashboard() {
     { key: 'localisations', icon: 'location-outline', label: 'Localisations', value: null, href: '/(tabs)/administration/localisations' as any },
     ...(isAdmin
       ? [
+          { key: 'quartiers', icon: 'map-outline' as IoniconName, label: 'Quartiers demandés', value: stats?.quartiersDemandes ?? 0, href: '/(tabs)/administration/quartiers-demandes' as any },
           { key: 'quotas', icon: 'speedometer-outline' as IoniconName, label: 'Quotas des comptes pro', value: null, href: '/(tabs)/administration/quotas' as any },
           { key: 'licences', icon: 'key-outline' as IoniconName, label: 'Licences', value: null, href: '/(tabs)/administration/licences' as any },
         ]

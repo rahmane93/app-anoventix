@@ -65,6 +65,7 @@ export default function AdministrationLayout() {
       <Stack.Screen name="messages" options={{ title: 'Messages signalés' }} />
       <Stack.Screen name="messages/[id]" options={{ title: 'Conversation' }} />
       <Stack.Screen name="localisations" options={{ title: 'Localisations' }} />
+      <Stack.Screen name="quartiers-demandes" options={{ title: 'Quartiers demandés' }} />
       <Stack.Screen name="licences" options={{ title: 'Licences' }} />
       <Stack.Screen name="quotas" options={{ title: 'Quotas des comptes pro' }} />
     </Stack>

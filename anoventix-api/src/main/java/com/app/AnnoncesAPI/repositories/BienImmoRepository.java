@@ -158,6 +158,16 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.entreprise.id = :entrepriseId")
     long countActiveAnnoncesByEntreprise(@Param("entrepriseId") UUID entrepriseId);
 
+    /** Comptes sans entreprise au-delà du seuil d'annonces actives gratuites : {id, nombre} (préavis du mode licence). */
+    @Query("SELECT b.owner.id, COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.entreprise IS NULL "
+         + "GROUP BY b.owner.id HAVING COUNT(b) > :seuil")
+    java.util.List<Object[]> proprietairesAuDela(@Param("seuil") long seuil);
+
+    /** Entreprises au-delà du seuil (annonces partagées entre le professionnel et ses agents) : {id, nombre}. */
+    @Query("SELECT b.owner.entreprise.id, COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.entreprise IS NOT NULL "
+         + "GROUP BY b.owner.entreprise.id HAVING COUNT(b) > :seuil")
+    java.util.List<Object[]> entreprisesAuDela(@Param("seuil") long seuil);
+
     /** Compte les annonces actives d'un utilisateur (annonces gratuites avant licence). */
     long countByOwnerIdAndActifTrue(UUID ownerId);
 

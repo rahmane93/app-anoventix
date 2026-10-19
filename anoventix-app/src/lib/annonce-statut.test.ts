@@ -1,4 +1,4 @@
-import { getStatutChip } from './annonce-statut';
+import { estCorrigeable, estRejetee, getEtatReexamen, getStatutChip } from './annonce-statut';
 
 describe('getStatutChip', () => {
   it("n'affiche rien pour une annonce publiée et active", () => {
@@ -20,7 +20,6 @@ describe('getStatutChip', () => {
 });
 
 describe('réexamen d’une annonce masquée (DEC-09, DEC-10)', () => {
-  const { getEtatReexamen, estCorrigeable, estRejetee } = require('./annonce-statut');
 
   it('propose le réexamen sur une annonce masquée tant qu’il reste des demandes', () => {
     expect(getEtatReexamen({ statutModeration: 'MASQUEE', reexamenDemande: false, nbReexamens: 0 })).toBe('DISPONIBLE');

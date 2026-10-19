@@ -70,6 +70,7 @@ public class BienImmoServiceImpl implements BienImmoService {
     private final QuotaEntrepriseService quotaService;
     private final MediaRepository mediaRepository;
     private final ModerationAnnonceService moderation;
+    private final QuartierDemandeService quartierDemandeService;
 
     public BienImmoServiceImpl(BienImmoRepository bienImmoRepository,
                                AnnonceRepository annonceRepository,
@@ -84,7 +85,9 @@ public class BienImmoServiceImpl implements BienImmoService {
                                LicenceService licenceService,
                                QuotaEntrepriseService quotaService,
                                MediaRepository mediaRepository,
-                               ModerationAnnonceService moderation) {
+                               ModerationAnnonceService moderation,
+                               QuartierDemandeService quartierDemandeService) {
+        this.quartierDemandeService = quartierDemandeService;
         this.mediaRepository = mediaRepository;
         this.moderation = moderation;
         this.bienImmoRepository = bienImmoRepository;
@@ -153,6 +156,10 @@ public class BienImmoServiceImpl implements BienImmoService {
         bienImmo.setMedias(medias);
 
         BienImmo saved = bienImmoRepository.save(bienImmo);
+        // Quartier absent de la liste : l'annonce est sur la commune, le nom saisi devient une demande d'ajout (DEC-22).
+        if (localisation.isTechnique()) {
+            quartierDemandeService.enregistrerDemande(saved, request.getQuartierSaisi(), user);
+        }
 
         return annonceMapper.bienImmoEntityToDTO(saved);
     }
@@ -196,6 +203,9 @@ public class BienImmoServiceImpl implements BienImmoService {
         existing.setLocalisation(localisation);
 
         BienImmo updated = bienImmoRepository.save(existing);
+        if (localisation.isTechnique()) {
+            quartierDemandeService.enregistrerDemande(updated, request.getQuartierSaisi(), user);
+        }
 
         // Enregistrement de l'historique des champs modifiés
         String modifiePar = user.getEmail();
@@ -565,7 +575,16 @@ public class BienImmoServiceImpl implements BienImmoService {
      * (terrain ou domaine vendu/loué en l'état) → remis à null. Pour un bien bâti,
      * on rejette les valeurs incohérentes (la mise à jour n'est pas annotée @Valid).
      */
+    /** Caution et avance n'ont de sens que pour une location ou un bail (DEC-23, RG-03-34). */
+    private void normaliserCautionAvance(BienImmo bien) {
+        if (bien.getTypeAnnonce() == com.app.AnnoncesAPI.enums.TypeAnnonce.VENTE) {
+            bien.setCautionMois(null);
+            bien.setAvanceMois(null);
+        }
+    }
+
     private void normaliserComposition(BienImmo bien) {
+        normaliserCautionAvance(bien);
         if (bien.getTypeBien() != null && !bien.getTypeBien().estBati()) {
             bien.setNbPieces(null);
             bien.setNbChambres(null);

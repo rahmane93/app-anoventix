@@ -98,6 +98,7 @@ export interface AdminStats {
   messagesSignalesEnAttente?: number;
   reexamensEnAttente?: number;
   entreprisesAVerifier?: number;
+  quartiersDemandes?: number;
 }
 
 export interface Signalement {

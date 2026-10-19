@@ -56,9 +56,12 @@ public class UserController {
     private final ExportDonneesService exportDonneesService;
     private final PresenceService presenceService;
     private final VerificationConnexionService verificationConnexionService;
+    private final com.app.AnnoncesAPI.services.ProfilPublicService profilPublicService;
 
     public UserController(UserService userService, ExportDonneesService exportDonneesService,
-                          PresenceService presenceService, VerificationConnexionService verificationConnexionService) {
+                          PresenceService presenceService, VerificationConnexionService verificationConnexionService,
+                          com.app.AnnoncesAPI.services.ProfilPublicService profilPublicService) {
+        this.profilPublicService = profilPublicService;
         this.userService = userService;
         this.exportDonneesService = exportDonneesService;
         this.presenceService = presenceService;
@@ -197,6 +200,18 @@ public class UserController {
     public ResponseEntity<Void> deleteMyAccount(Authentication authentication) {
         userService.deleteMyAccount(authentication.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/profil-public")
+    @Operation(summary = "Profil public minimal d'un compte",
+               description = "Public, sans connexion : prénom, initiale du nom, photo, « membre depuis », identité vérifiée et annonces "
+                           + "visibles (paginées). Ni téléphone, ni email, ni statut. 404 pour un compte inconnu, suspendu, désactivé, "
+                           + "anonymisé ou de la modération.")
+    public ResponseEntity<com.app.AnnoncesAPI.dto.ProfilPublicDTO> profilPublic(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(profilPublicService.profil(id, page, size));
     }
 
     @GetMapping("/me/export")

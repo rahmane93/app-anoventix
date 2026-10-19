@@ -24,4 +24,6 @@ public class AdminStatsResponse {
     private long reexamensEnAttente;
     /** Entreprises dont le justificatif RCCM attend une décision (DEC-04). */
     private long entreprisesAVerifier;
+    /** Demandes d'ajout de quartier en attente (DEC-22). */
+    private long quartiersDemandes;
 }

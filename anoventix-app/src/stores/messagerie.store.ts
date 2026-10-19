@@ -6,6 +6,7 @@ import type {
     CreateConversationRequest,
     MessageDTO,
 } from '../types/messagerie.types';
+import { demanderPermissionEtEnregistrer } from '../lib/push';
 import { getErrorMessage } from '../utils/format';
 
 interface MessagerieStore {
@@ -82,6 +83,8 @@ export const useMessagerieStore = create<MessagerieStore>((set, get) => ({
         isLoadingConversation: false,
       });
       await get().markConversationRead(conversationId);
+      // Premier message reçu : moment de proposer les notifications (RG-06-23).
+      if ((messagePage.data ?? []).some((m) => !m.mine)) demanderPermissionEtEnregistrer();
     } catch (err: unknown) {
       set({ error: getErrorMessage(err, 'Impossible de charger cette conversation.'), isLoadingConversation: false });
       throw err;
@@ -147,6 +150,8 @@ export const useMessagerieStore = create<MessagerieStore>((set, get) => ({
     };
     set({ messages: [...get().messages, pending], error: null });
     await get().retryMessage(conversationId, tempId);
+    // Premier message envoyé : moment de proposer les notifications (RG-06-23).
+    if (get().messages.some((m) => m.id !== tempId && m.mine && m.status !== 'failed')) demanderPermissionEtEnregistrer();
   },
 
   retryMessage: async (conversationId, tempId) => {

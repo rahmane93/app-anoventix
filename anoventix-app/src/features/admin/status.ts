@@ -39,6 +39,7 @@ export const ANNONCE_TONE: Record<StatutAnnonce, Tone> = {
 
 export const CLE_TONE: Record<StatutCleLicence, Tone> = {
   LIBRE: 'info',
+  EN_ATTENTE: 'warning',
   ACTIVE: 'success',
   EXPIREE: 'neutral',
 };

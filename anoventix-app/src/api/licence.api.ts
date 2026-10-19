@@ -4,7 +4,7 @@ import type {
   LicenceAdmin,
   ReglagesLicence,
   StatutCleLicence,
-  TypeLicence,
+  VenteLicence,
 } from '../types/licence.types';
 import { apiClient } from './client';
 
@@ -18,14 +18,24 @@ export async function activerLicence(cle: string): Promise<Licence> {
   return res.data;
 }
 
-export async function adminGenererCle(type: TypeLicence): Promise<string> {
-  const res = await apiClient.post<{ cle: string }>('/api/licences/admin/cles', { type });
-  return res.data.cle;
+/** Vend une clé nominative : l'acheteur reçoit un reçu par email et seul son compte peut l'activer. */
+export async function adminVendreCle(vente: VenteLicence): Promise<LicenceAdmin> {
+  const res = await apiClient.post<LicenceAdmin>('/api/licences/admin/cles', vente);
+  return res.data;
+}
+
+/** Affecte un acheteur à une clé au porteur d'avant la mise en service. */
+export async function adminAffecterAcheteur(id: number, vente: VenteLicence): Promise<LicenceAdmin> {
+  const res = await apiClient.put<LicenceAdmin>(`/api/licences/admin/cles/${id}/acheteur`, vente);
+  return res.data;
 }
 
 export async function adminListerCles(params: {
   statut?: StatutCleLicence;
   q?: string;
+  /** Période de vente (AAAA-MM-JJ). */
+  du?: string;
+  au?: string;
   page?: number;
   size?: number;
 }): Promise<PageResponse<LicenceAdmin>> {
@@ -43,12 +53,18 @@ export async function adminSetReglagesLicence(reglages: ReglagesLicence): Promis
   return res.data;
 }
 
-export async function adminGetModeLicence(): Promise<boolean> {
-  const res = await apiClient.get<{ actif: boolean }>('/api/licences/admin/mode');
-  return res.data.actif;
+export interface ModeLicence {
+  actif: boolean;
+  /** Date d'entrée en vigueur (J+30 après l'activation). */
+  dateEffet: string | null;
 }
 
-export async function adminSetModeLicence(actif: boolean): Promise<boolean> {
-  const res = await apiClient.put<{ actif: boolean }>('/api/licences/admin/mode', { actif });
-  return res.data.actif;
+export async function adminGetModeLicence(): Promise<ModeLicence> {
+  const res = await apiClient.get<ModeLicence>('/api/licences/admin/mode');
+  return res.data;
+}
+
+export async function adminSetModeLicence(actif: boolean): Promise<ModeLicence> {
+  const res = await apiClient.put<ModeLicence>('/api/licences/admin/mode', { actif });
+  return res.data;
 }

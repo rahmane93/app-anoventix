@@ -15,7 +15,11 @@ import java.time.LocalDate;
 public class LicenceResponse {
     /** Mode licence activé par l'administrateur. Faux : publication libre, rien à afficher. */
     private boolean modeActif;
-    /** ACTIVE, EXPIREE ou AUCUNE. */
+    /** Date à laquelle le mode licence s'applique ; nulle si le mode est coupé ou déjà en vigueur depuis longtemps. */
+    private LocalDate dateEffet;
+    /** Mode activé mais pas encore en vigueur : la publication reste libre jusqu'à la date d'effet (DEC-18). */
+    private boolean enPreavis;
+    /** ACTIVE, EN_ATTENTE (démarre à l'ouverture du mode licence), EXPIREE ou AUCUNE. */
     private String statut;
     private TypeLicence type;
     private LocalDate dateDebut;

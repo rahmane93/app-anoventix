@@ -29,6 +29,20 @@ export function champsComposition(typeBien?: TypeBien | '' | null): ChampComposi
 }
 
 /** Location et bail commercial se paient au mois. */
+/**
+ * « Caution 2 mois · Avance 3 mois » (RG-03-35). Un champ vide ou nul n'est pas affiché ;
+ * rien pour une vente.
+ */
+export function libelleCautionAvance(
+  a: { typeAnnonce?: TypeAnnonce | '' | null; cautionMois?: number | null; avanceMois?: number | null },
+): string {
+  if (!isLoyerMensuel(a.typeAnnonce)) return '';
+  const parties: string[] = [];
+  if (a.cautionMois) parties.push(`Caution ${a.cautionMois} mois`);
+  if (a.avanceMois) parties.push(`Avance ${a.avanceMois} mois`);
+  return parties.join(' · ');
+}
+
 export function isLoyerMensuel(typeAnnonce?: TypeAnnonce | '' | null): boolean {
   return typeAnnonce === 'LOCATION' || typeAnnonce === 'BAIL';
 }

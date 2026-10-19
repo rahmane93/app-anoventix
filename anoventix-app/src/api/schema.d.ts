@@ -300,6 +300,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/quartiers-demandes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [Admin] File des quartiers demandés
+         * @description Des plus anciennes aux plus récentes, avec les quartiers existants proches par le nom.
+         */
+        get: operations["lister"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/quartiers-demandes/{id}/ajouter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * [Admin] Ajouter le quartier demandé
+         * @description Crée le quartier (nom éventuellement corrigé) et y rattache aussitôt l'annonce et les demandes identiques de la commune.
+         */
+        put: operations["ajouter"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/quartiers-demandes/{id}/rattacher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * [Admin] Rattacher à un quartier existant
+         * @description Variante d'orthographe d'un quartier de la même commune.
+         */
+        put: operations["rattacher"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/quartiers-demandes/{id}/refuser": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * [Admin] Refuser la demande
+         * @description Motif obligatoire ; l'annonce reste rattachée à la commune.
+         */
+        put: operations["refuser"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/quotas": {
         parameters: {
             query?: never;
@@ -581,6 +661,65 @@ export interface paths {
          * @description Retire un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR.
          */
         delete: operations["revoquerRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/alertes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mes alertes de recherche */
+        get: operations["listerAlertes"];
+        put?: never;
+        /**
+         * Créer une alerte de recherche
+         * @description Enregistre les critères en cours. 10 alertes au plus par compte (409 au-delà).
+         */
+        post: operations["creerAlerte"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/alertes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Supprimer une alerte */
+        delete: operations["supprimerAlerte"];
+        options?: never;
+        head?: never;
+        /** Renommer, mettre en pause ou reprendre une alerte */
+        patch: operations["modifierAlerte"];
+        trace?: never;
+    };
+    "/api/alertes/{id}/ouverture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Signaler l'ouverture d'une notification d'alerte
+         * @description Évite la mise en pause automatique après 6 mois sans ouverture.
+         */
+        post: operations["ouvrirAlerte"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1606,15 +1745,35 @@ export interface paths {
         };
         /**
          * [Admin] Lister les clés de licence
-         * @description statut : TOUTES (défaut), LIBRE, ACTIVE, EXPIREE. q : recherche dans la clé ou l'email du titulaire.
+         * @description statut : TOUTES (défaut), LIBRE, EN_ATTENTE, ACTIVE, EXPIREE. q : clé, email du titulaire ou de l'acheteur, référence de paiement. du / au : période de vente (rapprochement des encaissements).
          */
         get: operations["listerCles"];
         put?: never;
         /**
-         * [Admin] Générer une clé de licence
-         * @description Type PARTICULIER ou PROFESSIONNEL.
+         * [Admin] Vendre une clé de licence
+         * @description Clé nominative : l'acheteur est un compte existant (email ou téléphone), le type de licence découle de son rôle. Montant, moyen de paiement et référence de transaction (obligatoire sauf espèces) sont enregistrés avec l'administrateur et la date. L'acheteur reçoit un reçu par email et seul son compte peut activer la clé.
          */
-        post: operations["genererCle"];
+        post: operations["vendre"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/licences/admin/cles/{id}/acheteur": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * [Admin] Affecter un acheteur à une clé au porteur
+         * @description Pour les clés générées avant la mise en service, encore libres et sans acheteur.
+         */
+        put: operations["affecterAcheteur"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1628,11 +1787,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** [Admin] État du mode licence */
+        /**
+         * [Admin] État du mode licence
+         * @description dateEffet : date d'entrée en vigueur (J+30 après l'activation).
+         */
         get: operations["getMode"];
         /**
          * [Admin] Activer / désactiver le mode licence
-         * @description Actif : au-delà des annonces actives gratuites, publier ou remettre en ligne exige une licence valide.
+         * @description Activer fixe une date d'effet à J+30 : la publication reste libre d'ici là et les comptes au-delà des annonces gratuites sont prévenus par email. Désactiver est immédiat.
          */
         put: operations["setMode"];
         post?: never;
@@ -1695,6 +1857,26 @@ export interface paths {
         put?: never;
         /** Ajouter une localisation */
         post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/localisations/autre-quartier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Entrée « Autre quartier » d'une commune
+         * @description À utiliser comme localisationId quand le quartier de l'annonceur n'est pas dans la liste, avec quartierSaisi dans la requête de l'annonce. Créée à la première utilisation.
+         */
+        get: operations["autreQuartier"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1880,6 +2062,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/push/appareils": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enregistrer l'appareil pour les notifications push
+         * @description Jeton Expo de l'appareil, enregistré à la connexion. Rattaché au compte courant.
+         */
+        post: operations["enregistrer"];
+        /**
+         * Retirer l'appareil
+         * @description Appelé à la déconnexion.
+         */
+        delete: operations["retirer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/pro": {
         parameters: {
             query?: never;
@@ -2027,6 +2233,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mes interrupteurs de notifications push */
+        get: operations["lireInterrupteurs"];
+        /**
+         * Activer ou couper les notifications push
+         * @description « Nouveaux messages » et « Alertes de recherche ». Les emails transactionnels restent obligatoires.
+         */
+        put: operations["modifierInterrupteurs"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/photo": {
         parameters: {
             query?: never;
@@ -2146,6 +2373,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{id}/profil-public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profil public minimal d'un compte
+         * @description Public, sans connexion : prénom, initiale du nom, photo, « membre depuis », identité vérifiée et annonces visibles (paginées). Ni téléphone, ni email, ni statut. 404 pour un compte inconnu, suspendu, désactivé, anonymisé ou de la modération.
+         */
+        get: operations["profilPublic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{id}/statut": {
         parameters: {
             query?: never;
@@ -2239,6 +2486,10 @@ export interface components {
         AdminAnnonceDTO: {
             actif?: boolean;
             annonceur?: components["schemas"]["AnnonceurDTO"];
+            /** Format: int32 */
+            avanceMois?: number;
+            /** Format: int32 */
+            cautionMois?: number;
             complementAdresse?: string;
             /** Format: date-time */
             dateCloture?: string;
@@ -2321,6 +2572,8 @@ export interface components {
             /** Format: int64 */
             piecesIdentiteEnAttente?: number;
             /** Format: int64 */
+            quartiersDemandes?: number;
+            /** Format: int64 */
             reexamensEnAttente?: number;
             /** Format: int64 */
             signalementsEnAttente?: number;
@@ -2372,9 +2625,37 @@ export interface components {
             prenom: string;
             telephone: string;
         };
+        AjoutQuartier: {
+            nom?: string;
+        };
+        AlerteRequest: {
+            criteres?: components["schemas"]["Criteres"];
+            nom?: string;
+        };
+        AlerteResponse: {
+            active?: boolean;
+            criteres?: components["schemas"]["Criteres"];
+            /** Format: date-time */
+            dateCreation?: string;
+            /** Format: date-time */
+            derniereNotification?: string;
+            /** Format: date-time */
+            derniereOuverture?: string;
+            /** Format: int64 */
+            id?: number;
+            nom?: string;
+        };
+        AlerteUpdate: {
+            active?: boolean;
+            nom?: string;
+        };
         AnnonceDTO: {
             actif?: boolean;
             annonceur?: components["schemas"]["AnnonceurDTO"];
+            /** Format: int32 */
+            avanceMois?: number;
+            /** Format: int32 */
+            cautionMois?: number;
             complementAdresse?: string;
             /** Format: date-time */
             dateCloture?: string;
@@ -2449,11 +2730,11 @@ export interface components {
             acteurLibelle?: string;
             acteurRole?: string;
             /** @enum {string} */
-            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
             adresseIp?: string;
             cibleId?: string;
             /** @enum {string} */
-            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE";
+            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION";
             /** Format: date-time */
             date?: string;
             /** Format: int64 */
@@ -2477,6 +2758,10 @@ export interface components {
             utilisateurId?: string;
         };
         BienImmoRequest: {
+            /** Format: int32 */
+            avanceMois?: number;
+            /** Format: int32 */
+            cautionMois?: number;
             complementAdresse?: string;
             description: string;
             documentsDisponibles: string;
@@ -2493,6 +2778,7 @@ export interface components {
             nbSallesBain?: number;
             prix: number;
             prixRevise?: number;
+            quartierSaisi?: string;
             /** Format: double */
             surfaceTotal?: number;
             titre: string;
@@ -2552,6 +2838,29 @@ export interface components {
             /** Format: int64 */
             annonceId: number;
         };
+        Criteres: {
+            commune?: string;
+            /** Format: int32 */
+            nbChambresMin?: number;
+            /** Format: int32 */
+            nbPiecesMin?: number;
+            prefecture?: string;
+            prixMax?: number;
+            prixMin?: number;
+            q?: string;
+            quartier?: string;
+            region?: string;
+            /** Format: double */
+            surfaceMax?: number;
+            /** Format: double */
+            surfaceMin?: number;
+            /** @enum {string} */
+            typeAnnonce?: "VENTE" | "LOCATION" | "BAIL";
+            /** @enum {string} */
+            typeBien?: "APPARTEMENT" | "MAISON" | "VILLA" | "TERRAIN" | "DOMAINE" | "MAGASIN" | "BUREAU" | "ENTREPOT" | "AUTRE";
+            /** @enum {string} */
+            typeUsage?: "AGRICOLE" | "HABITATION" | "COMMERCIAL" | "LOISIR" | "PROFESSIONNEL" | "AUTRE";
+        };
         DecisionSignalementRequest: {
             /** @enum {string} */
             decision: "MASQUER" | "REJETER" | "REMETTRE_EN_LIGNE" | "CLASSER";
@@ -2563,6 +2872,23 @@ export interface components {
             /** @enum {string} */
             statut: "NON_VERIFIEE" | "EN_ATTENTE" | "VERIFIEE" | "REJETEE";
         };
+        DemandeDetail: {
+            /** Format: int64 */
+            annonceId?: number;
+            annonceTitre?: string;
+            commune?: string;
+            /** Format: date-time */
+            dateDemande?: string;
+            demandeurEmail?: string;
+            /** Format: int64 */
+            id?: number;
+            nom?: string;
+            prefecture?: string;
+            quartiersProches?: components["schemas"]["QuartierProche"][];
+            region?: string;
+            /** @enum {string} */
+            statut?: "EN_ATTENTE" | "AJOUTEE" | "RATTACHEE" | "REFUSEE";
+        };
         DoubleAuthentificationResponse: {
             /** Format: int64 */
             expireDansSecondes?: number;
@@ -2571,6 +2897,10 @@ export interface components {
             /** Format: uuid */
             verificationId?: string;
             verificationRequise?: boolean;
+        };
+        EnregistrementAppareil: {
+            jeton: string;
+            plateforme?: string;
         };
         EntrepriseDTO: {
             active?: boolean;
@@ -2671,10 +3001,6 @@ export interface components {
             /** Format: email */
             email: string;
         };
-        GenerationLicenceRequest: {
-            /** @enum {string} */
-            type: "PARTICULIER" | "PROFESSIONNEL";
-        };
         HistoriqueAnnonceDTO: {
             ancienneValeur?: string;
             /** Format: int64 */
@@ -2697,6 +3023,10 @@ export interface components {
             modifiePar?: string;
             nouvelleValeur?: string;
         };
+        Interrupteurs: {
+            alertes?: boolean;
+            messages?: boolean;
+        };
         JwtResponse: {
             codesSecours?: string[];
             email?: string;
@@ -2709,6 +3039,7 @@ export interface components {
             type?: string;
         };
         LicenceAdminResponse: {
+            acheteurEmail?: string;
             cle?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -2716,9 +3047,17 @@ export interface components {
             dateDebut?: string;
             /** Format: date */
             dateFin?: string;
+            /** Format: date-time */
+            dateVente?: string;
+            generePar?: string;
             /** Format: int64 */
             id?: number;
+            /** Format: int64 */
+            montant?: number;
+            /** @enum {string} */
+            moyenPaiement?: "ORANGE_MONEY" | "MTN_MOMO" | "ESPECES" | "VIREMENT" | "AUTRE";
             ownerEmail?: string;
+            referencePaiement?: string;
             statut?: string;
             /** @enum {string} */
             type?: "PARTICULIER" | "PROFESSIONNEL";
@@ -2734,7 +3073,10 @@ export interface components {
             /** Format: date */
             dateDebut?: string;
             /** Format: date */
+            dateEffet?: string;
+            /** Format: date */
             dateFin?: string;
+            enPreavis?: boolean;
             modeActif?: boolean;
             partage?: boolean;
             /** Format: int64 */
@@ -2749,6 +3091,7 @@ export interface components {
             prefecture?: string;
             quartier?: string;
             region?: string;
+            technique?: boolean;
             typeCommune?: string;
         };
         LocalisationRequest: {
@@ -2869,6 +3212,15 @@ export interface components {
             /** Format: int32 */
             totalPages?: number;
         };
+        PageResponseDemandeDetail: {
+            /** Format: int32 */
+            currentPage?: number;
+            data?: components["schemas"]["DemandeDetail"][];
+            /** Format: int64 */
+            totalItems?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         PageResponseEntrepriseDTO: {
             /** Format: int32 */
             currentPage?: number;
@@ -2965,11 +3317,29 @@ export interface components {
             portefeuille?: components["schemas"]["PortefeuilleStats"];
             visibilite?: components["schemas"]["VisibiliteStats"];
         };
+        ProfilPublicDTO: {
+            annonces?: components["schemas"]["PageResponseAnnonceDTO"];
+            /** Format: uuid */
+            entrepriseId?: string;
+            identiteVerifiee?: boolean;
+            initialeNom?: string;
+            /** Format: date */
+            membreDepuis?: string;
+            photoProfil?: string;
+            prenom?: string;
+        };
+        QuartierProche: {
+            id?: string;
+            quartier?: string;
+        };
         QuotasDTO: {
             /** Format: int32 */
             quotaAgents?: number;
             /** Format: int32 */
             quotaAnnonces?: number;
+        };
+        RattachementQuartier: {
+            localisationId?: string;
         };
         ReexamenRequest: {
             message?: string;
@@ -2981,6 +3351,9 @@ export interface components {
         };
         RefreshTokenRequest: {
             refreshToken?: string;
+        };
+        RefusQuartier: {
+            motif?: string;
         };
         ReglagesLicenceDTO: {
             contactTelephone?: string;
@@ -3116,6 +3489,8 @@ export interface components {
             /** Format: int64 */
             nbAvertissements?: number;
             nom?: string;
+            notifAlertes?: boolean;
+            notifMessages?: boolean;
             numeroPieceIdentite?: string;
             /** Format: uuid */
             parentUserId?: string;
@@ -3136,6 +3511,14 @@ export interface components {
             motifRejet?: string;
             /** @enum {string} */
             statut: "EN_ATTENTE" | "VALIDEE" | "REJETEE";
+        };
+        VenteLicenceRequest: {
+            acheteur: string;
+            /** Format: int64 */
+            montant: number;
+            /** @enum {string} */
+            moyenPaiement: "ORANGE_MONEY" | "MTN_MOMO" | "ESPECES" | "VIREMENT" | "AUTRE";
+            referencePaiement?: string;
         };
         VerificationCodeRequest: {
             code: string;
@@ -3313,8 +3696,8 @@ export interface operations {
                 page?: number;
                 size?: number;
                 acteurId?: string;
-                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
-                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE";
+                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION";
                 cibleId?: string;
             };
             header?: never;
@@ -3520,6 +3903,108 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseUserDTO"];
+                };
+            };
+        };
+    };
+    lister: {
+        parameters: {
+            query?: {
+                statut?: "EN_ATTENTE" | "AJOUTEE" | "RATTACHEE" | "REFUSEE";
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseDemandeDetail"];
+                };
+            };
+        };
+    };
+    ajouter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AjoutQuartier"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DemandeDetail"];
+                };
+            };
+        };
+    };
+    rattacher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RattachementQuartier"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DemandeDetail"];
+                };
+            };
+        };
+    };
+    refuser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefusQuartier"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DemandeDetail"];
                 };
             };
         };
@@ -3910,6 +4395,118 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
+    listerAlertes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlerteResponse"][];
+                };
+            };
+        };
+    };
+    creerAlerte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlerteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlerteResponse"];
+                };
+            };
+        };
+    };
+    supprimerAlerte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    modifierAlerte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlerteUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlerteResponse"];
+                };
+            };
+        };
+    };
+    ouvrirAlerte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlerteResponse"];
                 };
             };
         };
@@ -5354,6 +5951,8 @@ export interface operations {
             query?: {
                 statut?: string;
                 q?: string;
+                du?: string;
+                au?: string;
                 page?: number;
                 size?: number;
             };
@@ -5374,7 +5973,7 @@ export interface operations {
             };
         };
     };
-    genererCle: {
+    vendre: {
         parameters: {
             query?: never;
             header?: never;
@@ -5383,7 +5982,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["GenerationLicenceRequest"];
+                "application/json": components["schemas"]["VenteLicenceRequest"];
             };
         };
         responses: {
@@ -5393,9 +5992,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
+                    "*/*": components["schemas"]["LicenceAdminResponse"];
+                };
+            };
+        };
+    };
+    affecterAcheteur: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VenteLicenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LicenceAdminResponse"];
                 };
             };
         };
@@ -5416,7 +6039,7 @@ export interface operations {
                 };
                 content: {
                     "*/*": {
-                        [key: string]: boolean;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5442,7 +6065,7 @@ export interface operations {
                 };
                 content: {
                     "*/*": {
-                        [key: string]: boolean;
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -5549,6 +6172,30 @@ export interface operations {
                 "application/json": components["schemas"]["LocalisationRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LocalisationDTO"];
+                };
+            };
+        };
+    };
+    autreQuartier: {
+        parameters: {
+            query: {
+                region: string;
+                prefecture: string;
+                commune: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -5904,6 +6551,48 @@ export interface operations {
             };
         };
     };
+    enregistrer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnregistrementAppareil"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    retirer: {
+        parameters: {
+            query: {
+                jeton: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getProStats: {
         parameters: {
             query?: never;
@@ -6124,6 +6813,50 @@ export interface operations {
             };
         };
     };
+    lireInterrupteurs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Interrupteurs"];
+                };
+            };
+        };
+    };
+    modifierInterrupteurs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Interrupteurs"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Interrupteurs"];
+                };
+            };
+        };
+    };
     uploadPhoto: {
         parameters: {
             query?: never;
@@ -6276,6 +7009,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PresenceResponse"];
+                };
+            };
+        };
+    };
+    profilPublic: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfilPublicDTO"];
                 };
             };
         };

@@ -8,7 +8,7 @@ import { router, type Href } from 'expo-router';
 
 let pendingReturnTo: Href | null = null;
 
-export type LoginReason = 'favori' | 'message' | 'signaler' | 'publier' | 'messagerie' | 'profil';
+export type LoginReason = 'favori' | 'message' | 'signaler' | 'publier' | 'messagerie' | 'profil' | 'alerte';
 
 export const LOGIN_REASON_MESSAGES: Record<LoginReason, string> = {
   favori: 'Connectez-vous pour enregistrer cette annonce dans vos favoris.',
@@ -17,6 +17,7 @@ export const LOGIN_REASON_MESSAGES: Record<LoginReason, string> = {
   publier: 'Connectez-vous pour publier une annonce.',
   messagerie: 'Connectez-vous pour accéder à vos conversations.',
   profil: 'Connectez-vous pour accéder à votre profil.',
+  alerte: 'Connectez-vous pour créer une alerte de recherche.',
 };
 
 /** Ouvre l'écran de connexion en mémorisant l'écran à rouvrir ensuite. */

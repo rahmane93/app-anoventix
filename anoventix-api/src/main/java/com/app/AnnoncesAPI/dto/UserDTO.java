@@ -35,6 +35,9 @@ public class UserDTO {
     private String motifRejetPieceIdentite;
     /** Le selfie de vérification est enregistré (le fichier n'est servi qu'au titulaire et à la modération). */
     private boolean selfieFourni;
+    /** Interrupteurs des notifications push (profil). */
+    private boolean notifMessages;
+    private boolean notifAlertes;
     private java.time.LocalDateTime dateEnvoiVerification;
     private java.time.LocalDateTime dateDecisionVerification;
     private StatutUtilisateur statut;

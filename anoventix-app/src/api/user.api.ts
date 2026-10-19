@@ -3,6 +3,7 @@ import type {
     UpdateProfileRequest,
     UserProfile,
 } from '../types/user.types';
+import type { BienImmo, PageResponse } from '../types/annonce.types';
 import { apiClient } from './client';
 import { multipartPost, multipartPut } from './multipart';
 
@@ -94,6 +95,29 @@ export const exportMesDonnees = async (): Promise<Record<string, unknown>> => {
  */
 export const getUserById = async (userId: string): Promise<UserProfile> => {
   const response = await apiClient.get<UserProfile>(`/api/users/${userId}`);
+  return response.data;
+};
+
+/** Profil public minimal (DEC-21) : ni téléphone, ni email, ni statut. */
+export interface ProfilPublic {
+  prenom: string | null;
+  /** Initiale du nom, suivie d'un point (« D. »). */
+  initialeNom: string | null;
+  photoProfil: string | null;
+  /** Premier jour du mois d'inscription. */
+  membreDepuis: string | null;
+  identiteVerifiee: boolean;
+  /** Renseigné pour un professionnel ou un agent : la carte mène à la page de l'agence. */
+  entrepriseId: string | null;
+  annonces: PageResponse<BienImmo>;
+}
+
+/**
+ * Profil public d'un compte (sans connexion). 404 pour un compte suspendu, désactivé, anonymisé ou de la modération.
+ * GET /api/users/{userId}/profil-public
+ */
+export const getProfilPublic = async (userId: string, page = 0, size = 50): Promise<ProfilPublic> => {
+  const response = await apiClient.get<ProfilPublic>(`/api/users/${userId}/profil-public`, { params: { page, size } });
   return response.data;
 };
 

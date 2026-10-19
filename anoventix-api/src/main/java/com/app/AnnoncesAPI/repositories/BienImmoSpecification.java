@@ -18,6 +18,11 @@ public class BienImmoSpecification {
         return (root, query, cb) -> cb.isTrue(root.get("visiblePublic"));
     }
 
+    /** Annonces devenues visibles après cette date (création ou remise en ligne) : alertes de recherche. */
+    public static Specification<BienImmo> visibleDepuisApres(java.time.LocalDateTime date) {
+        return (root, query, cb) -> cb.greaterThan(root.get("visibleDepuis"), date);
+    }
+
     public static Specification<BienImmo> hasReference(String reference) {
         return (root, query, cb) ->
             reference == null ? null :

@@ -48,6 +48,9 @@ public interface EntrepriseRepository extends JpaRepository<Entreprise, UUID> {
      */
     boolean existsByNumeroRCCM(String numeroRCCM);
 
+    /** Agences vérifiées et actives : pages du sitemap (DEC-24). */
+    List<Entreprise> findByStatutVerificationAndActiveTrue(com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut);
+
     long countByStatutVerification(com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut);
 
     /** Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28). */

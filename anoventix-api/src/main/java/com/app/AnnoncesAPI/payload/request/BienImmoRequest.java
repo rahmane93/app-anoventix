@@ -22,6 +22,14 @@ import lombok.NoArgsConstructor;
 @Data
 public class BienImmoRequest extends AnnonceRequest {
 
+    /**
+     * Nom du quartier saisi quand il n'est pas dans la liste (DEC-22) : requis si l'annonce est rattachée à
+     * l'entrée « Autre quartier » de la commune, ignoré sinon.
+     */
+    @jakarta.validation.constraints.Size(max = 100, message = "Le nom du quartier ne peut pas dépasser 100 caractères")
+    private String quartierSaisi;
+
+
    /** Surface totale en m². */
     private Double surfaceTotal;
 

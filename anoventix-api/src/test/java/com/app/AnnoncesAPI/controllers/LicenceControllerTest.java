@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.app.AnnoncesAPI.entities.Localisation;
+import com.app.AnnoncesAPI.entities.ParametrePlateforme;
 import com.app.AnnoncesAPI.entities.Role;
 import com.app.AnnoncesAPI.entities.User;
 import com.app.AnnoncesAPI.enums.StatutPieceIdentite;
@@ -63,6 +64,8 @@ public class LicenceControllerTest {
     @Autowired private LicenceRepository licenceRepository;
     @Autowired private ParametrePlateformeRepository parametreRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private com.app.AnnoncesAPI.services.LicenceService licenceService;
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private EmailService emailService;
@@ -89,6 +92,7 @@ public class LicenceControllerTest {
     // ni mode licence actif ne doivent leur survivre.
     @AfterEach
     void nettoyer() {
+        jdbc.execute("DELETE FROM email_sortant");
         licenceRepository.deleteAll();
         parametreRepository.deleteAll();
         messageRepository.deleteAll();
@@ -166,13 +170,13 @@ public class LicenceControllerTest {
                         .header("Authorization", "Bearer " + admin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"actif\":true}"))
-                .andExpect(status().isOk());
-        String cle = objectMapper.readTree(mockMvc.perform(post("/api/licences/admin/cles")
-                        .header("Authorization", "Bearer " + admin)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"type\":\"PARTICULIER\"}"))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString()).get("cle").asString();
+                // Préavis de 30 jours (DEC-18) : la date d'effet est fixée à J+30.
+                .andExpect(jsonPath("$.dateEffet").value(java.time.LocalDate.now().plusDays(30).toString()));
+        assertEquals(true, get200("/api/licences/me", particulier).get("enPreavis").asBoolean());
+        // Simule l'arrivée de la date d'effet : le mode s'applique.
+        parametreRepository.save(new ParametrePlateforme("licence.date-effet", java.time.LocalDate.now().minusDays(1).toString()));
+        String cle = vendre(admin, "part-licence@test.com", "ORANGE_MONEY", "OM-2026-001");
 
         // Le particulier voit le prix de sa licence et le contact.
         JsonNode me = get200("/api/licences/me", particulier);
@@ -194,6 +198,16 @@ public class LicenceControllerTest {
         long sixieme = objectMapper.readTree(publier(particulier).andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString()).get("id").asLong();
 
+        // Une clé nominative est refusée à un autre compte.
+        String autre = jwt("autre-licence@test.com", TypeRole.PARTICULIER);
+        String cleNominative = vendre(admin, "part-licence@test.com", "ESPECES", null);
+        mockMvc.perform(post("/api/licences/activer")
+                        .header("Authorization", "Bearer " + autre)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"cle\":\"" + cleNominative + "\"}"))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.message").value("Cette clé est réservée à un autre compte."));
+
         // La clé ne se réutilise pas.
         mockMvc.perform(post("/api/licences/activer")
                         .header("Authorization", "Bearer " + particulier)
@@ -202,17 +216,24 @@ public class LicenceControllerTest {
                 .andExpect(status().isUnprocessableContent());
 
         // Liste admin : filtres par statut et recherche par email.
-        mockMvc.perform(post("/api/licences/admin/cles")
-                        .header("Authorization", "Bearer " + admin)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"type\":\"PROFESSIONNEL\"}"))
-                .andExpect(status().isOk());
-        assertEquals(2, get200("/api/licences/admin/cles", admin).get("totalItems").asInt());
+        jwt("pro-licence@test.com", TypeRole.PROFESSIONNEL);
+        vendre(admin, "pro-licence@test.com", "VIREMENT", "VIR-77");
+        assertEquals(3, get200("/api/licences/admin/cles", admin).get("totalItems").asInt());
+        // Trace de la vente dans la liste, filtre par période et par référence de paiement.
+        JsonNode vente = get200("/api/licences/admin/cles?q=OM-2026-001", admin).get("data").get(0);
+        assertEquals("part-licence@test.com", vente.get("acheteurEmail").asString());
+        assertEquals(150000, vente.get("montant").asLong());
+        assertEquals("ORANGE_MONEY", vente.get("moyenPaiement").asString());
+        assertEquals("admin-licence@test.com", vente.get("generePar").asString());
+        assertEquals(3, get200("/api/licences/admin/cles?du=" + java.time.LocalDate.now() + "&au=" + java.time.LocalDate.now(), admin)
+                .get("totalItems").asInt());
+        assertEquals(0, get200("/api/licences/admin/cles?au=" + java.time.LocalDate.now().minusDays(1), admin)
+                .get("totalItems").asInt());
         JsonNode actives = get200("/api/licences/admin/cles?statut=ACTIVE", admin);
         assertEquals(1, actives.get("totalItems").asInt());
         assertEquals("part-licence@test.com", actives.get("data").get(0).get("ownerEmail").asString());
-        assertEquals(1, get200("/api/licences/admin/cles?statut=LIBRE", admin).get("totalItems").asInt());
-        assertEquals(1, get200("/api/licences/admin/cles?q=part-licence", admin).get("totalItems").asInt());
+        assertEquals(2, get200("/api/licences/admin/cles?statut=LIBRE", admin).get("totalItems").asInt());
+        assertEquals(2, get200("/api/licences/admin/cles?q=part-licence", admin).get("totalItems").asInt());
         assertEquals(0, get200("/api/licences/admin/cles?statut=EXPIREE", admin).get("totalItems").asInt());
 
         // Expiration avec 6 annonces actives : compte bloqué.
@@ -236,6 +257,71 @@ public class LicenceControllerTest {
                         .header("Authorization", "Bearer " + particulier))
                 .andExpect(status().isNoContent());
         assertEquals(false, get200("/api/licences/me", particulier).get("bloque").asBoolean());
+    }
+
+    @Test
+    void uneCleActiveeAvantLOuvertureDuModeDemarreQuandLeModePrendEffet() throws Exception {
+        String admin = jwt("admin-licence@test.com", TypeRole.ADMINISTRATEUR);
+        String particulier = jwt("part-licence@test.com", TypeRole.PARTICULIER);
+        String cle = vendre(admin, "part-licence@test.com", "ESPECES", null);
+
+        // Mode inactif : l'activation est acceptée, la licence attend son démarrage (DEC-28).
+        mockMvc.perform(post("/api/licences/activer")
+                        .header("Authorization", "Bearer " + particulier)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"cle\":\"" + cle + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("EN_ATTENTE"))
+                .andExpect(jsonPath("$.dateFin").doesNotExist());
+
+        // Le mode est ouvert (préavis) : elle attend toujours, et la publication reste libre.
+        mockMvc.perform(put("/api/licences/admin/mode").header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"actif\":true}"))
+                .andExpect(status().isOk());
+        assertEquals("EN_ATTENTE", get200("/api/licences/me", particulier).get("statut").asString());
+        for (int i = 0; i < 6; i++) publier(particulier).andExpect(status().isCreated());
+
+        // La date d'effet arrive : la clé démarre ce jour-là.
+        parametreRepository.save(new ParametrePlateforme("licence.date-effet", java.time.LocalDate.now().toString()));
+        assertEquals(1, licenceService.demarrerLicencesEnAttente());
+        JsonNode me = get200("/api/licences/me", particulier);
+        assertEquals("ACTIVE", me.get("statut").asString());
+        assertEquals(java.time.LocalDate.now().toString(), me.get("dateDebut").asString());
+        assertEquals(false, me.get("bloque").asBoolean());
+    }
+
+    @Test
+    void laVenteExigeUneReferenceSaufEnEspecesEtUnAcheteurConnu() throws Exception {
+        String admin = jwt("admin-licence@test.com", TypeRole.ADMINISTRATEUR);
+        jwt("part-licence@test.com", TypeRole.PARTICULIER);
+
+        mockMvc.perform(post("/api/licences/admin/cles").header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"acheteur\":\"part-licence@test.com\",\"montant\":150000,\"moyenPaiement\":\"MTN_MOMO\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/licences/admin/cles").header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"acheteur\":\"inconnu@test.com\",\"montant\":150000,\"moyenPaiement\":\"ESPECES\"}"))
+                .andExpect(status().isNotFound());
+        // Le reçu part par email à l'acheteur.
+        vendre(admin, "part-licence@test.com", "ESPECES", null);
+        assertEquals(1, emailsSortantsPour("part-licence@test.com"));
+    }
+
+    private int emailsSortantsPour(String destinataire) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM email_sortant WHERE destinataire = ?", Integer.class, destinataire);
+    }
+
+    /** Vente d'une clé nominative ; retourne la clé. */
+    private String vendre(String admin, String acheteur, String moyen, String reference) throws Exception {
+        Map<String, Object> corps = new java.util.HashMap<>(Map.of("acheteur", acheteur, "montant", 150000, "moyenPaiement", moyen));
+        if (reference != null) corps.put("referencePaiement", reference);
+        return objectMapper.readTree(mockMvc.perform(post("/api/licences/admin/cles")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(corps)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).get("cle").asString();
     }
 
     @Test

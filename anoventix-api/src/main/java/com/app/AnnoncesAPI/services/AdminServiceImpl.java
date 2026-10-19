@@ -72,6 +72,7 @@ public class AdminServiceImpl implements AdminService {
     private final AuditService audit;
     private final SessionService sessionService;
     private final ModerationAnnonceService moderation;
+    private final com.app.AnnoncesAPI.repositories.DemandeQuartierRepository quartierDemandeRepository;
 
     public AdminServiceImpl(UserRepository userRepository,
                             RoleRepository roleRepository,
@@ -89,7 +90,9 @@ public class AdminServiceImpl implements AdminService {
                             CompteSuppressionService compteSuppressionService,
                             AuditService audit,
                             SessionService sessionService,
-                            ModerationAnnonceService moderation) {
+                            ModerationAnnonceService moderation,
+                            com.app.AnnoncesAPI.repositories.DemandeQuartierRepository quartierDemandeRepository) {
+        this.quartierDemandeRepository = quartierDemandeRepository;
         this.sessionService = sessionService;
         this.moderation = moderation;
         this.userRepository = userRepository;
@@ -128,6 +131,8 @@ public class AdminServiceImpl implements AdminService {
                 .signalementsEnAttente(signalementRepository.countByStatut(StatutSignalement.EN_ATTENTE))
                 .messagesSignalesEnAttente(messageRepository.countBySignaleTrueAndSupprimeFalse())
                 .reexamensEnAttente(bienImmoRepository.countByReexamenDemandeTrue())
+                .quartiersDemandes(quartierDemandeRepository.countByStatut(
+                        com.app.AnnoncesAPI.enums.StatutDemandeQuartier.EN_ATTENTE))
                 .entreprisesAVerifier(entrepriseRepository.countByStatutVerification(
                         com.app.AnnoncesAPI.enums.StatutVerificationEntreprise.EN_ATTENTE))
                 .build();

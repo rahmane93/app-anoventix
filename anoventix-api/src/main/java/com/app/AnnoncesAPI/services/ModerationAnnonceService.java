@@ -167,6 +167,10 @@ public class ModerationAnnonceService {
         if (annonce.getStatutModeration() != StatutAnnonce.PUBLIEE || !Boolean.TRUE.equals(annonce.getActif())) {
             return false;
         }
+        // Seuil à 0 (ou moins) : masquage automatique désactivé.
+        if (seuilMasquageAuto <= 0) {
+            return false;
+        }
         long distincts = signalementRepository.compterSignaleursEnAttente(
                 annonce.getId(), MotifSignalement.ARNAQUE_FRAUDE.name());
         if (distincts < seuilMasquageAuto) {

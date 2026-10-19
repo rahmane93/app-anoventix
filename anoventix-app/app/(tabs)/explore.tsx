@@ -5,6 +5,7 @@ import { SKELETON_DATA, SkeletonCard } from '@/src/components/ui/skeleton-card';
 import { useZonesActives } from '@/src/features/explore/useZonesActives';
 import { useExploreAnnonces } from '@/src/features/explore/useExploreAnnonces';
 import { requireLogin } from '@/src/lib/auth-redirect';
+import { aDesCriteres, CreerAlerteSheet, criteresDepuisRecherche } from '@/src/features/explore/CreerAlerteSheet';
 import { useBreakpoint, useCardGrid, WebContainer } from '@/src/lib/responsive';
 import { getRoleFlags } from '@/src/lib/roles';
 import { useAuthStore } from '@/src/stores/auth.store';
@@ -137,6 +138,12 @@ export default function ExploreScreen() {
   if (filters.sort) activeChips.push({ key: 'so', label: `Tri : ${sortLabel(filters.sort, filters.direction)}`, onRemove: () => handleRemoveFilter(['sort', 'direction']) });
   // Type → onglets ; commune seule → sélecteur de zone : pas de puce en double.
   const communeSeule = !!filters.commune && !filters.quartier;
+  // Alerte de recherche (DEC-16) : proposée dès qu'une recherche ou un filtre est actif.
+  const [alerteOuverte, setAlerteOuverte] = React.useState(false);
+  const criteresAlerte = criteresDepuisRecherche(query, filters);
+  const alerteProposee = aDesCriteres(criteresAlerte);
+  const creerAlerte = () =>
+    isAuthenticated ? setAlerteOuverte(true) : requireLogin('alerte', '/(tabs)/explore');
   const visibleChips = activeChips.filter((c) => c.key !== 'ta' && !(c.key === 'loc' && communeSeule));
 
   // ── Zone affichée en titre (piste « le quartier d'abord ») ──────────────────
@@ -376,6 +383,24 @@ export default function ExploreScreen() {
           </TouchableOpacity>
         </ScrollView>
       )}
+      {alerteProposee && (
+        <TouchableOpacity
+          style={styles.alerteBtn}
+          onPress={creerAlerte}
+          hitSlop={CHIP_HIT_SLOP}
+          accessibilityRole="button"
+          accessibilityLabel="Créer une alerte pour cette recherche"
+        >
+          <Ionicons name="notifications-outline" size={14} color={colors.primary} />
+          <AppText style={styles.alerteBtnText}>Créer une alerte</AppText>
+        </TouchableOpacity>
+      )}
+      <CreerAlerteSheet
+        visible={alerteOuverte}
+        criteres={criteresAlerte}
+        nomSuggere={query.trim() || 'Ma recherche'}
+        onClose={() => setAlerteOuverte(false)}
+      />
       </WebContainer>
     </View>
   );
@@ -774,6 +799,11 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   filterBadgeText: { color: colors.white, fontSize: typography.sizes['2xs'], fontWeight: '700', lineHeight: 12 },
+  alerteBtn: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
+    paddingVertical: 4, paddingHorizontal: spacing.sm,
+  },
+  alerteBtnText: { fontSize: typography.sizes.sm, fontWeight: '700', color: colors.primary },
   activeChipsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
   activeChip: {
     flexDirection: 'row',

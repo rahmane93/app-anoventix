@@ -4,7 +4,7 @@ import { ROLE_ANNONCEUR_LABELS as ROLE_LABELS } from '@/src/lib/roles';
 import { colors, radius, spacing, typography, typeAnnonceColors } from '@/src/theme';
 import type { BienImmo } from '@/src/types/annonce.types';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS } from '@/src/types/annonce.types';
-import { formatComposition, isLoyerMensuel } from '@/src/lib/bien';
+import { formatComposition, isLoyerMensuel, libelleCautionAvance } from '@/src/lib/bien';
 import { useBreakpoint, useHover } from '@/src/lib/responsive';
 import { formatFullLocalisation, formatPrix } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
@@ -144,6 +144,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
 
         <View style={cardStyles.prix}>
           <Prix prix={item.prix} prixRevise={item.prixRevise} mensuel={isMensuel} variant="card" />
+          {libelleCautionAvance(item) ? <AppText style={cardStyles.cautionAvance}>{libelleCautionAvance(item)}</AppText> : null}
         </View>
 
         <View style={cardStyles.metaRow}>
@@ -162,6 +163,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
 });
 
 const cardStyles = StyleSheet.create({
+  cautionAvance: { fontSize: 12, color: colors.textSecondary },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,

@@ -174,7 +174,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ── Favoris — particulier uniquement ──────────────────────── */}
+      {/* ── Favoris — tous les comptes connectés (DEC-15) ─────────── */}
       <Tabs.Screen
         name="favoris"
         options={{

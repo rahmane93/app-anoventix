@@ -5,7 +5,9 @@ import { WebTopBar } from '@/src/components/web/WebTopBar';
 import { useLicenceGate } from '@/src/features/licence/useLicenceGate';
 import { consumeReturnTo } from '@/src/lib/auth-redirect';
 import { useBreakpoint, type ContainerSize } from '@/src/lib/responsive';
+import { enregistrerSiAutorise, installerGestionnaire, ouvrirNotification } from '@/src/lib/push';
 import { useAuthStore } from '@/src/stores/auth.store';
+import * as Notifications from 'expo-notifications';
 import { colors, typography } from '@/src/theme';
 import {
     Nunito_400Regular,
@@ -81,6 +83,27 @@ export default function RootLayout() {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
+  // Notifications push (Android) : affichage, enregistrement de l'appareil à la connexion et ouverture
+  // de la conversation ou de l'alerte au toucher (y compris app fermée).
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    installerGestionnaire();
+    const abonnement = Notifications.addNotificationResponseReceivedListener((reponse) => {
+      ouvrirNotification(reponse.notification.request.content.data);
+    });
+    return () => abonnement.remove();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isAuthenticated) return;
+    enregistrerSiAutorise();
+    Notifications.getLastNotificationResponseAsync()
+      .then((reponse) => {
+        if (reponse) ouvrirNotification(reponse.notification.request.content.data);
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
+
   useEffect(() => {
     // En cas d'échec, on affiche l'app avec les polices système plutôt que de
     // rester bloqué sur le splash.
@@ -137,6 +160,7 @@ export default function RootLayout() {
           options={{ ...stackHeader(), title: 'Mes signalements' }}
         />
         <Stack.Screen name="licence" options={{ ...stackHeader(), title: 'Ma licence' }} />
+        <Stack.Screen name="alertes" options={{ ...stackHeader(), title: 'Mes alertes' }} />
         <Stack.Screen name="regenerer-codes-secours" options={{ ...stackHeader(), title: 'Codes de secours' }} />
         <Stack.Screen name="entreprise-publique/[entrepriseId]" options={{ ...stackHeader('detail') }} />
         <Stack.Screen name="profil/[userId]" options={{ ...stackHeader() }} />

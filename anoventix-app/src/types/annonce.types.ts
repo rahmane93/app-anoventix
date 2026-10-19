@@ -7,6 +7,8 @@ export interface Localisation {
   commune: string;
   quartier: string;
   typeCommune?: string;
+  /** Entrée « Autre quartier » : l'annonce s'affiche avec sa commune seule (DEC-22). */
+  technique?: boolean;
 }
 
 // ─── Enums Annonce ────────────────────────────────────────────────────────────
@@ -98,6 +100,9 @@ export interface BienImmo {
   typeBien: TypeBien;
   typeUsage: TypeUsage | null;
   fraisHonoraire: number | null;
+  /** Location / bail : caution et avance en mois de loyer (DEC-23). */
+  cautionMois?: number | null;
+  avanceMois?: number | null;
   documentsDisponibles: string | null;
   surfaceTotal: number | null;
   /** Composition — toujours null pour TERRAIN / DOMAINE (vendus ou loués en l'état). */
@@ -143,7 +148,11 @@ export interface CreateBienImmoRequest {
   typeUsage?: TypeUsage;
   documentsDisponibles?: string;
   localisationId: string;
+  /** Nom du quartier saisi quand il n'est pas dans la liste (DEC-22). */
+  quartierSaisi?: string;
   fraisHonoraire?: number;
+  cautionMois?: number;
+  avanceMois?: number;
   surfaceTotal?: number;
   nbPieces?: number;
   nbChambres?: number;
@@ -162,11 +171,14 @@ export interface UpdateBienImmoRequest {
   prix?: number;
   prixRevise?: number;
   localisationId?: string;
+  quartierSaisi?: string;
   complementAdresse?: string;
   longitude?: number;
   latitude?: number;
   typeAnnonce?: TypeAnnonce;
   fraisHonoraire?: number;
+  cautionMois?: number;
+  avanceMois?: number;
   typeBien?: TypeBien;
   typeUsage?: TypeUsage;
   documentsDisponibles?: string;
