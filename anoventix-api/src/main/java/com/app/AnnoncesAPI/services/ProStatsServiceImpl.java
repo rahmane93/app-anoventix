@@ -83,7 +83,7 @@ public class ProStatsServiceImpl implements ProStatsService {
 
     private PortefeuilleStats buildPortefeuille(Set<UUID> owners, LocalDateTime startOfMonth) {
         long publiees  = bienImmoRepository.countEnLigneForOwners(owners, StatutAnnonce.PUBLIEE);
-        // Masquer et rejeter mettent actif = false : compter sans ce filtre (ECART-07).
+        // Masquer et rejeter mettent actif = false : compter sans ce filtre.
         long masquees  = bienImmoRepository.countByStatutForOwners(owners, StatutAnnonce.MASQUEE);
         long rejetees  = bienImmoRepository.countByStatutForOwners(owners, StatutAnnonce.REJETEE);
 

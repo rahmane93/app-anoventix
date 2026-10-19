@@ -82,7 +82,7 @@ const DECISION_API: Record<Decision, DecisionSignalementRequest['decision']> = {
 /**
  * Une seule décision, choisie explicitement (aucune option présélectionnée).
  * Signalement en attente : une seule opération côté serveur agit sur l'annonce ET clôture tous ses
- * signalements en attente (ECART-26). Une annonce masquée automatiquement se remet en ligne ou reste
+ * signalements en attente. Une annonce masquée automatiquement se remet en ligne ou reste
  * masquée / rejetée ; on ne la « classe » pas. Signalement déjà clos : l'annonce reste modérable.
  */
 function DecisionSheet({

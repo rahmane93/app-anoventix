@@ -34,7 +34,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             """)
     List<Media> findPhotosDAnnoncesTerminees(@Param("limite") java.time.LocalDateTime limite, Pageable pageable);
 
-    /** Photos publiques sans miniature, par lots, à partir d'un identifiant (rattrapage, ECART-55). */
+    /** Photos publiques sans miniature, par lots, à partir d'un identifiant (rattrapage). */
     @Query("SELECT m FROM Media m WHERE m.variantes = false AND m.id > :apres AND m.url LIKE '/uploads/public/%' ORDER BY m.id")
     List<Media> findSansVariantes(@Param("apres") long apres, Pageable pageable);
 }

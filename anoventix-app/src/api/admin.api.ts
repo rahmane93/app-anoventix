@@ -151,7 +151,7 @@ export interface EvenementAudit {
   adresseIp: string | null;
 }
 
-/** Journal d'audit, du plus récent au plus ancien (administrateur, ECART-63). */
+/** Journal d'audit, du plus récent au plus ancien (administrateur). */
 export async function getJournalAudit(params: { page: number; size: number; cibleType?: string }) {
   return (await apiClient.get<{ data: EvenementAudit[]; totalPages: number; totalItems: number }>(
     '/api/admin/audit', { params })).data;
@@ -164,7 +164,7 @@ export interface StatsAvancees {
   annonceParTypeAnnonce: { categorie: string; count: number }[];
 }
 
-/** Évolution sur 12 mois et répartitions des annonces visibles (ECART-30). */
+/** Évolution sur 12 mois et répartitions des annonces visibles. */
 export async function getStatsAvancees(): Promise<StatsAvancees> {
   return (await apiClient.get<StatsAvancees>('/api/admin/stats/avancees')).data;
 }
@@ -194,7 +194,7 @@ export async function leverAvertissement(userId: string, avertissementId: number
   return res.data;
 }
 
-/** Un compte a un seul rôle : le changer remplace l'ancien (ECART-22). */
+/** Un compte a un seul rôle : le changer remplace l'ancien (DEC-37). */
 export async function changerRole(userId: string, role: string): Promise<void> {
   await apiClient.put(`/api/admin/utilisateurs/${userId}/role`, { role });
 }

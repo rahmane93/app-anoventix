@@ -43,7 +43,7 @@ public class MessagingServiceImpl implements MessagingService {
     private final PushService push;
     private final com.app.AnnoncesAPI.repositories.BlocageUtilisateurRepository blocages;
 
-    /** Limites d'envoi par compte et par 24 h (ECART-29) : au-delà, 429. */
+    /** Limites d'envoi par compte et par 24 h : au-delà, 429. */
     static final int MESSAGES_PAR_JOUR = 300;
     static final int CONVERSATIONS_PAR_JOUR = 20;
 

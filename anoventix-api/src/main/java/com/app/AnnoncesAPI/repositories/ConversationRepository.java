@@ -51,7 +51,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     Optional<Conversation> findByIdForParticipant(@Param("conversationId") Long conversationId,
                                                   @Param("userId") UUID userId);
 
-    /** Conversations ouvertes par un compte depuis une date (limite d'ouverture, ECART-29). */
+    /** Conversations ouvertes par un compte depuis une date (limite d'ouverture). */
     long countByCreatedByIdAndCreatedAtAfter(UUID userId, java.time.LocalDateTime depuis);
 
     @Query("""

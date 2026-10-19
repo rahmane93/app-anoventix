@@ -30,7 +30,7 @@ import io.jsonwebtoken.Claims;
 
 /**
  * Sessions des appareils : jetons de rafraîchissement enregistrés en base, à usage unique,
- * avec détection de rejeu (ECART-21, ECART-51).
+ * avec détection de rejeu.
  *
  * <ul>
  *   <li>Une connexion ouvre une session (une « famille » de jetons).</li>

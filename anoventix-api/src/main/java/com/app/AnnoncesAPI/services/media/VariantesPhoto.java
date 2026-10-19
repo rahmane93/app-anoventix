@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import net.coobird.thumbnailator.Thumbnails;
 
 /**
- * Variantes d'une photo d'annonce (ECART-55) : à côté de {@code abc.jpg} (1920 px) se trouvent
+ * Variantes d'une photo d'annonce : à côté de {@code abc.jpg} (1920 px) se trouvent
  * {@code abc_t.jpg} (miniature, 400 px) et {@code abc_m.jpg} (moyenne, 1080 px). Les listes, les cartes et la
  * carte chargent la miniature, la fiche la version moyenne : des dizaines de Ko au lieu de plusieurs centaines.
  */

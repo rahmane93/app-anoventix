@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-// ─── Statistiques avancées de l'administration (ECART-30) ────────────────────
+// ─── Statistiques avancées de l'administration ────────────────────
 // Évolution des annonces sur 12 mois et répartitions (région, type de bien, type d'annonce).
 
 type Ligne = { libelle: string; count: number };

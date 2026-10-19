@@ -23,7 +23,7 @@ import com.app.AnnoncesAPI.enums.TypeRole;
 import com.app.AnnoncesAPI.repositories.UserRepository;
 
 /**
- * Invitation d'un agent par lien à usage unique (ECART-47).
+ * Invitation d'un agent par lien à usage unique.
  *
  * Avant : le professionnel créait l'agent, l'API lui générait un mot de passe temporaire envoyé en
  * clair par email, sans limite de durée. Désormais l'agent reçoit un lien valable 7 jours, une seule

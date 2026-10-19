@@ -73,8 +73,8 @@ export const getEntrepriseProfil = async (
   page = 0,
   size = 20,
 ): Promise<EntrepriseProfilResponse> => {
-  // Paramètres typés par le contrat de l'API : un nom erroné (ex. « limit »,
-  // ECART-19) ne compile plus.
+  // Paramètres typés par le contrat de l'API : un nom erroné (ex. « limit »)
+  // ne compile plus.
   const params: Operation<'getEntrepriseProfil'>['parameters']['query'] = { page, size };
   const response = await apiClient.get<EntrepriseProfilResponse>(
     `/api/entreprises/${id}/profil`,

@@ -11,7 +11,7 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** Miniatures des photos (ECART-55) : deux variantes à côté de l'original, jamais agrandies. */
+/** Miniatures des photos : deux variantes à côté de l'original, jamais agrandies. */
 class VariantesPhotoTest {
 
     @TempDir Path dossier;

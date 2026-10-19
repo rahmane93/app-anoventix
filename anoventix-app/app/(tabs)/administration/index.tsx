@@ -123,7 +123,7 @@ export default function AdminDashboard() {
     { key: 'annonces', icon: 'home-outline', label: 'Annonces actives', value: stats?.totalAnnoncesActives ?? 0, href: '/(tabs)/administration/annonces' as any },
     ...(isAdmin
       ? [
-          // L'écriture du référentiel est réservée à l'administrateur (ECART-45).
+          // L'écriture du référentiel est réservée à l'administrateur.
           { key: 'localisations', icon: 'location-outline' as IoniconName, label: 'Localisations', value: null, href: '/(tabs)/administration/localisations' as any },
           { key: 'quartiers', icon: 'map-outline' as IoniconName, label: 'Quartiers demandés', value: stats?.quartiersDemandes ?? 0, href: '/(tabs)/administration/quartiers-demandes' as any },
           { key: 'parametres', icon: 'options-outline' as IoniconName, label: 'Paramètres', value: null, href: '/(tabs)/administration/parametres' as any },

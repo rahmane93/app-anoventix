@@ -347,7 +347,7 @@ function LocalisationForm({
 
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
-// Le référentiel ne s'écrit que par un administrateur (ECART-45) : le modérateur n'a pas cet écran.
+// Le référentiel ne s'écrit que par un administrateur : le modérateur n'a pas cet écran.
 export default function LocalisationsScreen() {
   const user = useAuthStore((st) => st.user);
   const profile = useUserStore((st) => st.profile);

@@ -310,7 +310,7 @@ class ModerationAnnonceTest {
         assertThat(recharger(annonce).getStatutModeration()).isEqualTo(StatutAnnonce.REJETEE);
     }
 
-    // ── Décision sur un signalement (ECART-26) ─────────────────────────────
+    // ── Décision sur un signalement ─────────────────────────────
 
     @Test
     void laDecisionMasqueLAnnonceEtClotTousSesSignalementsEnUneFois() throws Exception {

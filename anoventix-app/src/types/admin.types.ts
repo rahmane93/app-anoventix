@@ -144,7 +144,7 @@ export interface AdminUser {
   motifRejetPieceIdentite: string | null;
   /** Le selfie de vérification est enregistré (EVO-01) ; absent d'un dossier d'avant sa mise en service. */
   selfieFourni?: boolean;
-  /** Verso et date d'expiration de la pièce (ECART-28). */
+  /** Verso et date d'expiration de la pièce (DEC-36). */
   versoFourni?: boolean;
   dateExpirationPiece?: string | null;
   dateEnvoiVerification?: string | null;

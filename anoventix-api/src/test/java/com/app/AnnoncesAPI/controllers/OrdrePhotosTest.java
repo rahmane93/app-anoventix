@@ -45,7 +45,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/** Ordre des photos d'une annonce et choix de la photo principale (ECART-49). */
+/** Ordre des photos d'une annonce et choix de la photo principale. */
 @SpringBootTest
 class OrdrePhotosTest {
 

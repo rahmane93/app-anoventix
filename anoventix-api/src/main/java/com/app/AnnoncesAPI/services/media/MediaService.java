@@ -309,7 +309,7 @@ public class MediaService {
     }
 
     /**
-     * Réordonne les photos d'une annonce (ECART-49) : la liste doit contenir exactement tous ses identifiants,
+     * Réordonne les photos d'une annonce : la liste doit contenir exactement tous ses identifiants,
      * la première devient la photo principale (vignette, aperçu de partage).
      */
     @Transactional

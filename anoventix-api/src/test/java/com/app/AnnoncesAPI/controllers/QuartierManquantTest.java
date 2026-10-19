@@ -65,7 +65,7 @@ class QuartierManquantTest {
     void preparer() throws Exception {
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
         vider();
-        // Kipé fait partie du référentiel (V14) : un quartier n'existe qu'une fois par commune (ECART-45).
+        // Kipé fait partie du référentiel (V14) : un quartier n'existe qu'une fois par commune.
         locId = localisationRepository.trouverQuartier("Conakry", "Conakry", "Ratoma", "Kipé").orElseGet(() -> {
             Localisation loc = new Localisation();
             loc.setId(LOC_ID);

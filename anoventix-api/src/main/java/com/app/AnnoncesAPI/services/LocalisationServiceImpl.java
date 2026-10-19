@@ -102,7 +102,7 @@ public class LocalisationServiceImpl implements LocalisationService {
         return annonceMapper.localisationToDTO(modifiee);
     }
 
-    /** Un quartier n'existe qu'une fois par commune, aux accents et à la casse près (ECART-45). */
+    /** Un quartier n'existe qu'une fois par commune, aux accents et à la casse près. */
     private void refuserDoublon(LocalisationRequest r, String idModifie) {
         localisationRepository.trouverQuartier(r.getRegion(), r.getPrefecture(), r.getCommune(), r.getQuartier())
                 .filter(l -> !l.getId().equals(idModifie))

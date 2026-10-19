@@ -323,7 +323,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = new User();
-        // Preuve du consentement (ECART-41) : date et version des CGU en vigueur.
+        // Preuve du consentement : date et version des CGU en vigueur.
         user.setCguAccepteesLe(LocalDateTime.now());
         user.setCguVersion(versionCgu);
         user.setEmail(signUpRequest.getEmail());
@@ -428,7 +428,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByActivationCode(token)
                 .orElseThrow(() -> new IllegalArgumentException("Lien d'activation invalide ou déjà utilisé."));
-        // Le jeton d'un agent est une invitation : l'agent doit choisir son mot de passe (ECART-47).
+        // Le jeton d'un agent est une invitation : l'agent doit choisir son mot de passe.
         if (user.getRole() != null && user.getRole().getName() == TypeRole.AGENT_PROFESSIONNEL) {
             throw new IllegalArgumentException("Lien d'activation invalide ou déjà utilisé.");
         }
@@ -633,8 +633,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Pas de réinitialisation pour un compte suspendu ou désactivé par la modération
-     * (ECART-36) : il ne doit pas retrouver d'accès par ce biais. Le compte en délai de
+     * Pas de réinitialisation pour un compte suspendu ou désactivé par la modération :
+     * il ne doit pas retrouver d'accès par ce biais. Le compte en délai de
      * grâce après une demande de suppression la garde, utile pour se réactiver.
      */
     private static boolean reinitialisationInterdite(User user) {

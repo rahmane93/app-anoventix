@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Chaque contexte de test part d'une base vide : le schéma est recréé par les
- * migrations Flyway, exactement comme sur une installation neuve (ECART-04).
+ * migrations Flyway, exactement comme sur une installation neuve.
  * Remplace l'ancien ddl-auto=create-drop, qui testait le schéma d'Hibernate
  * et non celui de la production.
  */

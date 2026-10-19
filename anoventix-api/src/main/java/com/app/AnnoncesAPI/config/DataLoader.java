@@ -63,7 +63,7 @@ public class DataLoader {
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setStatut(StatutUtilisateur.ACTIF);
             // Le mot de passe de ADMIN_PASSWORD est connu de qui a installé l'API : il doit être
-            // remplacé dès la première connexion (ECART-64).
+            // remplacé dès la première connexion (DEC-03).
             admin.setMustChangePassword(true);
             admin.setRole(adminRole);
             if (!MotDePasse.estValide(adminPassword)) {

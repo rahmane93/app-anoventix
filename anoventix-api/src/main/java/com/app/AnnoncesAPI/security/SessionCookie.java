@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Jeton de rafraîchissement du site web, confié à un cookie (ECART-54).
+ * Jeton de rafraîchissement du site web, confié à un cookie.
  *
  * Dans le {@code localStorage}, le jeton de 7 jours est lisible par tout script de la page : une
  * faille XSS suffit à voler une session. Le cookie est {@code HttpOnly} (illisible par les scripts),

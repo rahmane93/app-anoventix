@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-/** Documents disponibles en liste fermée (ECART-35). */
+/** Documents disponibles en liste fermée (DEC-35). */
 class DocumentDisponibleTest {
 
     @Test

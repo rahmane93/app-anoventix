@@ -11,7 +11,7 @@ import tools.jackson.databind.ValueSerializer;
 
 /**
  * Sérialiseur des coordonnées de contact (téléphone, email) d'un annonceur ou d'une agence
- * (DEC-14, ECART-31) : la valeur n'est écrite que pour un utilisateur connecté, un visiteur
+ * (DEC-14) : la valeur n'est écrite que pour un utilisateur connecté, un visiteur
  * reçoit {@code null}.
  *
  * Appliqué sur le champ du DTO plutôt qu'aux endpoints un par un : aucune réponse publique,

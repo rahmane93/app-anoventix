@@ -152,8 +152,22 @@ public class BienImmoControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.titre").value("Maison avec jardin à Ratoma"))
-                // Le libellé saisi est enregistré sous son code (ECART-35).
+                // Le libellé saisi est enregistré sous son code (DEC-35).
                 .andExpect(jsonPath("$.documentsDisponibles").value("TITRE_FONCIER"));
+    }
+
+    @Test
+    void testFicheParIdentifiantPublic_accessibleSansCompte() throws Exception {
+        String jwt = signupActivateAndGetJWT("bien-public", "bien-public@test.com", "Test123!");
+        Long id = createBien(jwt);
+        String publicId = objectMapper.readTree(mockMvc.perform(get("/api/biens-immo/{id}", id))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).get("publicId").asString();
+
+        // Lien partagé ouvert par un visiteur non connecté.
+        mockMvc.perform(get("/api/biens-immo/public/p/{publicId}", publicId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id));
     }
 
     @Test
@@ -576,7 +590,7 @@ public class BienImmoControllerTest {
                 .andReturn().getResponse().getContentAsString()).get("id").asLong();
     }
 
-    // ECART-33 et ECART-46 : filtres et pagination appliqués par la base, avant la page.
+    // filtres et pagination appliqués par la base, avant la page.
     @Test
     void testNearby_filtreEtPaginationSql() throws Exception {
         String jwt = signupActivateAndGetJWT("proche1", "proche1@test.com", "Test123!");

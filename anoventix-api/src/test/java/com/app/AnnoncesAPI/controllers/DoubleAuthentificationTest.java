@@ -35,7 +35,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Double authentification du staff par code email (DEC-03, ECART-64), avec codes de secours et
+ * Double authentification du staff par code email (DEC-03), avec codes de secours et
  * email d'alerte. Le code est lu dans la file d'envoi (email_sortant), qui n'envoie rien en test.
  */
 @SpringBootTest(properties = "app.security.staff-2fa-actif=true")

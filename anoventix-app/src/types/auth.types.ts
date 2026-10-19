@@ -7,7 +7,7 @@ export interface SignupRequest {
   telephone?: string;
   password: string;
   role: string;
-  /** Consentement aux CGU, enregistré par le serveur avec sa version (ECART-41). */
+  /** Consentement aux CGU, enregistré par le serveur avec sa version. */
   acceptCgu: boolean;
 }
 

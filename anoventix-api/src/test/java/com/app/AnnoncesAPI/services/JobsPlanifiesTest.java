@@ -165,7 +165,7 @@ class JobsPlanifiesTest {
         verify(media).deletePieceIdentite("private/piece-identite/x/piece.jpg");
     }
 
-    // ECART-15 : à l'échéance, un professionnel emporte ses agents et son entreprise, comme lors
+    // à l'échéance, un professionnel emporte ses agents et son entreprise, comme lors
     // d'une suppression par un administrateur.
     @Test
     void anonymiserComptesExpires_unProfessionnelEmporteSesAgentsEtSonEntreprise() {

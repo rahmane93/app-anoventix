@@ -23,7 +23,7 @@ import com.app.AnnoncesAPI.security.AdresseClient;
 import com.app.AnnoncesAPI.services.profiles.UserDetailsImpl;
 
 /**
- * Journal d'audit des actions du staff et du système (ECART-63).
+ * Journal d'audit des actions du staff et du système.
  *
  * Appelé explicitement par les services, dans leur transaction : une action annulée
  * (exception, rollback) ne laisse pas de trace, une action réussie en laisse toujours une.

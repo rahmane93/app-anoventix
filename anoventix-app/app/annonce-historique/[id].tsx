@@ -7,7 +7,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
-// ─── Historique des modifications d'une annonce (ECART-30) ───────────────────
+// ─── Historique des modifications d'une annonce ───────────────────
 // Ouvert par le propriétaire (« Mes annonces ») et par la modération (liste des annonces).
 
 const CHAMPS: Record<string, string> = {

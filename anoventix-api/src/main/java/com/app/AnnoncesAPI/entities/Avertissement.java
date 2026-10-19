@@ -66,7 +66,7 @@ public class Avertissement {
     @Column(name = "motif_levee", length = 200)
     private String motifLevee;
 
-    /** Durée pendant laquelle un avertissement compte pour le niveau et la suspension automatique (ECART-24). */
+    /** Durée pendant laquelle un avertissement compte pour le niveau et la suspension automatique (DEC-33). */
     public static final int VALIDITE_MOIS = 6;
 
     /** Compte encore : ni levé, ni plus vieux que {@link #VALIDITE_MOIS}. */

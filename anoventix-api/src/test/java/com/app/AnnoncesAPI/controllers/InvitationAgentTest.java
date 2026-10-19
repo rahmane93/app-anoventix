@@ -35,7 +35,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Invitation d'un agent par lien à usage unique, sans mot de passe temporaire (ECART-47). */
+/** Invitation d'un agent par lien à usage unique, sans mot de passe temporaire. */
 @SpringBootTest
 class InvitationAgentTest {
 

@@ -27,7 +27,7 @@ import tools.jackson.databind.ObjectMapper;
  * Limitation de débit par adresse IP sur les endpoints d'authentification.
  *
  * Les opérateurs mobiles guinéens partagent une même IP publique entre de nombreux abonnés
- * (CGNAT) : une limite serrée par IP déconnecte des utilisateurs sans rapport (ECART-05).
+ * (CGNAT) : une limite serrée par IP déconnecte des utilisateurs sans rapport.
  * Les seuils sont donc des garde-fous contre l'inondation, pas contre l'essai de mots de
  * passe : celui-ci est limité par compte (LoginAttemptTracker : verrouillage après 5 échecs).
  */
