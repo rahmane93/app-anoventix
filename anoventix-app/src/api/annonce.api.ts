@@ -249,6 +249,12 @@ export const signalerAnnonce = async (
   await apiClient.post(`/api/biens-immo/${annonceId}/signaler`, payload);
 };
 
+/** POST /api/biens-immo/{id}/reexamen → 201. Message facultatif, 500 caractères au plus. */
+export const demanderReexamen = async (annonceId: number, message?: string): Promise<void> => {
+  const texte = message?.trim();
+  await apiClient.post(`/api/biens-immo/${annonceId}/reexamen`, texte ? { message: texte } : {});
+};
+
 export const retirerSignalement = async (annonceId: number): Promise<void> => {
   await apiClient.delete(`/api/biens-immo/${annonceId}/signaler`);
 };

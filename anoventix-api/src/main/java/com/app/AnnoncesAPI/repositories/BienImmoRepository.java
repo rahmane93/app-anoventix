@@ -204,6 +204,11 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     /** Toutes les annonces publiquement visibles, triées selon le {@code Pageable}. */
     Page<BienImmo> findByVisiblePublicTrue(Pageable pageable);
 
+    long countByReexamenDemandeTrue();
+
+    /** File des réexamens de la modération (DEC-09) : plus anciennes demandes d'abord. */
+    Page<BienImmo> findByReexamenDemandeTrueOrderByDateReexamenAsc(Pageable pageable);
+
     /**
      * Recherche géospatiale par rayon (Haversine) — retourne les IDs triés par distance.
      * Utilise les colonnes {@code latitude}/{@code longitude} de la table {@code annonce}.

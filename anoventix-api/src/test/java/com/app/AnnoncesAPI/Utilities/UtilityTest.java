@@ -22,7 +22,8 @@ class UtilityTest {
             Map.entry("activationLink", "https://anoventix.com/activate?token=abc"),
             Map.entry("code", "12345678"), Map.entry("minutes", "15"),
             Map.entry("titre", "Annonce publiée"), Map.entry("message", "Votre annonce est en ligne."),
-            Map.entry("email", "agent@test.com"), Map.entry("temporaryPassword", "Tmp!2345"),
+            Map.entry("email", "agent@test.com"), Map.entry("invitationLink", "https://www.anoventix.com/invitation?token=abc"),
+            Map.entry("jours", "7"),
             Map.entry("entrepriseName", "Immo Conakry"), Map.entry("parentNomComplet", "Mamadou Bah"));
 
     @ParameterizedTest
@@ -30,7 +31,7 @@ class UtilityTest {
             "templates/email-activation.html",
             "templates/email-password-reset.html",
             "templates/email-notification.html",
-            "templates/email-temporary-password.html" })
+            "templates/email-invitation-agent.html" })
     void emailComplet(String modele) {
         String html = Utility.renderEmail(modele, VARS, "Aperçu du message", "Mention de bas de carte");
         assertTrue(html.startsWith("<!doctype html>"));

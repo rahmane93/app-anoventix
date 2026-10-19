@@ -58,7 +58,8 @@ class SuppressionCompteAdminTest {
     private CompteSuppressionService service() {
         PasswordEncoder encoder = mock(PasswordEncoder.class);
         when(encoder.encode(anyString())).thenReturn("hash");
-        return new CompteSuppressionService(userRepo, annonceRepo, entrepriseRepo, mediaRepo, media, encoder);
+        return new CompteSuppressionService(userRepo, annonceRepo, entrepriseRepo, mediaRepo, media, encoder,
+                mock(SessionService.class));
     }
 
     private static User compte(TypeRole role) {
@@ -142,7 +143,8 @@ class SuppressionCompteAdminTest {
                 mock(HistoriqueAnnonceRepository.class), mock(AvertissementRepository.class),
                 mock(MessageRepository.class), mock(NotificationService.class), mock(AnnonceMapper.class),
                 mock(EmailNotificationService.class),
-                mock(AnnonceExpirationService.class), suppression, mock(AuditService.class));
+                mock(AnnonceExpirationService.class), suppression, mock(AuditService.class),
+                mock(SessionService.class), mock(ModerationAnnonceService.class));
     }
 
     @Test
@@ -163,7 +165,7 @@ class SuppressionCompteAdminTest {
         CompteSuppressionService suppression = mock(CompteSuppressionService.class);
         UserServiceImpl users = new UserServiceImpl(userRepo, media, annonceRepo, mock(AnnonceMapper.class),
                 mock(AvertissementRepository.class), suppression, mock(EmailNotificationService.class),
-                mock(AuditService.class));
+                mock(AuditService.class), mock(SessionService.class));
         for (TypeRole role : List.of(TypeRole.ADMINISTRATEUR, TypeRole.MODERATEUR)) {
             User u = compte(role);
             when(userRepo.findByEmail(u.getEmail())).thenReturn(Optional.of(u));

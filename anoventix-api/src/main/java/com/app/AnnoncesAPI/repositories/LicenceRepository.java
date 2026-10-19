@@ -15,6 +15,9 @@ public interface LicenceRepository extends JpaRepository<Licence, Long> {
 
     Optional<Licence> findByCle(String cle);
 
+    /** Toutes les licences d'un titulaire (export RGPD). */
+    java.util.List<Licence> findByOwnerIdOrderByDateFinDesc(UUID ownerId);
+
     /** Licence du titulaire qui expire le plus tard (la « courante »). */
     Optional<Licence> findFirstByOwnerIdOrderByDateFinDesc(UUID ownerId);
 

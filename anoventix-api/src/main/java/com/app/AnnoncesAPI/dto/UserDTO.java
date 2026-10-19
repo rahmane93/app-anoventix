@@ -33,6 +33,10 @@ public class UserDTO {
     private String pieceIdentiteUrl;
     private StatutPieceIdentite statutPieceIdentite;
     private String motifRejetPieceIdentite;
+    /** Le selfie de vérification est enregistré (le fichier n'est servi qu'au titulaire et à la modération). */
+    private boolean selfieFourni;
+    private java.time.LocalDateTime dateEnvoiVerification;
+    private java.time.LocalDateTime dateDecisionVerification;
     private StatutUtilisateur statut;
     private String motifStatut;
     private long nbAvertissements;

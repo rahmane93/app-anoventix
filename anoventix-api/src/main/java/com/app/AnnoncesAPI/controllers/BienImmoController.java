@@ -213,6 +213,19 @@ public class BienImmoController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping("/{id}/reexamen")
+    @Operation(summary = "Demander le réexamen d'une annonce masquée",
+               description = "Le propriétaire (ou son entreprise) demande à la modération de réexaminer une annonce masquée "
+                       + "après l'avoir corrigée. Message facultatif (500 caractères). Une seule demande en cours, "
+                       + "trois demandes au plus par annonce.")
+    public ResponseEntity<Void> demanderReexamen(
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) com.app.AnnoncesAPI.payload.request.ReexamenRequest request,
+            Authentication authentication) {
+        bienImmoService.demanderReexamen(id, request == null ? null : request.getMessage(), authentication);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @DeleteMapping("/{id}/signaler")
     @Operation(summary = "Retirer son signalement",
                description = "L'utilisateur connecté annule son propre signalement actif sur cette annonce (soft delete).")

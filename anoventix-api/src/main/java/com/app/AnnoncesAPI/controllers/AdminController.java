@@ -65,10 +65,34 @@ public class AdminController {
 
     private final AdminService adminService;
     private final AuditService auditService;
+    private final com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationEntreprises;
 
-    public AdminController(AdminService adminService, AuditService auditService) {
+    public AdminController(AdminService adminService, AuditService auditService,
+                           com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationEntreprises) {
         this.adminService = adminService;
         this.auditService = auditService;
+        this.verificationEntreprises = verificationEntreprises;
+    }
+
+    @GetMapping("/entreprises/a-verifier")
+    @Operation(summary = "File des entreprises à vérifier",
+               description = "Entreprises dont le justificatif RCCM attend une décision, des plus anciennes aux plus récentes.")
+    public ResponseEntity<PageResponse<com.app.AnnoncesAPI.dto.EntrepriseDTO>> getEntreprisesAVerifier(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE));
+        return ResponseEntity.ok(PageResponse.of(verificationEntreprises.aVerifier(pageable)));
+    }
+
+    @PutMapping("/entreprises/{id}/verification")
+    @Operation(summary = "Vérifier ou refuser une entreprise",
+               description = "VERIFIEE : badge « Agence vérifiée », nom et RCCM figés. REJETEE : motif obligatoire, "
+                           + "communiqué au propriétaire. Un email part dans les deux cas.")
+    public ResponseEntity<com.app.AnnoncesAPI.dto.EntrepriseDTO> deciderVerificationEntreprise(
+            @PathVariable java.util.UUID id,
+            @Valid @RequestBody com.app.AnnoncesAPI.payload.request.DecisionVerificationEntrepriseRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        return ResponseEntity.ok(verificationEntreprises.decider(id, request, authentication));
     }
 
     @GetMapping("/annonces")
@@ -123,6 +147,28 @@ public class AdminController {
             @Valid @RequestBody TraiterSignalementRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
         return ResponseEntity.ok(adminService.traiterSignalement(id, request, currentAdmin.getUsername()));
+    }
+
+    @PutMapping("/signalements/{id}/decision")
+    @Operation(summary = "Décider d'un signalement",
+               description = "Masque, rejette ou remet l'annonce en ligne, ou classe le signalement sans suite. La décision sur "
+                       + "l'annonce et la clôture de tous ses signalements en attente se font en une seule opération. Le motif "
+                       + "est obligatoire pour masquer ou rejeter.")
+    public ResponseEntity<SignalementResponse> deciderSignalement(
+            @PathVariable Long id,
+            @Valid @RequestBody com.app.AnnoncesAPI.payload.request.DecisionSignalementRequest request,
+            @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
+        return ResponseEntity.ok(adminService.deciderSignalement(id, request, currentAdmin.getUsername()));
+    }
+
+    @GetMapping("/reexamens")
+    @Operation(summary = "File des réexamens",
+               description = "Annonces masquées dont le propriétaire a demandé un réexamen, de la plus ancienne à la plus récente.")
+    public ResponseEntity<PageResponse<com.app.AnnoncesAPI.dto.AdminAnnonceDTO>> getReexamens(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE));
+        return ResponseEntity.ok(PageResponse.of(adminService.getReexamens(pageable)));
     }
 
     @DeleteMapping("/signalements/{id}")
@@ -183,7 +229,7 @@ public class AdminController {
 
     @PutMapping("/annonces/{id}/publier")
     @Operation(summary = "Remettre une annonce en ligne",
-               description = "Remet une annonce masquée ou rejetée en ligne. L'action est enregistrée dans l'historique.")
+               description = "Remet une annonce masquée en ligne. Une annonce rejetée ne peut pas être remise en ligne (409). L'action est enregistrée dans l'historique.")
     public ResponseEntity<MessageResponse> publierAnnonce(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl currentAdmin) {

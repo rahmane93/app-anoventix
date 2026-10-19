@@ -30,6 +30,7 @@ public interface AnnonceMapper {
     @Mapping(source = "owner.photoProfil", target = "annonceur.photoProfil")
     @Mapping(source = "owner.role", target = "annonceur.role", qualifiedByName = "extractMainRole")
     @Mapping(source = "owner.entreprise.id", target = "annonceur.entrepriseId")
+    @Mapping(source = "owner.entreprise.statutVerification", target = "annonceur.agenceVerifiee", qualifiedByName = "estVerifiee")
     @Mapping(source = "owner.annoncesMasquees", target = "proprietaireMasque")
     @Mapping(target = "slug", expression = "java(com.app.AnnoncesAPI.Utilities.Utility.slugify(annonce.getTitre()))")
     AnnonceDTO toDTO(Annonce annonce);
@@ -42,6 +43,7 @@ public interface AnnonceMapper {
     @Mapping(source = "owner.photoProfil", target = "annonceur.photoProfil")
     @Mapping(source = "owner.role", target = "annonceur.role", qualifiedByName = "extractMainRole")
     @Mapping(source = "owner.entreprise.id", target = "annonceur.entrepriseId")
+    @Mapping(source = "owner.entreprise.statutVerification", target = "annonceur.agenceVerifiee", qualifiedByName = "estVerifiee")
     @Mapping(source = "owner.annoncesMasquees", target = "proprietaireMasque")
     @Mapping(target = "slug", expression = "java(com.app.AnnoncesAPI.Utilities.Utility.slugify(bienImmo.getTitre()))")
     BienImmoDTO bienImmoEntityToDTO(BienImmo bienImmo);
@@ -85,6 +87,12 @@ public interface AnnonceMapper {
     @Mapping(target = "referenceAnnonce", ignore = true)
     @Mapping(target = "statutModeration", ignore = true)
     @Mapping(target = "motifModeration", ignore = true)
+    @Mapping(target = "dateMasquage", ignore = true)
+    @Mapping(target = "masquageAutomatique", ignore = true)
+    @Mapping(target = "reexamenDemande", ignore = true)
+    @Mapping(target = "dateReexamen", ignore = true)
+    @Mapping(target = "messageReexamen", ignore = true)
+    @Mapping(target = "nbReexamens", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "vueCount", ignore = true)
     @Mapping(target = "dateExpiration", ignore = true)
@@ -106,12 +114,24 @@ public interface AnnonceMapper {
     @Mapping(target = "referenceAnnonce", ignore = true)
     @Mapping(target = "statutModeration", ignore = true)
     @Mapping(target = "motifModeration", ignore = true)
+    @Mapping(target = "dateMasquage", ignore = true)
+    @Mapping(target = "masquageAutomatique", ignore = true)
+    @Mapping(target = "reexamenDemande", ignore = true)
+    @Mapping(target = "dateReexamen", ignore = true)
+    @Mapping(target = "messageReexamen", ignore = true)
+    @Mapping(target = "nbReexamens", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "vueCount", ignore = true)
     @Mapping(target = "dateExpiration", ignore = true)
     @Mapping(target = "relanceExpirationEnvoyee", ignore = true)
     @Mapping(target = "publicId", ignore = true)
     void updateBienImmoFromRequest(BienImmoRequest request, @MappingTarget BienImmo bienImmo);
+
+    /** Badge « Agence vérifiée » : l'annonceur appartient à une entreprise VERIFIEE (DEC-04). */
+    @Named("estVerifiee")
+    default boolean estVerifiee(com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut) {
+        return statut == com.app.AnnoncesAPI.enums.StatutVerificationEntreprise.VERIFIEE;
+    }
 
     @Named("extractMainRole")
     default TypeRole extractMainRole(Role role) {

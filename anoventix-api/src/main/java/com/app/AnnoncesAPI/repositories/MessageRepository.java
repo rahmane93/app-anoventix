@@ -30,6 +30,15 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     /** Nombre de messages signalés non encore traités (signalés et non supprimés). */
     long countBySignaleTrueAndSupprimeFalse();
 
+    /** Messages signalés par un utilisateur (export RGPD). */
+    java.util.List<Message> findBySignaleParId(UUID userId);
+
+    /**
+     * Vrai si un message de la conversation a été signalé, en attente ou déjà traité (la date
+     * de signalement est conservée après le traitement) : seul cas où la modération peut lire la conversation.
+     */
+    boolean existsByConversationIdAndDateSignalementIsNotNull(Long conversationId);
+
     /** Tous les messages d'une conversation (vue admin, sans filtre participant). */
     @Query("SELECT m FROM Message m JOIN FETCH m.sender WHERE m.conversation.id = :conversationId ORDER BY m.createdAt ASC")
     Page<Message> findByConversationIdAdmin(@Param("conversationId") Long conversationId, Pageable pageable);

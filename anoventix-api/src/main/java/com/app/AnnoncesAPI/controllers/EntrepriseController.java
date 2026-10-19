@@ -40,9 +40,38 @@ public class EntrepriseController {
             java.util.Set.of("dateCreation", "prix", "titre");
 
     private final EntrepriseService entrepriseService;
+    private final com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationService;
 
-    public EntrepriseController(EntrepriseService entrepriseService) {
+    public EntrepriseController(EntrepriseService entrepriseService,
+                                com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationService) {
         this.entrepriseService = entrepriseService;
+        this.verificationService = verificationService;
+    }
+
+    @PostMapping(value = "/{id}/verification", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('PROFESSIONNEL')")
+    @Operation(summary = "Demander la vérification de l'entreprise",
+               description = "Le propriétaire envoie l'extrait RCCM en photo (image uniquement, 10 Mo au plus, champ « justificatif »). "
+                           + "Son identité doit déjà être vérifiée. Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.")
+    public ResponseEntity<EntrepriseDTO> demanderVerification(
+            @PathVariable UUID id,
+            @RequestParam(value = "justificatif", required = false) MultipartFile justificatif,
+            Authentication authentication) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(verificationService.envoyerJustificatif(id, justificatif, authentication));
+    }
+
+    @GetMapping("/{id}/justificatif")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Servir le justificatif RCCM",
+               description = "Propriétaire de l'entreprise ou modération uniquement (no-store).")
+    public ResponseEntity<org.springframework.core.io.Resource> getJustificatif(
+            @PathVariable UUID id, Authentication authentication) {
+        org.springframework.core.io.Resource fichier = verificationService.servirJustificatif(id, authentication);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(fichier);
     }
     
     /**
@@ -95,8 +124,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL', 'MODERATEUR', 'ADMINISTRATEUR')")
     @Operation(summary = "Récupérer une entreprise par ID",
                description = "Affiche les détails d'une entreprise")
-    public ResponseEntity<EntrepriseDTO> getEntrepriseById(@PathVariable UUID id) {
-        EntrepriseDTO entreprise = entrepriseService.getEntrepriseById(id);
+    public ResponseEntity<EntrepriseDTO> getEntrepriseById(@PathVariable UUID id, Authentication authentication) {
+        EntrepriseDTO entreprise = entrepriseService.getEntrepriseById(id, authentication);
         return ResponseEntity.ok(entreprise);
     }
     
@@ -107,8 +136,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL', 'MODERATEUR', 'ADMINISTRATEUR')")
     @Operation(summary = "Récupérer l'entreprise d'un utilisateur",
                description = "Trouve l'entreprise associée à un utilisateur")
-    public ResponseEntity<EntrepriseDTO> getEntrepriseByUser(@PathVariable UUID userId) {
-        EntrepriseDTO entreprise = entrepriseService.getEntrepriseByUser(userId);
+    public ResponseEntity<EntrepriseDTO> getEntrepriseByUser(@PathVariable UUID userId, Authentication authentication) {
+        EntrepriseDTO entreprise = entrepriseService.getEntrepriseByUser(userId, authentication);
         return ResponseEntity.ok(entreprise);
     }
     
@@ -213,6 +242,21 @@ public class EntrepriseController {
     }
 
     /**
+     * Renvoie l'invitation d'un agent en attente d'activation
+     */
+    @PostMapping("/{entrepriseId}/agents/{agentId}/invitation")
+    @PreAuthorize("hasRole('PROFESSIONNEL')")
+    @Operation(summary = "Renvoyer l'invitation d'un agent",
+               description = "Envoie un nouveau lien d'invitation (valable 7 jours, usage unique) à un agent qui n'a pas "
+                           + "encore choisi son mot de passe ; le lien précédent cesse de fonctionner.")
+    public ResponseEntity<AgentDTO> renvoyerInvitation(
+            @PathVariable UUID entrepriseId,
+            @PathVariable UUID agentId,
+            Authentication authentication) {
+        return ResponseEntity.ok(entrepriseService.renvoyerInvitation(entrepriseId, agentId, authentication));
+    }
+
+    /**
      * Suspend un agent de l'entreprise
      */
     @PutMapping("/{entrepriseId}/agents/{agentId}/suspendre")
@@ -247,8 +291,8 @@ public class EntrepriseController {
     @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL')")
     @Operation(summary = "Vérifier le quota d'annonces",
                description = "Vérifie si l'entreprise peut créer une nouvelle annonce")
-    public ResponseEntity<Boolean> canCreateAnnonce(@PathVariable UUID entrepriseId) {
-        boolean can = entrepriseService.canCreateAnnonce(entrepriseId);
+    public ResponseEntity<Boolean> canCreateAnnonce(@PathVariable UUID entrepriseId, Authentication authentication) {
+        boolean can = entrepriseService.canCreateAnnonce(entrepriseId, authentication);
         return ResponseEntity.ok(can);
     }
     
@@ -259,8 +303,8 @@ public class EntrepriseController {
     @PreAuthorize("hasRole('PROFESSIONNEL')")
     @Operation(summary = "Vérifier le quota d'agents",
                description = "Vérifie si l'entreprise peut ajouter un nouvel agent")
-    public ResponseEntity<Boolean> canAddAgent(@PathVariable UUID entrepriseId) {
-        boolean can = entrepriseService.canAddAgent(entrepriseId);
+    public ResponseEntity<Boolean> canAddAgent(@PathVariable UUID entrepriseId, Authentication authentication) {
+        boolean can = entrepriseService.canAddAgent(entrepriseId, authentication);
         return ResponseEntity.ok(can);
     }
     

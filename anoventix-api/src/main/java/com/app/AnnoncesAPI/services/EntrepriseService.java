@@ -42,7 +42,7 @@ public interface EntrepriseService {
      * @param id L'ID de l'entreprise
      * @return L'entreprise trouvée
      */
-    EntrepriseDTO getEntrepriseById(UUID id);
+    EntrepriseDTO getEntrepriseById(UUID id, Authentication authentication);
     
     /**
      * Récupère l'entreprise d'un utilisateur
@@ -50,7 +50,7 @@ public interface EntrepriseService {
      * @param userId L'ID de l'utilisateur
      * @return L'entreprise de l'utilisateur
      */
-    EntrepriseDTO getEntrepriseByUser(UUID userId);
+    EntrepriseDTO getEntrepriseByUser(UUID userId, Authentication authentication);
     
     /**
      * Récupère toutes les entreprises (actives et inactives).
@@ -112,12 +112,18 @@ public interface EntrepriseService {
     AgentDTO activerAgent(UUID entrepriseId, UUID agentId, Authentication authentication);
 
     /**
+     * Renvoie l'invitation (nouveau lien, ancien invalidé) à un agent qui n'a pas encore choisi son
+     * mot de passe. Réservé au propriétaire de l'entreprise.
+     */
+    AgentDTO renvoyerInvitation(UUID entrepriseId, UUID agentId, Authentication authentication);
+
+    /**
      * Vérifie si une entreprise peut créer une nouvelle annonce
      * 
      * @param entrepriseId L'ID de l'entreprise
      * @return true si le quota n'est pas atteint
      */
-    boolean canCreateAnnonce(UUID entrepriseId);
+    boolean canCreateAnnonce(UUID entrepriseId, Authentication authentication);
     
     /**
      * Vérifie si une entreprise peut ajouter un agent
@@ -125,7 +131,7 @@ public interface EntrepriseService {
      * @param entrepriseId L'ID de l'entreprise
      * @return true si le quota n'est pas atteint
      */
-    boolean canAddAgent(UUID entrepriseId);
+    boolean canAddAgent(UUID entrepriseId, Authentication authentication);
     
     /**
      * Désactive une entreprise

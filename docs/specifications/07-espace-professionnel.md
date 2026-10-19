@@ -32,7 +32,7 @@ Hors périmètre (non implémenté) : vérification de l'entreprise (RCCM, exist
 | US-07-05 | En tant que professionnel, je consulte toutes les annonces de l'entreprise et je les filtre par référence ou titre. |
 | US-07-06 | En tant que visiteur, je consulte la page publique de l'agence et ses annonces. |
 | US-07-07 | En tant que professionnel ou agent, je suis mon activité : portefeuille, visibilité, messagerie, équipe, conformité. |
-| US-07-08 | En tant qu'agent, je change mon mot de passe temporaire à la première connexion, puis je fais valider ma pièce d'identité (🆕 et mon selfie, module 02 §4.6) pour publier. |
+| US-07-08 | En tant qu'agent, je choisis mon mot de passe depuis le lien d'invitation, puis je fais valider ma pièce d'identité (🆕 et mon selfie, module 02 §4.6) pour publier. |
 
 ## 4. Règles de gestion
 
@@ -54,8 +54,8 @@ Hors périmètre (non implémenté) : vérification de l'entreprise (RCCM, exist
 |---|---|---|
 | RG-07-07 | Création d'un agent par le propriétaire uniquement, dans la limite du **quota d'agents** (agents non retirés, hors propriétaire). | `EntrepriseServiceImpl.java:231-248` |
 | RG-07-08 | Email (normalisé, unique) et téléphone (normalisé, unique, **obligatoire**) ; prénom et nom ≤ 50. L'email accepte 100 caractères alors que le compte n'en accepte que 50 (ECART-10). | `AgentRequest.java` |
-| RG-07-09 | Le compte agent est créé avec le rôle AGENT_PROFESSIONNEL, rattaché à l'entreprise et à son créateur (`parentUser`), au statut EN_ATTENTE_ACTIVATION, avec un **mot de passe temporaire aléatoire de 12 caractères** et l'obligation de le changer. | `EntrepriseServiceImpl.java:263-289` |
-| RG-07-10 | Le mot de passe temporaire est envoyé **en clair par email** (« Vos accès agent AnoventiX »), sans durée de validité (ECART-47). | `EntrepriseServiceImpl.java:291-305` |
+| RG-07-09 | Le compte agent est créé avec le rôle AGENT_PROFESSIONNEL, rattaché à l'entreprise et à son créateur (`parentUser`), au statut EN_ATTENTE_ACTIVATION, avec un **mot de passe aléatoire que personne ne connaît** : le compte ne s'ouvre qu'après l'acceptation de l'invitation (ECART-47 corrigé). | `EntrepriseServiceImpl.java:263-289` |
+| RG-07-10 | L'agent reçoit par email un **lien d'invitation à usage unique, valable 7 jours** (`/invitation?token=…`) et y choisit son mot de passe (règle commune des mots de passe) : le compte devient alors ACTIF. Aucun mot de passe n'est généré ni transmis. Le propriétaire peut **renvoyer l'invitation** (`POST /api/entreprises/{id}/agents/{agentId}/invitation`, l'ancien lien cesse de fonctionner) et l'agent peut demander un nouveau lien depuis l'écran de connexion. Le lien d'invitation n'active pas un compte par `/activate`. | `EntrepriseServiceImpl.java:291-305` |
 | RG-07-11 | Liste des agents : réservée aux membres de l'entreprise et à la modération ; exclut le propriétaire et les agents retirés (INACTIF). | `EntrepriseServiceImpl.java:328-354` |
 | RG-07-12 | **Suspendre** (propriétaire, créateur ou modération) : seulement un agent ACTIF ou en attente ; statut SUSPENDU avec un motif propre à l'entreprise. | `EntrepriseServiceImpl.java:432-456` |
 | RG-07-13 | **Réactiver** : l'entreprise ne lève que ses propres suspensions ; une suspension posée par la modération, ou un agent retiré, ne se lève que par la modération (avec contrôle du quota pour un agent retiré). Un agent qui n'a pas encore changé son mot de passe revient EN_ATTENTE_ACTIVATION. | `EntrepriseServiceImpl.java:459-489` |
@@ -87,7 +87,7 @@ Synthèse des effets croisés, établie à partir des modules 01, 02, 03, 09 et 
 | ID | Règle | Source |
 |---|---|---|
 | RG-07-16 | Vue interne `GET /entreprises/{id}/annonces` : annonces **actives** de tous les membres (y compris masquées ou rejetées si `actif` est vrai), réservée aux membres et à la modération. | `EntrepriseServiceImpl.java:511-525` |
-| RG-07-17 | Page publique `GET /entreprises/{id}/profil` : fiche de l'entreprise et annonces visibles publiquement, paginées. Elle renvoie aussi l'email du propriétaire, le RCCM, les quotas et le nombre d'agents (ECART-31). | `EntrepriseServiceImpl.java:529-539`, `EntrepriseDTO.java` |
+| RG-07-17 | Page publique `GET /entreprises/{id}/profil` : fiche de l'entreprise et annonces visibles publiquement, paginées. Elle ne renvoie que : nom, description, adresse, photo, nombre d'agents, et, aux seuls utilisateurs connectés, téléphone et email de l'agence (ECART-31 et DEC-14 corrigés). Ni RCCM, ni quotas, ni email du propriétaire. La fiche de gestion (`GET /entreprises/{id}`, `/user/{userId}`, `can-create-annonce`, `can-add-agent`) est réservée aux membres de l'entreprise et à la modération. | `EntrepriseServiceImpl.java:529-539`, `EntrepriseDTO.java` |
 | RG-07-18 | L'app demande la page avec le paramètre `limit`, ignoré par l'API qui attend `size` : la page contient toujours 10 annonces (ECART-19). | `src/api/entreprise.api.ts:76` |
 
 ### 4.4 Tableau de bord (`GET /api/stats/pro`)
@@ -107,7 +107,7 @@ Source : `ProStatsServiceImpl.java`.
 | ID | Règle | Source |
 |---|---|---|
 | 🆕 RG-07-23 | Statut de vérification de l'entreprise : **NON_VERIFIEE** (à la création), **EN_ATTENTE** (justificatif envoyé), **VERIFIEE** ou **REJETEE** (avec motif). Chaque nouvel envoi remet EN_ATTENTE. Les entreprises existantes partent NON_VERIFIEE à la mise en service et leur propriétaire est invité par email à envoyer son justificatif. | DEC-04 (SFG §17) |
-| 🆕 RG-07-24 | **Justificatif** : extrait RCCM en image ou PDF (≤ 10 Mo), stocké dans `uploads/private/entreprise/<id>/`, lisible seulement par le propriétaire et la modération. L'envoi exige que l'identité du propriétaire soit déjà vérifiée (module 02). | DEC-04 |
+| 🆕 RG-07-24 | **Justificatif** : extrait RCCM en photo, image uniquement, pas de PDF (≤ 10 Mo), stocké dans `uploads/private/entreprise/<id>/`, lisible seulement par le propriétaire et la modération. L'envoi exige que l'identité du propriétaire soit déjà vérifiée (module 02). | DEC-04 |
 | 🆕 RG-07-25 | **Décision** de la modération : elle vérifie que le numéro RCCM, la raison sociale et le nom du gérant correspondent à la fiche et à l'identité vérifiée du propriétaire. Motif obligatoire en cas de rejet. Auteur et date enregistrés (ECART-63). Email au propriétaire : E17 (vérifiée) ou E18 (refusée, motif). | DEC-04 |
 | 🆕 RG-07-26 | **Badge « Agence vérifiée »** : affiché sur la page publique, la carte annonceur des annonces du professionnel et de ses agents, uniquement pour une entreprise VERIFIEE. Une entreprise non vérifiée publie normalement, mais sans badge d'agence ; l'annonce affiche son nom sans mention de vérification. | DEC-04, ECART-61 |
 | 🆕 RG-07-27 | Après vérification, le **nom et le RCCM sont figés** ; une modification passe par le support et une nouvelle vérification. | DEC-04 |

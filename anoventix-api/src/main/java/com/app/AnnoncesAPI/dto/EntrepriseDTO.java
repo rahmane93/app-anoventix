@@ -27,6 +27,14 @@ public class EntrepriseDTO {
     private Boolean active;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
+
+    // Vérification de l'entreprise (DEC-04)
+    private com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statutVerification;
+    private String motifRejetVerification;
+    private LocalDateTime dateEnvoiVerification;
+    private LocalDateTime dateDecisionVerification;
+    /** Le justificatif RCCM est enregistré (le fichier n'est servi qu'au propriétaire et à la modération). */
+    private Boolean justificatifFourni;
     
     // Informations sur le propriétaire
     private UUID annonceurProfessionnelId;

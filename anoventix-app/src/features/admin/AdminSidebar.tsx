@@ -26,6 +26,8 @@ const GROUPS: { title: string; items: Item[] }[] = [
     title: 'Modération',
     items: [
       { path: 'signalements', label: 'Signalements', icon: 'flag-outline' },
+      { path: 'reexamens', label: 'Réexamens', icon: 'refresh-circle-outline' },
+      { path: 'entreprises-a-verifier', label: 'Entreprises à vérifier', icon: 'shield-checkmark-outline' },
       { path: 'messages', label: 'Messages signalés', icon: 'chatbubble-ellipses-outline' },
       { path: 'pieces-identite', label: "Pièces d'identité", icon: 'card-outline' },
     ],

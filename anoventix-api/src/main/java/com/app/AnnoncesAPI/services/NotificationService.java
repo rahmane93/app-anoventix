@@ -34,6 +34,12 @@ public class NotificationService {
         ajouter(email, "Activez votre compte AnoventiX", htmlBody, true);
     }
 
+    /** Relance à J+5 d'un compte non activé (E19) : nouveau lien, donc contenu sensible. */
+    @Transactional
+    public void envoyerRelanceActivation(String email, String htmlBody) {
+        ajouter(email, "Votre compte AnoventiX sera bientôt supprimé", htmlBody, true);
+    }
+
     /** Code de réinitialisation : contenu sensible, effacé de la file après l'envoi. */
     @Transactional
     public void envoyerReinitialisation(String email, String htmlBody) {

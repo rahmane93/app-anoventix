@@ -22,6 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.jsonwebtoken.Claims;
@@ -35,6 +36,7 @@ import com.app.AnnoncesAPI.exceptions.TooManyAttemptsException;
 import com.app.AnnoncesAPI.payload.request.LoginRequest;
 import com.app.AnnoncesAPI.payload.request.SignupRequest;
 import com.app.AnnoncesAPI.payload.response.JwtResponse;
+import com.app.AnnoncesAPI.payload.response.RefreshResponse;
 import com.app.AnnoncesAPI.repositories.RoleRepository;
 import com.app.AnnoncesAPI.repositories.UserRepository;
 import com.app.AnnoncesAPI.security.JwtUtils;
@@ -62,6 +64,11 @@ public class AuthServiceImpl implements AuthService {
     private final NotificationService notificationService;
     private final LoginAttemptTracker loginAttemptTracker;
     private final CompteSuppressionService compteSuppressionService;
+    private final SessionService sessionService;
+    private final VerificationConnexionService verificationConnexionService;
+    private final InvitationAgentService invitationAgentService;
+    private final String versionCgu;
+    private final boolean staffDoubleAuthentification;
     private final String baseUrl;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
@@ -73,6 +80,11 @@ public class AuthServiceImpl implements AuthService {
                            NotificationService notificationService,
                            LoginAttemptTracker loginAttemptTracker,
                            CompteSuppressionService compteSuppressionService,
+                           SessionService sessionService,
+                           VerificationConnexionService verificationConnexionService,
+                           InvitationAgentService invitationAgentService,
+                           @Value("${app.cgu.version:2026-09}") String versionCgu,
+                           @Value("${app.security.staff-2fa-actif:true}") boolean staffDoubleAuthentification,
                            @Value("${app.base-url}") String baseUrl) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -83,11 +95,16 @@ public class AuthServiceImpl implements AuthService {
         this.notificationService = notificationService;
         this.loginAttemptTracker = loginAttemptTracker;
         this.compteSuppressionService = compteSuppressionService;
+        this.sessionService = sessionService;
+        this.verificationConnexionService = verificationConnexionService;
+        this.invitationAgentService = invitationAgentService;
+        this.versionCgu = versionCgu;
+        this.staffDoubleAuthentification = staffDoubleAuthentification;
         this.baseUrl = baseUrl;
     }
 
     @Override
-    public JwtResponse authenticateUser(LoginRequest loginRequest) {
+    public Connexion authenticateUser(LoginRequest loginRequest) {
         if (loginRequest == null || loginRequest.getIdentifier() == null || loginRequest.getPassword() == null
                 || loginRequest.getIdentifier().isBlank() || loginRequest.getPassword().isBlank()) {
             throw new IllegalArgumentException("Paramètres de connexion manquants.");
@@ -97,6 +114,12 @@ public class AuthServiceImpl implements AuthService {
         String attemptKey = LoginAttemptTracker.loginKey(identifier);
         checkNotLocked(attemptKey);
         User user = resolveUserCountingFailure(identifier, attemptKey);
+
+        if (UserDetailsImpl.estAgentDUneEntrepriseDesactivee(user)
+                && encoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new DisabledException("L'entreprise " + user.getEntreprise().getNom()
+                    + " est désactivée. Contactez votre responsable.");
+        }
 
         // Vérifier le statut du compte
         // Les agents avec mustChangePassword peuvent se connecter (statut EN_ATTENTE_ACTIVATION toléré)
@@ -133,26 +156,32 @@ public class AuthServiceImpl implements AuthService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), loginRequest.getPassword()));
 
+            loginAttemptTracker.reset(attemptKey);
+
+            // Modérateurs et administrateurs : pas de jetons avant le code envoyé par email (DEC-03).
+            if (staffDoubleAuthentification && VerificationConnexionService.concerne(user)) {
+                return Connexion.verificationRequise(verificationConnexionService.demarrer(user));
+            }
+
             String jwt = jwtUtils.generateJwtToken(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            String refreshToken = jwtUtils.generateRefreshToken(userDetails.getUsername());
+            String refreshToken = sessionService.ouvrirSession(user);
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority())
                     .collect(Collectors.toList());
 
-            loginAttemptTracker.reset(attemptKey);
             logger.info("Connexion reussie pour l'utilisateur ID={}", user.getId());
             if (userDetails.isMustChangePassword()) {
                 logger.info("Changement de mot de passe requis pour l'utilisateur ID={}", user.getId());
             }
 
-            return new JwtResponse(
+            return Connexion.session(new JwtResponse(
                     userDetails.getId(),
                     userDetails.getEmail(),
                     jwt,
                     refreshToken,
                     roles,
-                    userDetails.isMustChangePassword());
+                    userDetails.isMustChangePassword()));
         } catch (BadCredentialsException e) {
             loginAttemptTracker.recordFailure(attemptKey);
             logger.warn("❌ Échec de connexion pour: {} - Mot de passe incorrect", identifier);
@@ -212,7 +241,7 @@ public class AuthServiceImpl implements AuthService {
                 new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
         String jwt = jwtUtils.generateJwtToken(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String refreshToken = jwtUtils.generateRefreshToken(userDetails.getUsername());
+        String refreshToken = sessionService.ouvrirSession(user);
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
@@ -227,28 +256,21 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String refreshAccessToken(String refreshToken) {
-        Claims claims = jwtUtils.parseValidClaims(refreshToken)
-                .filter(c -> JwtUtils.isOfType(c, JwtUtils.TYPE_REFRESH))
-                .orElseThrow(() -> new BadCredentialsException("Refresh token invalide ou expiré."));
-
-        User user = userRepository.findByEmail(claims.getSubject())
-                .orElseThrow(() -> new BadCredentialsException("Refresh token invalide ou expiré."));
-
-        // Le refresh ne doit pas prolonger la session d'un compte suspendu / désactivé,
-        // ni survivre à un changement de mot de passe.
-        if (!UserDetailsImpl.build(user).isEnabled()) {
-            throw new DisabledException("Votre compte n'est pas actif. Contactez l'administrateur.");
-        }
-        if (JwtUtils.isIssuedBefore(claims, user.getPasswordChangedAt())) {
-            throw new BadCredentialsException("Session expirée suite à un changement de mot de passe. Veuillez vous reconnecter.");
-        }
-        return jwtUtils.buildAccessToken(user.getEmail());
+    // Pas de transaction englobante : SessionService gère la sienne et doit pouvoir valider la
+    // révocation d'une session rejouée même quand la requête échoue.
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public RefreshResponse refresh(String refreshToken) {
+        // Règles de session (rotation, rejeu, compte actif, mot de passe changé) : SessionService.
+        SessionService.Rotation rotation = sessionService.tourner(refreshToken);
+        return new RefreshResponse(jwtUtils.buildAccessToken(rotation.user().getEmail()), rotation.refreshToken());
     }
 
     @Override
     public void logout(String accessToken, String refreshToken) {
         revokeQuietly(accessToken);
+        // Jetons suivis en base : la session entière est révoquée. La liste noire en mémoire ne
+        // couvre plus que les jetons d'avant la table refresh_token et l'access token (15 min).
+        sessionService.fermerSession(refreshToken);
         revokeQuietly(refreshToken);
     }
 
@@ -296,7 +318,14 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException(MotDePasse.MESSAGE);
         }
 
+        if (Boolean.FALSE.equals(signUpRequest.getAcceptCgu())) {
+            throw new IllegalArgumentException("Vous devez accepter les conditions d'utilisation pour créer un compte.");
+        }
+
         User user = new User();
+        // Preuve du consentement (ECART-41) : date et version des CGU en vigueur.
+        user.setCguAccepteesLe(LocalDateTime.now());
+        user.setCguVersion(versionCgu);
         user.setEmail(signUpRequest.getEmail());
         user.setNom(signUpRequest.getNom());
         user.setPrenom(signUpRequest.getPrenom());
@@ -342,12 +371,39 @@ public class AuthServiceImpl implements AuthService {
 
         // Réponse identique que le compte existe ou non (anti-énumération) : on sort en silence.
         var userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty() || userOpt.get().getStatut() != StatutUtilisateur.EN_ATTENTE_ACTIVATION
-                || Boolean.TRUE.equals(userOpt.get().getMustChangePassword())) {
+        if (userOpt.isEmpty() || userOpt.get().getStatut() != StatutUtilisateur.EN_ATTENTE_ACTIVATION) {
             logger.info("Renvoi d'activation ignoré (compte inexistant ou déjà activé)");
             return;
         }
-        envoyerLienActivation(userOpt.get());
+        User compte = userOpt.get();
+        // Un agent invité reçoit une nouvelle invitation (lien pour choisir son mot de passe), pas
+        // un lien d'activation d'email.
+        if (compte.getRole() != null && compte.getRole().getName() == TypeRole.AGENT_PROFESSIONNEL
+                && compte.getEntreprise() != null && compte.getParentUser() != null) {
+            invitationAgentService.inviter(compte, compte.getParentUser(), compte.getEntreprise());
+            return;
+        }
+        envoyerLienActivation(compte);
+    }
+
+    @Override
+    public void relancerActivation(UUID userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.getStatut() != StatutUtilisateur.EN_ATTENTE_ACTIVATION
+                || user.isRelanceActivationEnvoyee()) {
+            return;
+        }
+        user.setActivationCode(UUID.randomUUID().toString());
+        user.setActivationCodeExpiry(System.currentTimeMillis() + ACTIVATION_TTL_MS);
+        user.setRelanceActivationEnvoyee(true);
+        userRepository.save(user);
+
+        String lien = baseUrl + "/activate?token=" + user.getActivationCode();
+        notificationService.envoyerRelanceActivation(user.getEmail(), Utility.renderEmail(
+                "templates/email-relance-activation.html",
+                Map.of("prenom", user.getPrenom() == null ? "" : user.getPrenom(), "activationLink", lien),
+                "Votre compte AnoventiX sera supprimé dans 2 jours s'il n'est pas activé.",
+                "Vous n'avez pas créé de compte sur AnoventiX ? Ignorez simplement cet e-mail."));
     }
 
     /** Génère un nouveau token d'activation (48 h), le sauvegarde et envoie l'email. */
@@ -372,6 +428,10 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByActivationCode(token)
                 .orElseThrow(() -> new IllegalArgumentException("Lien d'activation invalide ou déjà utilisé."));
+        // Le jeton d'un agent est une invitation : l'agent doit choisir son mot de passe (ECART-47).
+        if (user.getRole() != null && user.getRole().getName() == TypeRole.AGENT_PROFESSIONNEL) {
+            throw new IllegalArgumentException("Lien d'activation invalide ou déjà utilisé.");
+        }
 
         // P1.4 — Vérification d'expiration du token (48h).
         // expiry == null : compte legacy créé avant l'introduction de l'expiration → accepté.
@@ -471,6 +531,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(encoder.encode(newPassword));
         user.setResetPasswordToken(null);
         user.setResetPasswordTokenExpiry(null);
+        sessionService.fermerToutesLesSessions(user.getId());
         // Invalide toutes les sessions existantes (access + refresh tokens).
         user.setPasswordChangedAt(System.currentTimeMillis());
         userRepository.save(user);
@@ -502,6 +563,7 @@ public class AuthServiceImpl implements AuthService {
         // Invalide toutes les sessions existantes (access + refresh tokens), y compris
         // celles d'un éventuel attaquant. La session courante reçoit de nouveaux tokens.
         user.setPasswordChangedAt(System.currentTimeMillis());
+        sessionService.fermerToutesLesSessions(user.getId());
 
         // Si l'utilisateur avait un mot de passe temporaire, l'effacer et activer le compte
         if (Boolean.TRUE.equals(user.getMustChangePassword())) {
@@ -524,7 +586,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(),
                 user.getEmail(),
                 jwtUtils.buildAccessToken(user.getEmail()),
-                jwtUtils.generateRefreshToken(user.getEmail()),
+                sessionService.ouvrirSession(user),
                 roles,
                 userDetails.isMustChangePassword());
     }

@@ -31,8 +31,11 @@ export function AgentCard({
   isRemoving,
   canToggle,
   canRemove,
+  onResendInvitation,
 }: {
   agent: AgentDTO;
+  /** Seul le propriétaire peut renvoyer l'invitation d'un agent en attente. */
+  onResendInvitation?: () => void;
   onToggleStatus: () => void;
   onRemove: () => void;
   isToggling: boolean;
@@ -55,7 +58,7 @@ export function AgentCard({
     agent.statut === 'INACTIF' ? 'Désactivé' :
     agent.statut === 'EN_ATTENTE_ACTIVATION' ? 'En attente d\'activation' :
     (agent.statut ?? '—');
-  // Un agent en attente (mot de passe temporaire pas encore changé) est suspendable ;
+  // Un agent en attente (invitation pas encore acceptée) est suspendable ;
   // « Activer » ne sert qu'à lever une suspension posée par l'entreprise.
   const isActive = agent.statut === 'ACTIF' || agent.statut === 'EN_ATTENTE_ACTIVATION';
   const toggleLabel = isActive ? 'Suspendre' : 'Activer';
@@ -79,6 +82,16 @@ export function AgentCard({
           <View style={[styles.agentStatutDot, { backgroundColor: statutColor }]} />
           <AppText style={[styles.agentStatut, { color: statutColor }]}>{statutLabel}</AppText>
         </View>
+        {agent.statut === 'EN_ATTENTE_ACTIVATION' && onResendInvitation ? (
+          <TouchableOpacity
+            onPress={onResendInvitation}
+            accessibilityRole="button"
+            accessibilityLabel={`Renvoyer l'invitation à ${agent.email}`}
+            style={styles.agentResendLink}
+          >
+            <AppText style={styles.agentResendText}>Renvoyer l'invitation</AppText>
+          </TouchableOpacity>
+        ) : null}
       </View>
       {(canToggle || canRemove) ? (
         <View style={styles.agentActions}>

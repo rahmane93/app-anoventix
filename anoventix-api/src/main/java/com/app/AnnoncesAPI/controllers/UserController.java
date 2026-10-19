@@ -30,12 +30,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.app.AnnoncesAPI.dto.AnnonceDTO;
 import com.app.AnnoncesAPI.dto.UserDTO;
+import com.app.AnnoncesAPI.payload.request.CodesSecoursRequest;
 import com.app.AnnoncesAPI.payload.request.UpdateProfileRequest;
 import com.app.AnnoncesAPI.payload.request.UpdateStatutRequest;
 import com.app.AnnoncesAPI.payload.request.ValidationPieceIdentiteRequest;
 import com.app.AnnoncesAPI.services.ExportDonneesService;
 import com.app.AnnoncesAPI.services.PresenceService;
 import com.app.AnnoncesAPI.services.UserService;
+import com.app.AnnoncesAPI.services.VerificationConnexionService;
+import com.app.AnnoncesAPI.services.profiles.UserDetailsImpl;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -51,12 +55,28 @@ public class UserController {
     private final UserService userService;
     private final ExportDonneesService exportDonneesService;
     private final PresenceService presenceService;
+    private final VerificationConnexionService verificationConnexionService;
 
     public UserController(UserService userService, ExportDonneesService exportDonneesService,
-                          PresenceService presenceService) {
+                          PresenceService presenceService, VerificationConnexionService verificationConnexionService) {
         this.userService = userService;
         this.exportDonneesService = exportDonneesService;
         this.presenceService = presenceService;
+        this.verificationConnexionService = verificationConnexionService;
+    }
+
+    @PostMapping("/me/codes-secours")
+    @PreAuthorize("hasAnyRole('MODERATEUR', 'ADMINISTRATEUR')")
+    @Operation(summary = "Régénérer mes codes de secours (double authentification)",
+               description = "Réservé aux comptes de modération et d'administration. Annule les codes précédents et "
+                           + "renvoie 8 nouveaux codes à usage unique, affichés une seule fois. Le mot de passe est redemandé.")
+    public ResponseEntity<Map<String, List<String>>> regenererCodesSecours(
+            @Valid @RequestBody CodesSecoursRequest body,
+            @AuthenticationPrincipal UserDetailsImpl moi) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(Map.of("codesSecours",
+                        verificationConnexionService.regenererCodesSecours(moi.getId(), body.getPassword())));
     }
 
     // -------------------------------------------------------------------------
@@ -93,21 +113,45 @@ public class UserController {
     @PostMapping(value = "/me/piece-identite", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Uploader sa pièce d'identité",
-               description = "Envoi en multipart/form-data.\n"
-                           + "Champs : file (obligatoire, image), typePieceIdentite (obligatoire), numeroPieceIdentite (obligatoire).\n"
-                           + "Le statut passe automatiquement à EN_ATTENTE jusqu'à validation par un admin/modérateur.")
+               description = "Envoi en multipart/form-data du dossier de vérification.\n"
+                           + "Champs : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, "
+                           + "720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.\n"
+                           + "La pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE "
+                           + "jusqu'à la décision de la modération.")
     public ResponseEntity<UserDTO> uploadPieceIdentite(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "selfie", required = false) MultipartFile selfie,
             @RequestParam String typePieceIdentite,
             @RequestParam String numeroPieceIdentite,
             Authentication authentication) {
-
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.uploadPieceIdentite(
-                        authentication.getName(), file, typePieceIdentite, numeroPieceIdentite));
+                        authentication.getName(), file, selfie, typePieceIdentite, numeroPieceIdentite));
+    }
+
+    @PostMapping(value = "/me/selfie", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Ajouter le selfie à un dossier en attente",
+               description = "Transitoire : pour un dossier EN_ATTENTE envoyé avant la mise en service du selfie. "
+                           + "422 dans tout autre cas.")
+    public ResponseEntity<UserDTO> uploadSelfie(
+            @RequestParam(value = "selfie", required = false) MultipartFile selfie,
+            Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userService.uploadSelfie(authentication.getName(), selfie));
+    }
+
+    @GetMapping("/{userId}/selfie")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Servir le selfie de vérification",
+               description = "Image du selfie (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement. "
+                           + "Jamais affiché publiquement.")
+    public ResponseEntity<Resource> getSelfie(@PathVariable UUID userId, Authentication authentication) {
+        Resource resource = userService.servirSelfie(userId, authentication);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 
     // -------------------------------------------------------------------------

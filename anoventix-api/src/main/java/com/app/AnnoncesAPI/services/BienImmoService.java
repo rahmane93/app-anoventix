@@ -35,6 +35,9 @@ public interface BienImmoService extends AnnonceService {
     void signalerAnnonce(Long id, com.app.AnnoncesAPI.enums.MotifSignalement motif, String commentaire, Authentication authentication);
     void retirerSignalement(Long annonceId, Authentication authentication);
 
+    /** Demande à la modération de réexaminer une annonce masquée, après correction (DEC-09). */
+    void demanderReexamen(Long id, String message, Authentication authentication);
+
     /** Retourne la liste paginée des signalements posés par l'utilisateur connecté. */
     Page<com.app.AnnoncesAPI.payload.response.SignalementResponse> getMesSignalements(Authentication authentication, Pageable pageable);
 

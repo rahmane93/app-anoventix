@@ -151,6 +151,26 @@ public abstract class Annonce {
     @Column(length = 500)
     private String motifModeration;
 
+    /** Date du dernier masquage par la modération (ou par le système). */
+    private LocalDateTime dateMasquage;
+
+    /** Vrai si le dernier masquage vient des signalements (DEC-11), pas d'un modérateur. */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean masquageAutomatique = false;
+
+    /** Réexamen demandé par le propriétaire d'une annonce masquée (DEC-09). */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean reexamenDemande = false;
+
+    private LocalDateTime dateReexamen;
+
+    @Column(length = 500)
+    private String messageReexamen;
+
+    /** Nombre de demandes de réexamen déjà faites (3 au plus, DEC-09). */
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int nbReexamens = 0;
+
     /**
      * Fin de validité de l'annonce : au-delà, elle est clôturée automatiquement
      * (motif EXPIREE) et le propriétaire peut la prolonger gratuitement.
@@ -194,8 +214,8 @@ public abstract class Annonce {
     private int nbFavoris;
 
     /**
-     * Règle unique de visibilité publique : en ligne, publiée, et compte propriétaire non
-     * masqué par l'administrateur. Les requêtes filtrent sur {@code visiblePublic}, calculée par la
+     * Règle unique de visibilité publique : en ligne, publiée, compte propriétaire ACTIF et non
+     * masqué par l'administrateur, entreprise du propriétaire active (DEC-01, DEC-12). Les requêtes filtrent sur {@code visiblePublic}, calculée par la
      * fonction SQL annonce_est_visible (migration V15) : toute évolution de la règle se fait aux deux
      * endroits, VisibiliteAnnonceTest vérifie qu'ils concordent.
      * Nom sans préfixe get/is : ni Hibernate ni Jackson ne le prennent pour une propriété.
@@ -204,6 +224,8 @@ public abstract class Annonce {
         return Boolean.TRUE.equals(actif)
                 && statutModeration == StatutAnnonce.PUBLIEE
                 && owner != null
-                && !owner.isAnnoncesMasquees();
+                && !owner.isAnnoncesMasquees()
+                && owner.getStatut() == com.app.AnnoncesAPI.enums.StatutUtilisateur.ACTIF
+                && (owner.getEntreprise() == null || !Boolean.FALSE.equals(owner.getEntreprise().getActive()));
     }
 }

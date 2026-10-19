@@ -48,6 +48,19 @@ public interface EntrepriseRepository extends JpaRepository<Entreprise, UUID> {
      */
     boolean existsByNumeroRCCM(String numeroRCCM);
 
+    long countByStatutVerification(com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut);
+
+    /** Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28). */
+    boolean existsByNumeroRCCMAndStatutVerificationAndIdNot(
+            String numeroRCCM, com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut, UUID id);
+
+    boolean existsByNumeroRCCMAndStatutVerification(
+            String numeroRCCM, com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut);
+
+    /** File de vérification, des plus anciennes demandes aux plus récentes. */
+    Page<Entreprise> findByStatutVerificationOrderByDateEnvoiVerificationAsc(
+            com.app.AnnoncesAPI.enums.StatutVerificationEntreprise statut, Pageable pageable);
+
     /**
      * Vérifie si un numéro de téléphone est déjà utilisé par une entreprise
      */

@@ -15,6 +15,7 @@ import com.app.AnnoncesAPI.entities.Annonce;
 import com.app.AnnoncesAPI.entities.BienImmo;
 import com.app.AnnoncesAPI.enums.MotifCloture;
 import com.app.AnnoncesAPI.enums.StatutAnnonce;
+import com.app.AnnoncesAPI.enums.StatutUtilisateur;
 import com.app.AnnoncesAPI.repositories.BienImmoRepository;
 
 /**
@@ -70,6 +71,10 @@ public class AnnonceExpirationService {
                         StatutAnnonce.PUBLIEE, maintenant, maintenant.plusDays(relanceJoursAvant))
                 .stream()
                 .filter(a -> !a.getOwner().isAnnoncesMasquees())
+                // Compte suspendu / désactivé ou entreprise désactivée : pas de relance (RG-01-35, RG-07-22).
+                .filter(a -> a.getOwner().getStatut() == StatutUtilisateur.ACTIF
+                        && (a.getOwner().getEntreprise() == null
+                            || !Boolean.FALSE.equals(a.getOwner().getEntreprise().getActive())))
                 .toList();
         for (BienImmo annonce : aRelancer) {
             emailNotificationService.notifier(annonce.getOwner(),

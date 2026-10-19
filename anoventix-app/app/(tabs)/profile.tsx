@@ -11,6 +11,7 @@ import {
     PIECES,
 } from '@/src/features/profile/constants';
 import { MenuRow, PieceStatusBadge, secStyles } from '@/src/features/profile/MenuRow';
+import { SelfieCapture } from '@/src/features/profile/SelfieCapture';
 import { OwnerAnnonceMiniCard } from '@/src/features/profile/OwnerAnnonceMiniCard';
 import { SecurityCard } from '@/src/features/profile/SecurityCard';
 import { useProfile } from '@/src/features/profile/useProfile';
@@ -98,6 +99,11 @@ export default function ProfileScreen() {
     pieceNumero,
     setPieceNumero,
     pieceFile,
+    selfieFile,
+    selfieOuvert,
+    setSelfieOuvert,
+    setSelfieSeul,
+    onSelfiePris,
     viewingPiece,
     setViewingPiece,
     pickAndUploadPhoto,
@@ -302,6 +308,13 @@ export default function ProfileScreen() {
           label="Changer mon mot de passe"
           onPress={() => router.push('/(auth)/change-password')}
         />
+        {isModerationRole && (
+          <MenuRow
+            iconName="key-outline"
+            label="Codes de secours (double authentification)"
+            onPress={() => router.push('/regenerer-codes-secours')}
+          />
+        )}
         {!isModerationRole && (
           <MenuRow
             iconName="flag-outline"
@@ -373,6 +386,25 @@ export default function ProfileScreen() {
                   </View>
                 </View>
               )}
+              {docStatut === 'EN_ATTENTE' && (
+                profile?.selfieFourni === false ? (
+                  <View style={styles.selfieManquant}>
+                    <AlertBanner message="Ajoutez un selfie pour terminer votre vérification." variant="warning" />
+                    <Button
+                      title="Prendre mon selfie"
+                      size="sm"
+                      fullWidth={false}
+                      leftIcon={<Ionicons name="camera-outline" size={16} color={colors.white} />}
+                      onPress={() => { setSelfieSeul(true); setSelfieOuvert(true); }}
+                      accessibilityLabel="Prendre mon selfie de vérification"
+                    />
+                  </View>
+                ) : (
+                  <AppText style={styles.delaiVerification}>
+                    La modération vérifie votre dossier en 72 h au plus. Vous serez prévenu par email.
+                  </AppText>
+                )
+              )}
               {profile?.typePieceIdentite && (
                 <Button
                   title="Voir le document"
@@ -419,9 +451,26 @@ export default function ProfileScreen() {
                   </AppText>
                   {pieceFile && <Ionicons name="checkmark-circle" size={18} color={colors.success} />}
                 </TouchableOpacity>
+                {/* Selfie : appareil photo uniquement, jamais la galerie (RG-02-24). */}
+                <TouchableOpacity
+                  style={styles.filePicker}
+                  onPress={() => { setSelfieSeul(false); setSelfieOuvert(true); }}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel="Prendre mon selfie avec ma pièce d'identité"
+                >
+                  <Ionicons name="camera-outline" size={18} color={colors.textSecondary} />
+                  <AppText style={styles.filePickerText} numberOfLines={1}>
+                    {selfieFile ? 'Selfie pris — appuyez pour le refaire' : 'Prendre mon selfie avec ma pièce…'}
+                  </AppText>
+                  {selfieFile && <Ionicons name="checkmark-circle" size={18} color={colors.success} />}
+                </TouchableOpacity>
+                <AppText style={styles.selfieAide}>
+                  Visage découvert, pièce tenue à côté du visage, photo prise en direct. Seule la modération la verra.
+                </AppText>
               </View>
               <Button
-                title="Envoyer ma pièce d'identité"
+                title="Envoyer mon dossier de vérification"
                 style={styles.saveBtn}
                 onPress={handleSubmitPiece}
                 isLoading={uploadingPiece}
@@ -453,6 +502,11 @@ export default function ProfileScreen() {
           iconName="shield-outline"
           label="Politique de confidentialité"
           onPress={() => WebBrowser.openBrowserAsync(LEGAL_LINKS.confidentialite)}
+        />
+        <MenuRow
+          iconName="information-circle-outline"
+          label="Mentions légales"
+          onPress={() => WebBrowser.openBrowserAsync(LEGAL_LINKS.mentionsLegales)}
         />
         <MenuRow
           iconName="download-outline"
@@ -493,6 +547,12 @@ export default function ProfileScreen() {
       </AppText>
       </Column>
       </Column>
+
+      <SelfieCapture
+        visible={selfieOuvert}
+        onClose={() => { setSelfieOuvert(false); setSelfieSeul(false); }}
+        onCapture={onSelfiePris}
+      />
 
       {/* ── Modal visualisation pièce ────────────────────────────────── */}
       <Dialog
@@ -777,6 +837,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   saveBtn: { marginHorizontal: spacing.base, marginBottom: spacing.sm },
+  selfieManquant: { gap: spacing.sm, alignItems: 'flex-start' },
+  delaiVerification: { fontSize: typography.sizes.xs, color: colors.textSecondary, lineHeight: 18 },
+  selfieAide: { fontSize: typography.sizes.xs, color: colors.textMuted, lineHeight: 18 },
   pieceFeedback: { marginHorizontal: spacing.base, marginBottom: spacing.sm },
   pieceRow: {
     flexDirection: 'row' as const,

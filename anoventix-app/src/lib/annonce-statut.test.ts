@@ -18,3 +18,24 @@ describe('getStatutChip', () => {
     expect(getStatutChip({ statutModeration: 'PUBLIEE', motifCloture: null, actif: false })?.text).toBe('Masquée');
   });
 });
+
+describe('réexamen d’une annonce masquée (DEC-09, DEC-10)', () => {
+  const { getEtatReexamen, estCorrigeable, estRejetee } = require('./annonce-statut');
+
+  it('propose le réexamen sur une annonce masquée tant qu’il reste des demandes', () => {
+    expect(getEtatReexamen({ statutModeration: 'MASQUEE', reexamenDemande: false, nbReexamens: 0 })).toBe('DISPONIBLE');
+    expect(getEtatReexamen({ statutModeration: 'MASQUEE', reexamenDemande: false, nbReexamens: 2 })).toBe('DISPONIBLE');
+  });
+
+  it('signale un réexamen en cours, puis l’épuisement des trois demandes', () => {
+    expect(getEtatReexamen({ statutModeration: 'MASQUEE', reexamenDemande: true, nbReexamens: 1 })).toBe('EN_COURS');
+    expect(getEtatReexamen({ statutModeration: 'MASQUEE', reexamenDemande: false, nbReexamens: 3 })).toBe('EPUISE');
+  });
+
+  it('ne propose rien pour une annonce rejetée ou en ligne', () => {
+    expect(getEtatReexamen({ statutModeration: 'REJETEE', reexamenDemande: false, nbReexamens: 0 })).toBe('AUCUN');
+    expect(getEtatReexamen({ statutModeration: 'PUBLIEE', reexamenDemande: false, nbReexamens: 0 })).toBe('AUCUN');
+    expect(estCorrigeable({ statutModeration: 'MASQUEE' })).toBe(true);
+    expect(estRejetee({ statutModeration: 'REJETEE' })).toBe(true);
+  });
+});

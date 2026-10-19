@@ -122,7 +122,7 @@ export const getEntrepriseAgents = async (entrepriseId: string): Promise<AgentDT
 
 /**
  * Crée un agent rattaché à une entreprise.
- * L'agent reçoit un email avec son mot de passe temporaire.
+ * L'agent reçoit par email un lien d'invitation (usage unique, 7 jours) pour choisir son mot de passe.
  */
 export const createAgent = async (
   entrepriseId: string,
@@ -201,4 +201,12 @@ export const uploadEntreprisePhoto = async (
  */
 export const deleteEntreprise = async (entrepriseId: string): Promise<void> => {
   await apiClient.delete(`/api/entreprises/${entrepriseId}`);
+};
+
+/** Renvoie l'invitation d'un agent qui n'a pas encore choisi son mot de passe (l'ancien lien est invalidé). */
+export const renvoyerInvitation = async (entrepriseId: string, agentId: string): Promise<AgentDTO> => {
+  const response = await apiClient.post<AgentDTO>(
+    `/api/entreprises/${entrepriseId}/agents/${agentId}/invitation`,
+  );
+  return response.data;
 };

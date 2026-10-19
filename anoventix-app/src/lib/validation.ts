@@ -117,6 +117,20 @@ export const resetPasswordSchema = z
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
+// ─── Invitation d'un agent : choix du mot de passe depuis le lien reçu par email ─────
+
+export const invitationSchema = z
+  .object({
+    password: passwordRules,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
+
+export type InvitationFormData = z.infer<typeof invitationSchema>;
+
 // ─── Change Password Schema ──────────────────────────────────────
 
 export const changePasswordSchema = z

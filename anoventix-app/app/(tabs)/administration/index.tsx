@@ -91,6 +91,16 @@ export default function AdminDashboard() {
       href: '/(tabs)/administration/signalements' as any,
     },
     {
+      key: 'reexamens', icon: 'refresh-circle-outline', label: 'Réexamens d’annonces',
+      value: stats?.reexamensEnAttente ?? 0,
+      href: '/(tabs)/administration/reexamens' as any,
+    },
+    {
+      key: 'entreprises-a-verifier', icon: 'shield-checkmark-outline', label: 'Entreprises à vérifier',
+      value: stats?.entreprisesAVerifier ?? 0,
+      href: '/(tabs)/administration/entreprises-a-verifier' as any,
+    },
+    {
       key: 'messages', icon: 'chatbubble-ellipses-outline', label: 'Messages signalés',
       value: stats?.messagesSignalesEnAttente ?? 0,
       href: '/(tabs)/administration/messages' as any,

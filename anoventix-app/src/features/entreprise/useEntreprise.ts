@@ -1,3 +1,4 @@
+import { renvoyerInvitation } from '@/src/api/entreprise.api';
 import { toJpegUpload } from '@/src/lib/images';
 import { getRoleFlags } from '@/src/lib/roles';
 import {
@@ -229,7 +230,7 @@ export function useEntreprise() {
       setInviteOpen(false);
       appAlert(
         'Agent ajouté',
-        `${data.prenom} ${data.nom} a été ajouté. Un email avec son mot de passe temporaire lui a été envoyé.`,
+        `${data.prenom} ${data.nom} a été ajouté. Un email d'invitation lui a été envoyé : il y choisira son mot de passe.`,
       );
     } catch (err) {
       // On efface l'erreur globale (en haut de page) pour n'afficher le message
@@ -275,6 +276,18 @@ export function useEntreprise() {
         },
       ],
     );
+  };
+
+  const handleResendInvitation = async (agent: AgentDTO) => {
+    if (!entreprise) return;
+    setAgentsFeedback(null);
+    try {
+      await renvoyerInvitation(entreprise.id, agent.id);
+      setAgentsFeedback({ type: 'success', text: `Une nouvelle invitation a été envoyée à ${agent.email}.` });
+    } catch (err) {
+      clearError();
+      setAgentsFeedback({ type: 'error', text: getErrorMessage(err, "Impossible de renvoyer l'invitation.") });
+    }
   };
 
   const handleToggleAgentStatus = (agent: AgentDTO) => {
@@ -349,5 +362,6 @@ export function useEntreprise() {
     onSubmitAgent,
     handleRemoveAgent,
     handleToggleAgentStatus,
+    handleResendInvitation,
   };
 }

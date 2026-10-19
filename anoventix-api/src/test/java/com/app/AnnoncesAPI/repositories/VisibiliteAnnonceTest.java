@@ -16,6 +16,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.app.AnnoncesAPI.entities.BienImmo;
+import com.app.AnnoncesAPI.entities.Entreprise;
+import com.app.AnnoncesAPI.entities.Entreprise;
 import com.app.AnnoncesAPI.entities.Localisation;
 import com.app.AnnoncesAPI.entities.User;
 import com.app.AnnoncesAPI.enums.StatutAnnonce;
@@ -42,14 +44,73 @@ class VisibiliteAnnonceTest {
     @Autowired private LocalisationRepository localisationRepository;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private TransactionTemplate transaction;
+    @Autowired private EntrepriseRepository entrepriseRepository;
 
     private final List<Long> annonces = new ArrayList<>();
     private final List<UUID> comptes = new ArrayList<>();
+    private final List<UUID> entreprises = new ArrayList<>();
 
     @AfterEach
     void nettoyer() {
         annonces.forEach(bienImmoRepository::deleteById);
         comptes.forEach(userRepository::deleteById);
+        entreprises.forEach(entrepriseRepository::deleteById);
+    }
+
+    @Test
+    void laColonneConcordeAvecLaRegleJavaPourLeStatutDuCompteEtLEntreprise() {
+        for (StatutUtilisateur statut : StatutUtilisateur.values()) {
+            for (Boolean entrepriseActive : new Boolean[] { null, true, false }) {
+                User owner = compte(false);
+                owner.setStatut(statut);
+                if (entrepriseActive != null) {
+                    owner.setEntreprise(entreprise(entrepriseActive));
+                }
+                owner = userRepository.save(owner);
+                BienImmo annonce = annonce(owner, true, StatutAnnonce.PUBLIEE);
+
+                boolean attendu = statut == StatutUtilisateur.ACTIF && !Boolean.FALSE.equals(entrepriseActive);
+                assertThat(colonne(annonce.getId()))
+                        .as("statut=%s entrepriseActive=%s", statut, entrepriseActive).isEqualTo(attendu);
+                // L'entreprise du propriétaire est paresseuse : la règle Java s'évalue dans une transaction.
+                Long id = annonce.getId();
+                boolean regleJava = Boolean.TRUE.equals(
+                        transaction.execute(t -> bienImmoRepository.findById(id).orElseThrow().estVisiblePubliquement()));
+                assertThat(regleJava).isEqualTo(attendu);
+            }
+        }
+    }
+
+    @Test
+    void suitLaDesactivationDeLEntrepriseEtLeChangementDeStatutDuCompte() {
+        Entreprise entreprise = entreprise(true);
+        User owner = compte(false);
+        owner.setEntreprise(entreprise);
+        owner = userRepository.save(owner);
+        BienImmo annonce = annonce(owner, true, StatutAnnonce.PUBLIEE);
+        assertThat(colonne(annonce.getId())).isTrue();
+
+        entreprise.setActive(false);
+        entrepriseRepository.save(entreprise);
+        assertThat(colonne(annonce.getId())).as("entreprise désactivée").isFalse();
+
+        entreprise.setActive(true);
+        entrepriseRepository.save(entreprise);
+        assertThat(colonne(annonce.getId())).as("entreprise réactivée").isTrue();
+
+        owner = userRepository.findById(owner.getId()).orElseThrow();
+        owner.setStatut(StatutUtilisateur.SUSPENDU);
+        userRepository.save(owner);
+        assertThat(colonne(annonce.getId())).as("compte suspendu").isFalse();
+    }
+
+    private Entreprise entreprise(boolean active) {
+        Entreprise e = new Entreprise();
+        e.setNom("Agence test " + UUID.randomUUID().toString().substring(0, 6));
+        e.setActive(active);
+        e = entrepriseRepository.save(e);
+        entreprises.add(e.getId());
+        return e;
     }
 
     @Test

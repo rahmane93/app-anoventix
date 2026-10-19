@@ -30,6 +30,7 @@ import com.app.AnnoncesAPI.exceptions.ResourceNotFoundException;
 import com.app.AnnoncesAPI.exceptions.UnauthorizedActionException;
 import com.app.AnnoncesAPI.mappers.AnnonceMapper;
 import com.app.AnnoncesAPI.payload.request.AvertissementRequest;
+import com.app.AnnoncesAPI.payload.request.DecisionSignalementRequest;
 import com.app.AnnoncesAPI.payload.request.TraiterSignalementRequest;
 import com.app.AnnoncesAPI.payload.response.AdminStatsAvanceesResponse;
 import com.app.AnnoncesAPI.payload.response.AdminStatsResponse;
@@ -69,6 +70,8 @@ public class AdminServiceImpl implements AdminService {
     private final AnnonceExpirationService annonceExpirationService;
     private final CompteSuppressionService compteSuppressionService;
     private final AuditService audit;
+    private final SessionService sessionService;
+    private final ModerationAnnonceService moderation;
 
     public AdminServiceImpl(UserRepository userRepository,
                             RoleRepository roleRepository,
@@ -84,7 +87,11 @@ public class AdminServiceImpl implements AdminService {
                             EmailNotificationService emailNotificationService,
                             AnnonceExpirationService annonceExpirationService,
                             CompteSuppressionService compteSuppressionService,
-                            AuditService audit) {
+                            AuditService audit,
+                            SessionService sessionService,
+                            ModerationAnnonceService moderation) {
+        this.sessionService = sessionService;
+        this.moderation = moderation;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bienImmoRepository = bienImmoRepository;
@@ -120,6 +127,9 @@ public class AdminServiceImpl implements AdminService {
                 .annoncesRejetees(bienImmoRepository.countByStatutModeration(StatutAnnonce.REJETEE))
                 .signalementsEnAttente(signalementRepository.countByStatut(StatutSignalement.EN_ATTENTE))
                 .messagesSignalesEnAttente(messageRepository.countBySignaleTrueAndSupprimeFalse())
+                .reexamensEnAttente(bienImmoRepository.countByReexamenDemandeTrue())
+                .entreprisesAVerifier(entrepriseRepository.countByStatutVerification(
+                        com.app.AnnoncesAPI.enums.StatutVerificationEntreprise.EN_ATTENTE))
                 .build();
     }
 
@@ -203,58 +213,54 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public void masquerAnnonce(Long id, String raison, String adminUsername) {
-        Annonce annonce = findAnnonce(id);
-        String ancienStatut = annonce.getStatutModeration() != null ? annonce.getStatutModeration().name() : null;
-        annonce.setStatutModeration(StatutAnnonce.MASQUEE);
-        annonce.setMotifModeration(normaliserMotif(raison));
-        annonce.setActif(false);
-        annonceRepository.save(annonce);
-
-        logHistorique(annonce, "statutModeration", ancienStatut, StatutAnnonce.MASQUEE.name(), adminUsername);
-        logHistorique(annonce, "raison", null, raison, adminUsername);
-        audit.enregistrer(ActionAudit.ANNONCE_MASQUEE, id, annonce.getMotifModeration());
-        notifierProprietaire(annonce, "Votre annonce a été masquée",
-                "Votre annonce a été masquée par la modération", annonce.getMotifModeration());
-
+        moderation.masquer(findAnnonce(id), normaliserMotif(raison), adminUsername);
     }
 
     @Override
     @Transactional
     public void rejeterAnnonce(Long id, String raison, String adminUsername) {
-        Annonce annonce = findAnnonce(id);
-        String ancienStatut = annonce.getStatutModeration() != null ? annonce.getStatutModeration().name() : null;
-        annonce.setStatutModeration(StatutAnnonce.REJETEE);
-        annonce.setMotifModeration(normaliserMotif(raison));
-        annonce.setActif(false);
-        annonceRepository.save(annonce);
-
-        logHistorique(annonce, "statutModeration", ancienStatut, StatutAnnonce.REJETEE.name(), adminUsername);
-        logHistorique(annonce, "raison", null, raison, adminUsername);
-        audit.enregistrer(ActionAudit.ANNONCE_REJETEE, id, annonce.getMotifModeration());
-        notifierProprietaire(annonce, "Votre annonce a été rejetée",
-                "Votre annonce a été rejetée par la modération", annonce.getMotifModeration());
-
+        moderation.rejeter(findAnnonce(id), normaliserMotif(raison), adminUsername);
     }
 
     @Override
     @Transactional
     public void publierAnnonce(Long id, String adminUsername) {
-        Annonce annonce = findAnnonce(id);
-        String ancienStatut = annonce.getStatutModeration() != null ? annonce.getStatutModeration().name() : null;
-        annonce.setStatutModeration(StatutAnnonce.PUBLIEE);
-        annonce.setMotifModeration(null);
-        // Ne remet actif=true que si l'annonce n'a pas été clôturée volontairement par son propriétaire
-        if (annonce.getMotifCloture() == null) {
-            annonce.setActif(true);
-            annonceExpirationService.prolonger(annonce);
+        moderation.remettreEnLigne(findAnnonce(id), adminUsername);
+    }
+
+    @Override
+    @Transactional
+    public SignalementResponse deciderSignalement(Long id, DecisionSignalementRequest request, String adminUsername) {
+        Signalement signalement = signalementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Signalement introuvable avec l'ID : " + id));
+        if (signalement.getStatut() != StatutSignalement.EN_ATTENTE) {
+            throw new IllegalArgumentException("Ce signalement a déjà été traité (statut : " + signalement.getStatut() + ").");
         }
-        annonceRepository.save(annonce);
+        Annonce annonce = signalement.getAnnonce();
+        // Décision sur l'annonce et clôture des signalements dans la même transaction (ECART-26).
+        switch (request.getDecision()) {
+            case MASQUER -> moderation.masquer(annonce, normaliserMotif(request.getMotif()), adminUsername);
+            case REJETER -> moderation.rejeter(annonce, normaliserMotif(request.getMotif()), adminUsername);
+            case REMETTRE_EN_LIGNE -> moderation.remettreEnLigne(annonce, adminUsername);
+            case CLASSER -> {
+                signalement.setStatut(StatutSignalement.IGNORE);
+                signalement.setTraitePar(adminUsername);
+                signalement.setDateTraitement(LocalDateTime.now());
+            }
+        }
+        if (request.getNoteAdmin() != null && !request.getNoteAdmin().isBlank()) {
+            signalement.setNoteAdmin(request.getNoteAdmin());
+        }
+        Signalement saved = signalementRepository.save(signalement);
+        audit.enregistrer(ActionAudit.SIGNALEMENT_TRAITE, id, request.getDecision().name());
+        return toSignalementResponse(saved);
+    }
 
-        logHistorique(annonce, "statutModeration", ancienStatut, StatutAnnonce.PUBLIEE.name(), adminUsername);
-        audit.enregistrer(ActionAudit.ANNONCE_REMISE_EN_LIGNE, id, "Statut précédent : " + ancienStatut);
-        notifierProprietaire(annonce, "Votre annonce est de nouveau en ligne",
-                "Votre annonce est de nouveau en ligne", null);
-
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminAnnonceDTO> getReexamens(Pageable pageable) {
+        return bienImmoRepository.findByReexamenDemandeTrueOrderByDateReexamenAsc(pageable)
+                .map(annonceMapper::toAdminDTO);
     }
 
     @Override
@@ -355,7 +361,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public Page<UserDTO> getPiecesIdentiteEnAttente(Pageable pageable) {
-        return userRepository.findByStatutPieceIdentite(StatutPieceIdentite.EN_ATTENTE, pageable)
+        return userRepository.findByStatutPieceIdentiteOrderByDateEnvoiVerificationAsc(StatutPieceIdentite.EN_ATTENTE, pageable)
                 .map(this::toUserDTO);
     }
 
@@ -386,6 +392,9 @@ public class AdminServiceImpl implements AdminService {
         String ancienRole = user.getRole() == null ? null : user.getRole().getName().name();
         user.setRole(roleEntity);
         userRepository.save(user);
+        // Sessions fermées : un compte promu modérateur passe à la double authentification dès sa
+        // connexion suivante, un compte rétrogradé perd ses accès (RG-01-41).
+        sessionService.fermerToutesLesSessions(userId);
         audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, ancienRole + " → " + role);
     }
 
@@ -409,6 +418,7 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(roleRepository.findByName(TypeRole.PARTICULIER)
                 .orElseThrow(() -> new IllegalStateException("Rôle PARTICULIER introuvable en base.")));
         userRepository.save(user);
+        sessionService.fermerToutesLesSessions(userId);
         audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, role + " → " + TypeRole.PARTICULIER);
     }
 
@@ -465,6 +475,7 @@ public class AdminServiceImpl implements AdminService {
             user.setStatut(StatutUtilisateur.SUSPENDU);
             user.setMotifStatut("Suspension automatique suite à " + (count + 1) + " avertissements.");
             userRepository.save(user);
+            sessionService.fermerToutesLesSessions(userId);
         }
 
         Avertissement avert = new Avertissement();
@@ -536,6 +547,11 @@ public class AdminServiceImpl implements AdminService {
     // Pas readOnly : la lecture d'une conversation privée est elle-même journalisée (DEC-02).
     @Transactional
     public Page<MessageModerationResponse> getMessagesConversationAdmin(Long conversationId, Pageable pageable) {
+        // DEC-02 : une conversation privée n'est lisible que si l'un de ses messages a été signalé.
+        // Même réponse qu'une conversation inexistante : l'identifiant, séquentiel, ne se sonde pas.
+        if (!messageRepository.existsByConversationIdAndDateSignalementIsNotNull(conversationId)) {
+            throw new ResourceNotFoundException("Conversation introuvable.");
+        }
         Page<MessageModerationResponse> messages = messageRepository.findByConversationIdAdmin(conversationId, pageable)
                 .map(this::toMessageModerationResponse);
         audit.enregistrer(ActionAudit.CONVERSATION_CONSULTEE, conversationId,
@@ -598,6 +614,9 @@ public class AdminServiceImpl implements AdminService {
                 .pieceIdentiteUrl(pieceIdentiteApiUrl)
                 .statutPieceIdentite(u.getStatutPieceIdentite())
                 .motifRejetPieceIdentite(u.getMotifRejetPieceIdentite())
+                .selfieFourni(u.getSelfieUrl() != null && !u.getSelfieUrl().isBlank())
+                .dateEnvoiVerification(u.getDateEnvoiVerification())
+                .dateDecisionVerification(u.getDateDecisionVerification())
                 .statut(u.getStatut())
                 .motifStatut(u.getMotifStatut())
                 .createdAt(u.getCreatedAt())
@@ -626,6 +645,7 @@ public class AdminServiceImpl implements AdminService {
                 .traitePar(s.getTraitePar())
                 .dateTraitement(s.getDateTraitement())
                 .noteAdmin(s.getNoteAdmin())
+                .annonceMasqueeAutomatiquement(s.getAnnonce() != null && s.getAnnonce().isMasquageAutomatique())
                 .build();
     }
 

@@ -39,6 +39,7 @@ const NO_REFRESH_PATHS = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/api/auth/resend-activation",
+  "/api/auth/verification-code",
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -127,12 +128,19 @@ const secureDelete = async (key: string): Promise<void> => {
 
 // ─── Instance Axios ───────────────────────────────────────────────────────────
 
+// Site web : le jeton de rafraîchissement voyage dans un cookie HttpOnly posé par l'API
+// (illisible par les scripts de la page, ECART-54). `withCredentials` l'envoie avec les
+// requêtes vers l'API ; l'en-tête X-Client active ce mode côté serveur et sert de garde CSRF.
+const WEB_AUTH = isWeb ? { withCredentials: true, headers: { "X-Client": "web" } } : {};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10_000,
+  withCredentials: isWeb,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    ...(isWeb ? { "X-Client": "web" } : {}),
   },
 });
 
@@ -245,8 +253,11 @@ export function fallbackMessageForStatus(status?: number): string {
 
 async function _doRefresh(): Promise<string | null> {
   try {
+    // Application : le jeton est dans le stockage sécurisé. Site web : il est dans le cookie
+    // HttpOnly ; un jeton resté dans le localStorage par une version antérieure est envoyé une
+    // dernière fois pour que l'API le convertisse en cookie, puis supprimé.
     const storedRefresh = await secureGet(REFRESH_TOKEN_KEY);
-    if (!storedRefresh) {
+    if (!storedRefresh && !isWeb) {
       // 401 sans refresh token possible : s'il restait un access token, la session est morte.
       if (await secureGet(TOKEN_KEY)) {
         await secureDelete(TOKEN_KEY);
@@ -257,11 +268,13 @@ async function _doRefresh(): Promise<string | null> {
 
     const res = await axios.post<{ token: string; refreshToken?: string }>(
       `${API_BASE_URL}/api/auth/refresh`,
-      { refreshToken: storedRefresh },
+      storedRefresh ? { refreshToken: storedRefresh } : {},
       {
+        ...WEB_AUTH,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          ...WEB_AUTH.headers,
         },
         timeout: REFRESH_TIMEOUT_MS,
       },
@@ -269,7 +282,9 @@ async function _doRefresh(): Promise<string | null> {
 
     const newToken = res.data.token;
     await secureSet(TOKEN_KEY, newToken);
-    if (res.data.refreshToken) {
+    if (isWeb) {
+      await secureDelete(REFRESH_TOKEN_KEY);
+    } else if (res.data.refreshToken) {
       await secureSet(REFRESH_TOKEN_KEY, res.data.refreshToken);
     }
     return newToken;
@@ -309,8 +324,10 @@ export const removeToken = () => secureDelete(TOKEN_KEY);
 
 export const getToken = () => secureGet(TOKEN_KEY);
 
-export const saveRefreshToken = (token: string) =>
-  secureSet(REFRESH_TOKEN_KEY, token);
+/** Application seulement : sur le web le jeton reste dans le cookie HttpOnly, jamais dans le JavaScript. */
+export const saveRefreshToken = async (token: string): Promise<void> => {
+  if (!isWeb) await secureSet(REFRESH_TOKEN_KEY, token);
+};
 
 export const removeRefreshToken = () => secureDelete(REFRESH_TOKEN_KEY);
 

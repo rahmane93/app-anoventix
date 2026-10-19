@@ -39,6 +39,7 @@ export function useProfile() {
     fetchProfile,
     uploadPhoto,
     uploadPieceIdentite,
+    uploadSelfie,
     deleteAccount,
     isDeletingAccount,
     clearError,
@@ -51,6 +52,7 @@ export function useProfile() {
       fetchProfile: s.fetchProfile,
       uploadPhoto: s.uploadPhoto,
       uploadPieceIdentite: s.uploadPieceIdentite,
+      uploadSelfie: s.uploadSelfie,
       deleteAccount: s.deleteAccount,
       isDeletingAccount: s.isDeletingAccount,
       clearError: s.clearError,
@@ -65,6 +67,11 @@ export function useProfile() {
   const [pieceTypeSel, setPieceTypeSel] = useState<TypePieceIdentite | ''>('');
   const [pieceNumero, setPieceNumero] = useState('');
   const [pieceFile, setPieceFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+  // Selfie de vérification (EVO-01) : pris en direct, jamais importé de la galerie.
+  const [selfieFile, setSelfieFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [selfieOuvert, setSelfieOuvert] = useState(false);
+  // Le selfie capturé complète un dossier existant (seul) au lieu de l'accompagner la pièce.
+  const [selfieSeul, setSelfieSeul] = useState(false);
   const [viewingPiece, setViewingPiece] = useState(false);
   // Retour affiché à côté de la section pièce (le formulaire est en bas de page :
   // une bannière en haut resterait hors de vue).
@@ -130,6 +137,7 @@ export function useProfile() {
       !pieceTypeSel && 'le type de pièce',
       !pieceNumero.trim() && 'le numéro',
       !pieceFile && 'la photo du document',
+      !selfieFile && 'votre selfie',
     ].filter(Boolean);
     if (manquants.length > 0) {
       setPieceFeedback({ variant: 'error', message: `Complétez ${manquants.join(', ')}.` });
@@ -139,15 +147,39 @@ export function useProfile() {
     setSuccessMsg(null);
     setPieceFeedback(null);
     try {
-      await uploadPieceIdentite(pieceFile!, pieceTypeSel as TypePieceIdentite, pieceNumero.trim());
-      setPieceFeedback({ variant: 'success', message: "Pièce d'identité envoyée. Un modérateur la vérifiera prochainement." });
+      await uploadPieceIdentite(pieceFile!, selfieFile!, pieceTypeSel as TypePieceIdentite, pieceNumero.trim());
+      setPieceFeedback({
+        variant: 'success',
+        message: "Dossier envoyé. La modération le vérifie en 72 h au plus, vous serez prévenu par email.",
+      });
       setPieceFormOpen(false);
       setPieceFile(null);
+      setSelfieFile(null);
     } catch (err) {
       // Affichée près du formulaire plutôt qu'en haut de page.
       setPieceFeedback({ variant: 'error', message: getErrorMessage(err, "Pièce d'identité non envoyée. Vérifiez votre connexion puis réessayez.") });
       clearError();
     }
+  };
+
+  /** Dossier d'avant le selfie : le selfie capturé part seul (POST /me/selfie). */
+  const handleSelfieSeul = async (selfie: { uri: string; name: string; type: string }) => {
+    setPieceFeedback(null);
+    try {
+      await uploadSelfie(selfie);
+      setPieceFeedback({ variant: 'success', message: 'Selfie envoyé. La modération vérifie votre dossier.' });
+    } catch (err) {
+      setPieceFeedback({ variant: 'error', message: getErrorMessage(err, 'Selfie non envoyé. Réessayez.') });
+      clearError();
+    } finally {
+      setSelfieSeul(false);
+    }
+  };
+
+  /** Selfie pris : joint au dossier en cours de saisie, ou envoyé seul pour un dossier en attente. */
+  const onSelfiePris = (selfie: { uri: string; name: string; type: string }) => {
+    if (selfieSeul) handleSelfieSeul(selfie);
+    else setSelfieFile(selfie);
   };
 
   useFocusEffect(
@@ -261,6 +293,12 @@ export function useProfile() {
     pieceNumero,
     setPieceNumero,
     pieceFile,
+    selfieFile,
+    selfieOuvert,
+    setSelfieOuvert,
+    selfieSeul,
+    setSelfieSeul,
+    onSelfiePris,
     viewingPiece,
     setViewingPiece,
     // handlers

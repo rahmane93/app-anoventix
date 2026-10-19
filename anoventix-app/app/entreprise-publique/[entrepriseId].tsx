@@ -158,6 +158,12 @@ export default function EntreprisePubliqueScreen() {
             </View>
 
             <AppText style={s.nom}>{entreprise.nom}</AppText>
+            {entreprise.verifiee ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessibilityLabel="Agence vérifiée">
+                <Ionicons name="shield-checkmark" size={14} color={colors.successText} />
+                <AppText style={{ fontSize: 12, fontWeight: '700', color: colors.successText }}>Agence vérifiée</AppText>
+              </View>
+            ) : null}
 
             {entreprise.description ? (
               <AppText style={s.description}>{entreprise.description}</AppText>
@@ -186,12 +192,6 @@ export default function EntreprisePubliqueScreen() {
                   <AppText style={s.infoText}>
                     {entreprise.adresse}
                   </AppText>
-                </View>
-              ) : null}
-              {entreprise.numeroRCCM ? (
-                <View style={s.infoItem}>
-                  <Ionicons name="document-text-outline" size={14} color={colors.textMuted} />
-                  <AppText style={s.infoText}>RCCM : {entreprise.numeroRCCM}</AppText>
                 </View>
               ) : null}
             </View>

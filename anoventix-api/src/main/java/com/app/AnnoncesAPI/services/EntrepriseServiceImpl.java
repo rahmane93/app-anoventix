@@ -26,6 +26,7 @@ import com.app.AnnoncesAPI.dto.MediaDTO;
 import com.app.AnnoncesAPI.entities.Entreprise;
 import com.app.AnnoncesAPI.entities.Role;
 import com.app.AnnoncesAPI.entities.User;
+import com.app.AnnoncesAPI.enums.StatutVerificationEntreprise;
 import com.app.AnnoncesAPI.enums.StatutUtilisateur;
 import com.app.AnnoncesAPI.enums.TypeRole;
 import com.app.AnnoncesAPI.exceptions.ResourceNotFoundException;
@@ -63,6 +64,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     private final NotificationService notificationService;
     private final MediaService mediaService;
     private final QuotaEntrepriseService quotaService;
+    private final InvitationAgentService invitations;
 
     public EntrepriseServiceImpl(
             EntrepriseRepository entrepriseRepository,
@@ -74,7 +76,9 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             PasswordEncoder passwordEncoder,
             NotificationService notificationService,
             MediaService mediaService,
-            QuotaEntrepriseService quotaService) {
+            QuotaEntrepriseService quotaService,
+            InvitationAgentService invitations) {
+        this.invitations = invitations;
         this.entrepriseRepository = entrepriseRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -103,8 +107,9 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Vous avez déjà une entreprise enregistrée");
         }
         
-        // Vérifier que le numéro RCCM n'existe pas déjà
-        if (request.getNumeroRCCM() != null && entrepriseRepository.existsByNumeroRCCM(request.getNumeroRCCM())) {
+        // Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28).
+        if (request.getNumeroRCCM() != null && entrepriseRepository.existsByNumeroRCCMAndStatutVerification(
+                request.getNumeroRCCM(), StatutVerificationEntreprise.VERIFIEE)) {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
@@ -145,9 +150,18 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new UnauthorizedActionException("Vous n'êtes pas autorisé à modifier cette entreprise");
         }
         
-        // Vérifier le numéro RCCM si modifié
+        // Après vérification, le nom et le RCCM sont figés : le support s'en charge (RG-07-27).
+        if (entreprise.getStatutVerification() == StatutVerificationEntreprise.VERIFIEE
+                && ((request.getNom() != null && !request.getNom().equals(entreprise.getNom()))
+                    || (request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM())))) {
+            throw new IllegalStateException(
+                    "Votre agence est vérifiée : le nom et le numéro RCCM ne peuvent plus être modifiés. "
+                    + "Contactez le support pour les changer.");
+        }
+        // Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28).
         if (request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM())
-                && entrepriseRepository.existsByNumeroRCCM(request.getNumeroRCCM())) {
+                && entrepriseRepository.existsByNumeroRCCMAndStatutVerificationAndIdNot(
+                        request.getNumeroRCCM(), StatutVerificationEntreprise.VERIFIEE, id)) {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
@@ -158,7 +172,12 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé par une autre entreprise");
         }
         
+        boolean rccmChange = request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM());
         entrepriseMapper.updateEntityFromRequest(request, entreprise);
+        // Un RCCM modifié pendant l'examen invalide la demande en cours : à renvoyer.
+        if (rccmChange && entreprise.getStatutVerification() == StatutVerificationEntreprise.EN_ATTENTE) {
+            entreprise.setStatutVerification(StatutVerificationEntreprise.NON_VERIFIEE);
+        }
         Entreprise updated = entrepriseRepository.save(entreprise);
         
         logger.info("Entreprise mise à jour avec succès: {}", updated.getNom());
@@ -199,21 +218,34 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     
     @Override
     @Transactional(readOnly = true)
-    public EntrepriseDTO getEntrepriseById(UUID id) {
-        logger.info("Récupération de l'entreprise ID: {}", id);
-        
+    public EntrepriseDTO getEntrepriseById(UUID id, Authentication authentication) {
         Entreprise entreprise = entrepriseRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + id));
-        
+        verifierMembreOuModeration(id, authentication);
         return quotaService.toDTO(entreprise);
+    }
+
+    /**
+     * Informations de gestion (RCCM, quotas, email du propriétaire) : réservées aux membres de
+     * l'entreprise et à la modération (ECART-31). Le public passe par la page publique.
+     */
+    private void verifierMembreOuModeration(UUID entrepriseId, Authentication authentication) {
+        User caller = getCurrentUser(authentication);
+        boolean membre = caller.getEntreprise() != null && caller.getEntreprise().getId().equals(entrepriseId);
+        if (!membre && !isAdminOrModerateur(caller)) {
+            throw new UnauthorizedActionException("Vous n'êtes pas autorisé à consulter cette entreprise");
+        }
     }
     
     @Override
     @Transactional(readOnly = true)
-    public EntrepriseDTO getEntrepriseByUser(UUID userId) {
-        logger.info("Récupération de l'entreprise de l'utilisateur ID: {}", userId);
-        
-        User user = userRepository.findById(userId)
+    public EntrepriseDTO getEntrepriseByUser(UUID userId, Authentication authentication) {
+        User caller = getCurrentUser(authentication);
+        if (!caller.getId().equals(userId) && !isAdminOrModerateur(caller)) {
+            throw new UnauthorizedActionException("Vous n'êtes pas autorisé à consulter l'entreprise de cet utilisateur");
+        }
+
+        User user= userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + userId));
         
         Entreprise entreprise = entrepriseRepository.findByAnnonceurProfessionnel(user)
@@ -265,44 +297,28 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         Role agentRole = roleRepository.findByName(TypeRole.AGENT_PROFESSIONNEL)
             .orElseThrow(() -> new RuntimeException("Erreur: Le rôle AGENT_PROFESSIONNEL n'existe pas"));
         
-        // 4️⃣ Créer l'agent avec mot de passe temporaire
-        
-        // Ignorer le mot de passe fourni dans la requête et générer un mot de passe temporaire
-        String temporaryPassword = generateTemporaryPassword();
-        
-        logger.debug("🔑 Mot de passe temporaire généré pour: {}", request.getEmail());
-        
+        // 4️⃣ Créer l'agent, inactif jusqu'à ce qu'il accepte l'invitation et choisisse son mot de passe
+        // (ECART-47) : aucun mot de passe n'est généré ni envoyé, le compte reçoit un mot de passe
+        // aléatoire que personne ne connaît.
         User agent = new User();
         agent.setEmail(request.getEmail());
-        agent.setPassword(passwordEncoder.encode(temporaryPassword)); // Utiliser le mot de passe temporaire
+        agent.setPassword(invitations.motDePasseInutilisable());
         agent.setNom(request.getNom());
         agent.setPrenom(request.getPrenom());
         agent.setTelephone(request.getTelephone());
-        agent.setStatut(StatutUtilisateur.EN_ATTENTE_ACTIVATION); // Compte désactivé jusqu'au changement de mot de passe
-        
-        // Marquer que l'agent doit changer son mot de passe
-        agent.setMustChangePassword(true);
-        
+        agent.setStatut(StatutUtilisateur.EN_ATTENTE_ACTIVATION);
+        agent.setMustChangePassword(false);
+
         agent.setEntreprise(entreprise);
         agent.setParentUser(owner); // Le PROFESSIONNEL qui l'a créé
         agent.setRole(agentRole);
         
         User savedAgent = userRepository.save(agent);
         
-        // 5️⃣ Envoyer l'email avec le mot de passe temporaire
-        String parentNomComplet = (owner.getPrenom() != null ? owner.getPrenom() + " " : "") + owner.getNom();
-        String mailBody = buildTemporaryPasswordEmailBody(
-            savedAgent.getPrenom(),
-            savedAgent.getNom(),
-            savedAgent.getEmail(),
-            temporaryPassword,
-            entreprise.getNom(),
-            parentNomComplet.isBlank() ? owner.getEmail() : parentNomComplet
-        );
-        // Contenu sensible (mot de passe temporaire) : effacé de la file dès l'envoi.
-        notificationService.envoyer(savedAgent.getEmail(), "Vos accès agent AnoventiX", mailBody, true);
-        
-        logger.info("✅ Agent {} créé avec succès et rattaché à l'entreprise {} (Propriétaire: {}). Email avec mot de passe temporaire envoyé.",
+        // 5️⃣ Lien d'invitation à usage unique, valable 7 jours (l'email part après validation de la transaction)
+        invitations.inviter(savedAgent, owner, entreprise);
+
+        logger.info("✅ Agent {} créé et invité dans l'entreprise {} (Propriétaire: {})",
                     savedAgent.getEmail(), entreprise.getNom(), owner.getEmail());
         
         // 6️⃣ Construire le DTO de réponse
@@ -476,8 +492,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         if (agent.getStatut() == StatutUtilisateur.INACTIF && !quotaService.peutAjouterAgent(entreprise)) {
             throw new IllegalArgumentException("Quota d'agents atteint (" + quotaService.quotaAgents(entreprise) + " maximum)");
         }
-        // Un agent qui n'a pas encore changé son mot de passe temporaire reste en attente.
-        agent.setStatut(Boolean.TRUE.equals(agent.getMustChangePassword())
+        // Un agent qui n'a pas encore accepté son invitation reste en attente.
+        agent.setStatut(Boolean.TRUE.equals(agent.getMustChangePassword()) || agent.getActivationCode() != null
                 ? StatutUtilisateur.EN_ATTENTE_ACTIVATION
                 : StatutUtilisateur.ACTIF);
         agent.setMotifStatut(null);
@@ -488,19 +504,21 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean canCreateAnnonce(UUID entrepriseId) {
+    public boolean canCreateAnnonce(UUID entrepriseId, Authentication authentication) {
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
             .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
-        
+        verifierMembreOuModeration(entrepriseId, authentication);
+
         return quotaService.peutCreerAnnonce(entreprise, quotaService.annoncesActives(entreprise));
     }
     
     @Override
     @Transactional(readOnly = true)
-    public boolean canAddAgent(UUID entrepriseId) {
+    public boolean canAddAgent(UUID entrepriseId, Authentication authentication) {
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
             .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
-        
+        verifierMembreOuModeration(entrepriseId, authentication);
+
         return quotaService.peutAjouterAgent(entreprise);
     }
     
@@ -527,6 +545,10 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     public com.app.AnnoncesAPI.dto.EntrepriseProfilDTO getEntrepriseProfil(UUID entrepriseId, Pageable pageable) {
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
+        // Entreprise désactivée : la page publique se ferme (DEC-12, RG-07-22).
+        if (Boolean.FALSE.equals(entreprise.getActive())) {
+            throw new ResourceNotFoundException("Cette agence n'est plus disponible.");
+        }
         EntrepriseDTO entrepriseDTO = quotaService.toDTO(entreprise);
         // Endpoint public : uniquement les annonces visibles du public.
         Page<AnnonceDTO> annonces = bienImmoRepository
@@ -580,54 +602,24 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         return userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
     }
-    
-    /**
-     * Génère un mot de passe temporaire sécurisé
-     */
-    private String generateTemporaryPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-        java.security.SecureRandom random = new java.security.SecureRandom();
-        StringBuilder password = new StringBuilder();
-        
-        // Assurer au moins une majuscule, une minuscule, un chiffre et un caractère spécial
-        password.append("ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(random.nextInt(26)));
-        password.append("abcdefghijklmnopqrstuvwxyz".charAt(random.nextInt(26)));
-        password.append("0123456789".charAt(random.nextInt(10)));
-        password.append("!@#$%".charAt(random.nextInt(5)));
-        
-        // Compléter jusqu'à 12 caractères
-        for (int i = 0; i < 8; i++) {
-            password.append(chars.charAt(random.nextInt(chars.length())));
+
+    @Override
+    public AgentDTO renvoyerInvitation(UUID entrepriseId, UUID agentId, Authentication authentication) {
+        User caller = getCurrentUser(authentication);
+        Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent non trouvé avec l'ID: " + agentId));
+        if (agent.getEntreprise() == null || !agent.getEntreprise().getId().equals(entrepriseId)) {
+            throw new IllegalArgumentException("Cet agent n'est pas rattaché à cette entreprise");
         }
-        
-        // Mélanger les caractères
-        char[] passwordArray = password.toString().toCharArray();
-        for (int i = passwordArray.length - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            char temp = passwordArray[i];
-            passwordArray[i] = passwordArray[j];
-            passwordArray[j] = temp;
+        if (!entreprise.getAnnonceurProfessionnel().getId().equals(caller.getId())) {
+            throw new UnauthorizedActionException("Seul le propriétaire de l'entreprise peut renvoyer une invitation");
         }
-        
-        return new String(passwordArray);
-    }
-    
-    /**
-     * Construit le corps HTML de l'email avec le mot de passe temporaire
-     */
-    private String buildTemporaryPasswordEmailBody(String prenom, String nom, String email,
-                                                   String temporaryPassword, String entrepriseName,
-                                                   String parentNomComplet) {
-        // HashMap (et non Map.of) car Map.of lève une NPE si une valeur est null.
-        Map<String, String> vars = new HashMap<>();
-        vars.put("prenom", prenom != null ? prenom : "");
-        vars.put("nom", nom != null ? nom : "");
-        vars.put("email", email != null ? email : "");
-        vars.put("temporaryPassword", temporaryPassword != null ? temporaryPassword : "");
-        vars.put("entrepriseName", entrepriseName != null ? entrepriseName : "");
-        vars.put("parentNomComplet", parentNomComplet != null ? parentNomComplet : "");
-        return Utility.renderEmail("templates/email-temporary-password.html", vars,
-                "Vos identifiants pour rejoindre " + (entrepriseName != null ? entrepriseName : "votre entreprise") + " sur AnoventiX.",
-                "Vous n'êtes pas à l'origine de cette demande ? Contactez l'administrateur de votre entreprise.");
+        if (agent.getStatut() != StatutUtilisateur.EN_ATTENTE_ACTIVATION) {
+            throw new IllegalStateException("Cet agent a déjà activé son compte : aucune invitation à renvoyer.");
+        }
+        invitations.inviter(agent, caller, entreprise);
+        return toAgentDTO(agent, entreprise);
     }
 }

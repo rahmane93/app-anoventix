@@ -62,6 +62,9 @@ export default function AuthLayout() {
       <Stack.Screen name="reset-password" options={{ title: 'Nouveau mot de passe' }} />
       <Stack.Screen name="change-password" options={{ title: 'Changer le mot de passe' }} />
       <Stack.Screen name="activate" options={{ title: 'Activation du compte' }} />
+      <Stack.Screen name="invitation" options={{ title: 'Invitation' }} />
+      <Stack.Screen name="verification" options={{ title: 'Vérification en deux étapes' }} />
+      <Stack.Screen name="codes-secours" options={{ title: 'Codes de secours', gestureEnabled: false }} />
     </Stack>
   );
 

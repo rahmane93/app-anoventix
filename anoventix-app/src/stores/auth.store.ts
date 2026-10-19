@@ -10,10 +10,13 @@ import type {
     ChangePasswordRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
+    ResultatSignin,
     SigninRequest,
     SigninResponse,
     SignupRequest,
+    VerificationRequise,
 } from '../types/auth.types';
+import { estVerificationRequise } from '../types/auth.types';
 
 const toArray = (v: string | string[] | null | undefined): string[] => {
   if (!v) return [];
@@ -31,7 +34,16 @@ interface AuthStore {
   isLoading: boolean;
 
   // Actions
-  signin: (data: SigninRequest) => Promise<SigninResponse>;
+  signin: (data: SigninRequest) => Promise<ResultatSignin>;
+
+  // Double authentification du staff : code envoyé par email avant l'ouverture de la session.
+  verification: VerificationRequise | null;
+  /** Codes de secours à montrer avant d'entrer dans l'app (session retenue jusque-là). */
+  codesSecoursARemettre: { codes: string[]; session: SigninResponse } | null;
+  verifierCode: (code: string) => Promise<void>;
+  renvoyerCode: () => Promise<void>;
+  confirmerCodesSecours: () => Promise<void>;
+  annulerVerification: () => void;
   reactivate: (data: SigninRequest) => Promise<SigninResponse>;
   resendActivation: (email: string) => Promise<string>;
   signup: (data: SignupRequest) => Promise<string>;
@@ -69,16 +81,52 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isAuthenticated: false,
   mustChangePassword: false,
   isLoading: true, // true au démarrage pour l'hydratation
+  verification: null,
+  codesSecoursARemettre: null,
 
   /**
-   * Connexion : stocke le token et met à jour l'état.
+   * Connexion : stocke le token et met à jour l'état. Pour un modérateur ou un administrateur,
+   * aucune session n'est ouverte : le serveur demande d'abord le code envoyé par email.
    */
   signin: async (data) => {
     useUserStore.getState().reset();
     const response = await authApi.signin(data);
+    if (estVerificationRequise(response)) {
+      set({ verification: response });
+      return response;
+    }
     await ouvrirSession(response, set);
     return response;
   },
+
+  /** Saisie du code (email ou secours). Si des codes de secours sont remis, la session attend qu'ils soient vus. */
+  verifierCode: async (code) => {
+    const verification = useAuthStore.getState().verification;
+    if (!verification) throw { message: 'Aucune vérification en cours. Reconnectez-vous.', status: 400 };
+    const session = await authApi.verifierCode(verification.verificationId, code.trim());
+    if (session.codesSecours?.length) {
+      set({ codesSecoursARemettre: { codes: session.codesSecours, session } });
+      return;
+    }
+    set({ verification: null });
+    await ouvrirSession(session, set);
+  },
+
+  renvoyerCode: async () => {
+    const verification = useAuthStore.getState().verification;
+    if (!verification) throw { message: 'Aucune vérification en cours. Reconnectez-vous.', status: 400 };
+    set({ verification: await authApi.renvoyerCode(verification.verificationId) });
+  },
+
+  /** « J'ai conservé mes codes » : la session retenue s'ouvre. */
+  confirmerCodesSecours: async () => {
+    const attente = useAuthStore.getState().codesSecoursARemettre;
+    if (!attente) return;
+    set({ verification: null, codesSecoursARemettre: null });
+    await ouvrirSession(attente.session, set);
+  },
+
+  annulerVerification: () => set({ verification: null, codesSecoursARemettre: null }),
 
   /**
    * Réactivation d'un compte supprimé (délai de grâce) : ouvre la session comme un signin.

@@ -40,6 +40,10 @@ public class Signalement {
     @Column(nullable = false, length = 100)
     private String motif;
 
+    /** Code du motif ({@code MotifSignalement}) : sert aux règles, le libellé sert à l'affichage. */
+    @Column(name = "code_motif", length = 30)
+    private String codeMotif;
+
     @Column(columnDefinition = "TEXT")
     private String commentaire;
 

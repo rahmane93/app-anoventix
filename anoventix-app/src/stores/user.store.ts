@@ -18,11 +18,13 @@ interface UserStore {
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   uploadPhoto: (file: { uri: string; name: string; type: string }, photoType?: 'profil') => Promise<void>;
   uploadPieceIdentite: (
-    recto: { uri: string; name: string; type: string },
+    piece: { uri: string; name: string; type: string },
+    selfie: { uri: string; name: string; type: string },
     typePiece: TypePieceIdentite,
     numeroPiece: string,
-    verso?: { uri: string; name: string; type: string },
   ) => Promise<void>;
+  /** Selfie seul, pour un dossier envoyé avant la mise en service du selfie. */
+  uploadSelfie: (selfie: { uri: string; name: string; type: string }) => Promise<void>;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
@@ -97,16 +99,30 @@ export const useUserStore = create<UserStore>((set) => ({
    * Après l'upload, le statut est EN_ATTENTE côté serveur.
    * Le profil est rechargé pour refléter le nouveau champ pieceIdentite.
    */
-  uploadPieceIdentite: async (recto, typePiece, numeroPiece, verso) => {
+  uploadPieceIdentite: async (piece, selfie, typePiece, numeroPiece) => {
     set({ uploadingPiece: true, error: null });
     try {
-      await userApi.uploadPieceIdentite(recto, typePiece, numeroPiece, verso);
+      await userApi.uploadPieceIdentite(piece, selfie, typePiece, numeroPiece);
       // Recharge le profil complet pour afficher le statut exact retourné par le serveur
       const profile = await userApi.getProfile();
       set({ profile });
     } catch (err: unknown) {
       const error = err as { message?: string };
       set({ error: error?.message ?? 'Impossible d\'uploader la pièce.' });
+      throw err;
+    } finally {
+      set({ uploadingPiece: false });
+    }
+  },
+
+  uploadSelfie: async (selfie) => {
+    set({ uploadingPiece: true, error: null });
+    try {
+      await userApi.uploadSelfie(selfie);
+      set({ profile: await userApi.getProfile() });
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      set({ error: error?.message ?? "Impossible d'envoyer le selfie." });
       throw err;
     } finally {
       set({ uploadingPiece: false });

@@ -439,6 +439,59 @@ public class AdminControllerTest {
                 .andExpect(status().isOk());
     }
 
+    // ECART-31 : page publique d'agence sans données de gestion ; fiche de gestion réservée aux membres.
+    @Test
+    void testPageEntreprise_publiqueSansDonneesDeGestionEtFicheReservee() throws Exception {
+        String proJwt = createPrivilegedUserAndGetJWT("pro-vitrine", TypeRole.PROFESSIONNEL);
+        String autreProJwt = createPrivilegedUserAndGetJWT("pro-curieux", TypeRole.PROFESSIONNEL);
+        String modJwt = createPrivilegedUserAndGetJWT("mod-vitrine", TypeRole.MODERATEUR);
+        User pro = userRepository.findByEmail("pro-vitrine@test.com").orElseThrow();
+        com.app.AnnoncesAPI.entities.Entreprise entreprise = new com.app.AnnoncesAPI.entities.Entreprise();
+        entreprise.setNom("Agence Vitrine");
+        entreprise.setNumeroRCCM("RC-GN-2026-999");
+        entreprise.setTelephone("+224621000001");
+        entreprise.setEmail("contact@vitrine.test");
+        entreprise.setAnnonceurProfessionnel(pro);
+        entreprise = entrepriseRepository.save(entreprise);
+        pro.setEntreprise(entreprise);
+        userRepository.save(pro);
+
+        // Visiteur : nom et description, mais ni RCCM, ni quotas, ni email du propriétaire, ni contacts.
+        String publique = mockMvc.perform(get("/api/entreprises/{id}/profil", entreprise.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entreprise.nom").value("Agence Vitrine"))
+                .andExpect(jsonPath("$.entreprise.telephone").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.entreprise.email").value(org.hamcrest.Matchers.nullValue()))
+                .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(publique)
+                .doesNotContain("RC-GN-2026-999", "quotaAnnonces", "annoncesRestantes", "pro-vitrine@test.com",
+                        "annonceurProfessionnel");
+
+        // Connecté : les contacts de l'agence sont fournis, le reste de la fiche publique reste absent.
+        mockMvc.perform(get("/api/entreprises/{id}/profil", entreprise.getId())
+                        .header("Authorization", "Bearer " + autreProJwt))
+                .andExpect(jsonPath("$.entreprise.telephone").value("+224621000001"))
+                .andExpect(jsonPath("$.entreprise.numeroRCCM").doesNotExist());
+
+        // Fiche de gestion : membres et modération seulement.
+        mockMvc.perform(get("/api/entreprises/{id}", entreprise.getId()).header("Authorization", "Bearer " + autreProJwt))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/entreprises/{id}/can-create-annonce", entreprise.getId())
+                        .header("Authorization", "Bearer " + autreProJwt))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/entreprises/{id}", entreprise.getId()).header("Authorization", "Bearer " + proJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numeroRCCM").value("RC-GN-2026-999"));
+        mockMvc.perform(get("/api/entreprises/{id}", entreprise.getId()).header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isOk());
+        User curieux = userRepository.findByEmail("pro-curieux@test.com").orElseThrow();
+        mockMvc.perform(get("/api/entreprises/user/{id}", pro.getId()).header("Authorization", "Bearer " + autreProJwt))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/entreprises/user/{id}", pro.getId()).header("Authorization", "Bearer " + proJwt))
+                .andExpect(status().isOk());
+        org.assertj.core.api.Assertions.assertThat(curieux.getId()).isNotEqualTo(pro.getId());
+    }
+
     // --- Gestion des rôles ---
 
     @Test
@@ -573,5 +626,56 @@ public class AdminControllerTest {
         mockMvc.perform(put("/api/admin/messages/{id}/ignorer", messageId)
                 .header("Authorization", "Bearer " + modJwt))
                 .andExpect(status().isBadRequest());
+    }
+
+    // DEC-02 : la modération ne lit une conversation privée que si l'un de ses messages a été signalé.
+    @Test
+    void testLectureConversation_reserveeAuxConversationsSignaleesEtJournalisee() throws Exception {
+        String ownerJwt = signupActivateAndGetJWT("owner-conv", "owner-conv@test.com", "Test123!");
+        String userJwt = signupActivateAndGetJWT("user-conv", "user-conv@test.com", "Test123!");
+        String modJwt = createPrivilegedUserAndGetJWT("mod-conv", TypeRole.MODERATEUR);
+        String adminJwt = createPrivilegedUserAndGetJWT("admin-conv", TypeRole.ADMINISTRATEUR);
+        Long annonceId = createBien(ownerJwt);
+        Long convId = objectMapper.readTree(mockMvc.perform(post("/api/messagerie/conversations")
+                .header("Authorization", "Bearer " + userJwt)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("annonceId", annonceId))))
+                .andReturn().getResponse().getContentAsString()).get("id").asLong();
+        Long messageId = objectMapper.readTree(mockMvc.perform(post("/api/messagerie/conversations/{id}/messages", convId)
+                .header("Authorization", "Bearer " + userJwt)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("content", "Bonjour, toujours disponible ?"))))
+                .andReturn().getResponse().getContentAsString()).get("id").asLong();
+
+        // Aucun message signalé : introuvable, comme une conversation qui n'existe pas.
+        mockMvc.perform(get("/api/admin/conversations/{id}/messages", convId)
+                .header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/admin/conversations/{id}/messages", 999_999)
+                .header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isNotFound());
+
+        // Un message signalé ouvre la conversation, et la lecture est tracée.
+        mockMvc.perform(post("/api/messagerie/messages/{id}/signaler", messageId)
+                .header("Authorization", "Bearer " + ownerJwt))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/conversations/{id}/messages", convId)
+                .header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1));
+        mockMvc.perform(get("/api/admin/audit")
+                .param("action", "CONVERSATION_CONSULTEE").param("cibleId", String.valueOf(convId))
+                .header("Authorization", "Bearer " + adminJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.data[0].acteurLibelle").value("mod-conv@test.com"));
+
+        // Classé sans suite : le motif est conservé, la conversation reste lisible (décision tracée).
+        mockMvc.perform(put("/api/admin/messages/{id}/ignorer", messageId)
+                .header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/conversations/{id}/messages", convId)
+                .header("Authorization", "Bearer " + modJwt))
+                .andExpect(status().isOk());
     }
 }

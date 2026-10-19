@@ -3,6 +3,7 @@ package com.app.AnnoncesAPI.config;
 import com.app.AnnoncesAPI.entities.Role;
 import com.app.AnnoncesAPI.entities.User;
 import com.app.AnnoncesAPI.enums.StatutUtilisateur;
+import com.app.AnnoncesAPI.Utilities.MotDePasse;
 import com.app.AnnoncesAPI.enums.TypeRole;
 import com.app.AnnoncesAPI.repositories.RoleRepository;
 import com.app.AnnoncesAPI.repositories.UserRepository;
@@ -61,8 +62,14 @@ public class DataLoader {
             admin.setEmail(adminEmail);
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setStatut(StatutUtilisateur.ACTIF);
-            admin.setMustChangePassword(false);
+            // Le mot de passe de ADMIN_PASSWORD est connu de qui a installé l'API : il doit être
+            // remplacé dès la première connexion (ECART-64).
+            admin.setMustChangePassword(true);
             admin.setRole(adminRole);
+            if (!MotDePasse.estValide(adminPassword)) {
+                logger.warn("⚠️  ADMIN_PASSWORD ne respecte pas la règle des mots de passe : choisissez-en un plus robuste "
+                        + "(le changement sera de toute façon exigé à la première connexion).");
+            }
 
             userRepository.save(admin);
             logger.info("✅ Compte administrateur créé : {}", adminEmail);

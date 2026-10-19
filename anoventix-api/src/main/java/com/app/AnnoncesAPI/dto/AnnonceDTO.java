@@ -44,6 +44,15 @@ public class AnnonceDTO {
     private LocalDateTime dateCloture;
     /** Motif de masquage / rejet par la modération (null si en ligne). */
     private String motifModeration;
+    /** Masquage décidé par le système après plusieurs signalements (DEC-11). */
+    private boolean masquageAutomatique;
+    private LocalDateTime dateMasquage;
+    /** Réexamen demandé par le propriétaire et pas encore tranché (DEC-09). */
+    private boolean reexamenDemande;
+    private LocalDateTime dateReexamen;
+    private String messageReexamen;
+    /** Demandes de réexamen déjà faites sur cette annonce (3 au plus). */
+    private int nbReexamens;
     /** Fin de validité : l'annonce sera clôturée (EXPIREE) à cette date si elle n'est pas prolongée. */
     private LocalDateTime dateExpiration;
     /** Annonces du propriétaire masquées par l'administrateur (vues propriétaire / admin ; jamais vraie en public). */

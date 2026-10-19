@@ -29,4 +29,6 @@ public class SignalementResponse {
     private String traitePar;
     private LocalDateTime dateTraitement;
     private String noteAdmin;
+    /** L'annonce a été masquée automatiquement (DEC-11) et attend une décision. */
+    private Boolean annonceMasqueeAutomatiquement;
 }

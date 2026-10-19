@@ -309,6 +309,34 @@ public class BienImmoControllerTest {
                 .andExpect(status().isOk());
     }
 
+    // DEC-14 : le téléphone de l'annonceur n'est fourni qu'aux utilisateurs connectés.
+    @Test
+    void testTelephoneAnnonceur_reserveAuxUtilisateursConnectes() throws Exception {
+        String jwt = signupActivateAndGetJWT("contact1", "contact1@test.com", "Test123!");
+        Long id = createBien(jwt);
+        var owner = userRepository.findByEmail("contact1@test.com").orElseThrow();
+        owner.setTelephone("+224620000099");
+        userRepository.save(owner);
+        String lecteurJwt = signupActivateAndGetJWT("lecteur1", "lecteur1@test.com", "Test123!");
+
+        // Visiteur : fiche, liste et recherche ne contiennent pas le numéro.
+        mockMvc.perform(get("/api/biens-immo/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.annonceur.nom").exists())
+                .andExpect(jsonPath("$.annonceur.telephone").value(org.hamcrest.Matchers.nullValue()));
+        mockMvc.perform(get("/api/biens-immo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].annonceur.telephone").value(org.hamcrest.Matchers.nullValue()));
+        org.assertj.core.api.Assertions.assertThat(
+                mockMvc.perform(get("/api/biens-immo/filter")).andReturn().getResponse().getContentAsString())
+                .doesNotContain("620000099");
+
+        // Connecté (un autre compte) : le numéro est fourni.
+        mockMvc.perform(get("/api/biens-immo/{id}", id).header("Authorization", "Bearer " + lecteurJwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.annonceur.telephone").value("+224620000099"));
+    }
+
     @Test
     void testRecherche_parQuartierSansAccentEtParReference() throws Exception {
         Localisation kipe = new Localisation();

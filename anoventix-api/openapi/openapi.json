@@ -233,7 +233,7 @@
     },
     "/api/admin/annonces/{id}/publier" : {
       "put" : {
-        "description" : "Remet une annonce masquée ou rejetée en ligne. L'action est enregistrée dans l'historique.",
+        "description" : "Remet une annonce masquée en ligne. Une annonce rejetée ne peut pas être remise en ligne (409). L'action est enregistrée dans l'historique.",
         "operationId" : "publierAnnonce",
         "parameters" : [ {
           "in" : "path",
@@ -333,7 +333,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
           }
         }, {
           "in" : "query",
@@ -341,7 +341,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE" ]
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE" ]
           }
         }, {
           "in" : "query",
@@ -414,6 +414,45 @@
         "tags" : [ "Administration" ]
       }
     },
+    "/api/admin/entreprises/a-verifier" : {
+      "get" : {
+        "description" : "Entreprises dont le justificatif RCCM attend une décision, des plus anciennes aux plus récentes.",
+        "operationId" : "getEntreprisesAVerifier",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseEntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "File des entreprises à vérifier",
+        "tags" : [ "Administration" ]
+      }
+    },
     "/api/admin/entreprises/{entrepriseId}/quotas" : {
       "put" : {
         "description" : "Une valeur nulle ramène le quota à la valeur globale.",
@@ -451,6 +490,45 @@
         },
         "summary" : "Quotas propres à une entreprise",
         "tags" : [ "Quotas" ]
+      }
+    },
+    "/api/admin/entreprises/{id}/verification" : {
+      "put" : {
+        "description" : "VERIFIEE : badge « Agence vérifiée », nom et RCCM figés. REJETEE : motif obligatoire, communiqué au propriétaire. Un email part dans les deux cas.",
+        "operationId" : "deciderVerificationEntreprise",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DecisionVerificationEntrepriseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Vérifier ou refuser une entreprise",
+        "tags" : [ "Administration" ]
       }
     },
     "/api/admin/messages/signales" : {
@@ -636,6 +714,45 @@
         "tags" : [ "Quotas" ]
       }
     },
+    "/api/admin/reexamens" : {
+      "get" : {
+        "description" : "Annonces masquées dont le propriétaire a demandé un réexamen, de la plus ancienne à la plus récente.",
+        "operationId" : "getReexamens",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseAdminAnnonceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "File des réexamens",
+        "tags" : [ "Administration" ]
+      }
+    },
     "/api/admin/signalements" : {
       "get" : {
         "description" : "Retourne les signalements avec filtre optionnel par statut (EN_ATTENTE, TRAITE, IGNORE).",
@@ -702,6 +819,45 @@
           }
         },
         "summary" : "Supprimer un signalement",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/signalements/{id}/decision" : {
+      "put" : {
+        "description" : "Masque, rejette ou remet l'annonce en ligne, ou classe le signalement sans suite. La décision sur l'annonce et la clôture de tous ses signalements en attente se font en une seule opération. Le motif est obligatoire pour masquer ou rejeter.",
+        "operationId" : "deciderSignalement",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DecisionSignalementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignalementResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Décider d'un signalement",
         "tags" : [ "Administration" ]
       }
     },
@@ -1073,6 +1229,34 @@
         "tags" : [ "Administration" ]
       }
     },
+    "/api/auth/accept-invitation" : {
+      "post" : {
+        "operationId" : "accepterInvitation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AcceptInvitationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
     "/api/auth/activate" : {
       "get" : {
         "operationId" : "activateAccount",
@@ -1220,15 +1404,14 @@
                 "$ref" : "#/components/schemas/RefreshTokenRequest"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/RefreshResponse"
                 }
               }
             },
@@ -1316,7 +1499,17 @@
                 }
               }
             },
-            "description" : "OK"
+            "description" : "Session ouverte"
+          },
+          "202" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoubleAuthentificationResponse"
+                }
+              }
+            },
+            "description" : "Modérateur ou administrateur : un code a été envoyé par email, à saisir via /verification-code"
           }
         },
         "tags" : [ "auth-controller" ]
@@ -1341,6 +1534,62 @@
               "*/*" : {
                 "schema" : {
                   "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/verification-code" : {
+      "post" : {
+        "operationId" : "verifierCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerificationCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JwtResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/verification-code/renvoyer" : {
+      "post" : {
+        "operationId" : "renvoyerCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RenvoiCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoubleAuthentificationResponse"
                 }
               }
             },
@@ -2229,6 +2478,37 @@
         "tags" : [ "Biens Immobiliers" ]
       }
     },
+    "/api/biens-immo/{id}/reexamen" : {
+      "post" : {
+        "description" : "Le propriétaire (ou son entreprise) demande à la modération de réexaminer une annonce masquée après l'avoir corrigée. Message facultatif (500 caractères). Une seule demande en cours, trois demandes au plus par annonce.",
+        "operationId" : "demanderReexamen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReexamenRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Demander le réexamen d'une annonce masquée",
+        "tags" : [ "Biens Immobiliers" ]
+      }
+    },
     "/api/biens-immo/{id}/signaler" : {
       "delete" : {
         "description" : "L'utilisateur connecté annule son propre signalement actif sur cette annonce (soft delete).",
@@ -2605,6 +2885,43 @@
         "tags" : [ "Entreprises" ]
       }
     },
+    "/api/entreprises/{entrepriseId}/agents/{agentId}/invitation" : {
+      "post" : {
+        "description" : "Envoie un nouveau lien d'invitation (valable 7 jours, usage unique) à un agent qui n'a pas encore choisi son mot de passe ; le lien précédent cesse de fonctionner.",
+        "operationId" : "renvoyerInvitation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "entrepriseId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "agentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Renvoyer l'invitation d'un agent",
+        "tags" : [ "Entreprises" ]
+      }
+    },
     "/api/entreprises/{entrepriseId}/agents/{agentId}/suspendre" : {
       "put" : {
         "description" : "L'annonceurProfessionnel de l'entreprise ou le créateur de l'agent peuvent suspendre un agent",
@@ -2849,6 +3166,36 @@
         "tags" : [ "Entreprises" ]
       }
     },
+    "/api/entreprises/{id}/justificatif" : {
+      "get" : {
+        "description" : "Propriétaire de l'entreprise ou modération uniquement (no-store).",
+        "operationId" : "getJustificatif",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Servir le justificatif RCCM",
+        "tags" : [ "Entreprises" ]
+      }
+    },
     "/api/entreprises/{id}/photo" : {
       "put" : {
         "description" : "Envoyer le fichier image en multipart/form-data. Seul le propriétaire peut modifier la photo.",
@@ -2983,6 +3330,50 @@
           }
         },
         "summary" : "Réactiver une entreprise",
+        "tags" : [ "Entreprises" ]
+      }
+    },
+    "/api/entreprises/{id}/verification" : {
+      "post" : {
+        "description" : "Le propriétaire envoie l'extrait RCCM en photo (image uniquement, 10 Mo au plus, champ « justificatif »). Son identité doit déjà être vérifiée. Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.",
+        "operationId" : "demanderVerification",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "justificatif" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EntrepriseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Demander la vérification de l'entreprise",
         "tags" : [ "Entreprises" ]
       }
     },
@@ -3982,6 +4373,42 @@
         "tags" : [ "Utilisateurs" ]
       }
     },
+    "/api/users/me/codes-secours" : {
+      "post" : {
+        "description" : "Réservé aux comptes de modération et d'administration. Annule les codes précédents et renvoie 8 nouveaux codes à usage unique, affichés une seule fois. Le mot de passe est redemandé.",
+        "operationId" : "regenererCodesSecours",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CodesSecoursRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Régénérer mes codes de secours (double authentification)",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
     "/api/users/me/export" : {
       "get" : {
         "description" : "Profil, annonces, favoris, conversations, signalements, en JSON.",
@@ -4134,7 +4561,7 @@
     },
     "/api/users/me/piece-identite" : {
       "post" : {
-        "description" : "Envoi en multipart/form-data.\nChamps : file (obligatoire, image), typePieceIdentite (obligatoire), numeroPieceIdentite (obligatoire).\nLe statut passe automatiquement à EN_ATTENTE jusqu'à validation par un admin/modérateur.",
+        "description" : "Envoi en multipart/form-data du dossier de vérification.\nChamps : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.\nLa pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.",
         "operationId" : "uploadPieceIdentite",
         "parameters" : [ {
           "in" : "query",
@@ -4160,9 +4587,12 @@
                   "file" : {
                     "type" : "string",
                     "format" : "binary"
+                  },
+                  "selfie" : {
+                    "type" : "string",
+                    "format" : "binary"
                   }
-                },
-                "required" : [ "file" ]
+                }
               }
             }
           }
@@ -4180,6 +4610,41 @@
           }
         },
         "summary" : "Uploader sa pièce d'identité",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/me/selfie" : {
+      "post" : {
+        "description" : "Transitoire : pour un dossier EN_ATTENTE envoyé avant la mise en service du selfie. 422 dans tout autre cas.",
+        "operationId" : "uploadSelfie",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "selfie" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ajouter le selfie à un dossier en attente",
         "tags" : [ "Utilisateurs" ]
       }
     },
@@ -4348,6 +4813,36 @@
         "tags" : [ "Utilisateurs" ]
       }
     },
+    "/api/users/{userId}/selfie" : {
+      "get" : {
+        "description" : "Image du selfie (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement. Jamais affiché publiquement.",
+        "operationId" : "getSelfie",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Servir le selfie de vérification",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
     "/uploads/public/**" : {
       "get" : {
         "operationId" : "serveFile",
@@ -4370,6 +4865,20 @@
   },
   "components" : {
     "schemas" : {
+      "AcceptInvitationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "password", "token" ]
+      },
       "ActivationLicenceRequest" : {
         "type" : "object",
         "properties" : {
@@ -4404,7 +4913,15 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateMasquage" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateReexamen" : {
             "type" : "string",
             "format" : "date-time"
           },
@@ -4430,11 +4947,17 @@
           "longitude" : {
             "type" : "number"
           },
+          "masquageAutomatique" : {
+            "type" : "boolean"
+          },
           "medias" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/MediaDTO"
             }
+          },
+          "messageReexamen" : {
+            "type" : "string"
           },
           "motifCloture" : {
             "type" : "string",
@@ -4452,6 +4975,10 @@
             "format" : "int32"
           },
           "nbPieces" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nbReexamens" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -4480,6 +5007,9 @@
           },
           "publicId" : {
             "type" : "string"
+          },
+          "reexamenDemande" : {
+            "type" : "boolean"
           },
           "referenceAnnonce" : {
             "type" : "string"
@@ -4560,11 +5090,19 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "entreprisesAVerifier" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "messagesSignalesEnAttente" : {
             "type" : "integer",
             "format" : "int64"
           },
           "piecesIdentiteEnAttente" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reexamensEnAttente" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -4717,7 +5255,15 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateMasquage" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "dateModification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateReexamen" : {
             "type" : "string",
             "format" : "date-time"
           },
@@ -4743,11 +5289,17 @@
           "longitude" : {
             "type" : "number"
           },
+          "masquageAutomatique" : {
+            "type" : "boolean"
+          },
           "medias" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/MediaDTO"
             }
+          },
+          "messageReexamen" : {
+            "type" : "string"
           },
           "motifCloture" : {
             "type" : "string",
@@ -4757,6 +5309,10 @@
             "type" : "string"
           },
           "nbFavoris" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nbReexamens" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -4771,6 +5327,9 @@
           },
           "publicId" : {
             "type" : "string"
+          },
+          "reexamenDemande" : {
+            "type" : "boolean"
           },
           "referenceAnnonce" : {
             "type" : "string"
@@ -4822,6 +5381,9 @@
       "AnnonceurDTO" : {
         "type" : "object",
         "properties" : {
+          "agenceVerifiee" : {
+            "type" : "boolean"
+          },
           "entrepriseId" : {
             "type" : "string",
             "format" : "uuid"
@@ -4859,7 +5421,7 @@
           },
           "action" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
           },
           "adresseIp" : {
             "type" : "string"
@@ -4869,7 +5431,7 @@
           },
           "cibleType" : {
             "type" : "string",
-            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE" ]
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE" ]
           },
           "date" : {
             "type" : "string",
@@ -5024,6 +5586,16 @@
         },
         "required" : [ "newPassword", "oldPassword" ]
       },
+      "CodesSecoursRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "password" ]
+      },
       "ConformiteStats" : {
         "type" : "object",
         "properties" : {
@@ -5122,6 +5694,61 @@
         },
         "required" : [ "annonceId" ]
       },
+      "DecisionSignalementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "decision" : {
+            "type" : "string",
+            "enum" : [ "MASQUER", "REJETER", "REMETTRE_EN_LIGNE", "CLASSER" ]
+          },
+          "motif" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "noteAdmin" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "decision" ]
+      },
+      "DecisionVerificationEntrepriseRequest" : {
+        "type" : "object",
+        "properties" : {
+          "motif" : {
+            "type" : "string",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "statut" : {
+            "type" : "string",
+            "enum" : [ "NON_VERIFIEE", "EN_ATTENTE", "VERIFIEE", "REJETEE" ]
+          }
+        },
+        "required" : [ "statut" ]
+      },
+      "DoubleAuthentificationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "expireDansSecondes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "methode" : {
+            "type" : "string"
+          },
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "verificationRequise" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "EntrepriseDTO" : {
         "type" : "object",
         "properties" : {
@@ -5150,6 +5777,14 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateDecisionVerification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateEnvoiVerification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "dateModification" : {
             "type" : "string",
             "format" : "date-time"
@@ -5163,6 +5798,12 @@
           "id" : {
             "type" : "string",
             "format" : "uuid"
+          },
+          "justificatifFourni" : {
+            "type" : "boolean"
+          },
+          "motifRejetVerification" : {
+            "type" : "string"
           },
           "nom" : {
             "type" : "string"
@@ -5191,6 +5832,10 @@
           "quotaAnnoncesPersonnalise" : {
             "type" : "boolean"
           },
+          "statutVerification" : {
+            "type" : "string",
+            "enum" : [ "NON_VERIFIEE", "EN_ATTENTE", "VERIFIEE", "REJETEE" ]
+          },
           "telephone" : {
             "type" : "string"
           }
@@ -5210,7 +5855,7 @@
             "format" : "int32"
           },
           "entreprise" : {
-            "$ref" : "#/components/schemas/EntrepriseDTO"
+            "$ref" : "#/components/schemas/EntreprisePubliqueDTO"
           },
           "totalItems" : {
             "type" : "integer",
@@ -5219,6 +5864,40 @@
           "totalPages" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "EntreprisePubliqueDTO" : {
+        "type" : "object",
+        "properties" : {
+          "adresse" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "nombreAgents" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "photoProfil" : {
+            "type" : "string"
+          },
+          "telephone" : {
+            "type" : "string"
+          },
+          "verifiee" : {
+            "type" : "boolean"
           }
         }
       },
@@ -5396,6 +6075,12 @@
       "JwtResponse" : {
         "type" : "object",
         "properties" : {
+          "codesSecours" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "email" : {
             "type" : "string"
           },
@@ -6095,15 +6780,37 @@
           }
         }
       },
+      "ReexamenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        }
+      },
+      "RefreshResponse" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
       "RefreshTokenRequest" : {
         "type" : "object",
         "properties" : {
           "refreshToken" : {
-            "type" : "string",
-            "minLength" : 1
+            "type" : "string"
           }
-        },
-        "required" : [ "refreshToken" ]
+        }
       },
       "ReglagesLicenceDTO" : {
         "type" : "object",
@@ -6121,6 +6828,16 @@
             "format" : "int64"
           }
         }
+      },
+      "RenvoiCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "verificationId" ]
       },
       "ResetPasswordRequest" : {
         "type" : "object",
@@ -6199,6 +6916,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "annonceMasqueeAutomatiquement" : {
+            "type" : "boolean"
+          },
           "annule" : {
             "type" : "boolean"
           },
@@ -6261,6 +6981,9 @@
       "SignupRequest" : {
         "type" : "object",
         "properties" : {
+          "acceptCgu" : {
+            "type" : "boolean"
+          },
           "email" : {
             "type" : "string",
             "format" : "email",
@@ -6405,6 +7128,14 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateDecisionVerification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "dateEnvoiVerification" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
           "dateMasquageAnnonces" : {
             "type" : "string",
             "format" : "date-time"
@@ -6466,6 +7197,9 @@
           "role" : {
             "type" : "string"
           },
+          "selfieFourni" : {
+            "type" : "boolean"
+          },
           "statut" : {
             "type" : "string",
             "enum" : [ "EN_ATTENTE_ACTIVATION", "ACTIF", "INACTIF", "SUSPENDU" ]
@@ -6497,6 +7231,21 @@
           }
         },
         "required" : [ "statut" ]
+      },
+      "VerificationCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "verificationId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "code", "verificationId" ]
       },
       "VisibiliteStats" : {
         "type" : "object",

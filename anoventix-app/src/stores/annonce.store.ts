@@ -69,6 +69,7 @@ interface AnnonceStore {
   cloturerAnnonce: (id: number, motif: MotifCloture) => Promise<void>;
   reactiverAnnonce: (id: number) => Promise<void>;
   toggleActifAnnonce: (id: number) => Promise<void>;
+  demanderReexamen: (id: number, message?: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -275,6 +276,17 @@ export const useAnnonceStore = create<AnnonceStore>((set, get) => ({
       await rafraichirMonAnnonce(id, set);
     } catch (err: unknown) {
       set({ error: getErrorMessage(err, "Impossible de modifier la visibilité de l'annonce.") });
+      throw err;
+    }
+  },
+
+  demanderReexamen: async (id, message) => {
+    set({ error: null });
+    try {
+      await annonceApi.demanderReexamen(id, message);
+      await rafraichirMonAnnonce(id, set);
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err, 'Impossible de demander le réexamen de cette annonce.') });
       throw err;
     }
   },

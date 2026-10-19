@@ -66,7 +66,9 @@ class SharePageServiceTest {
         annonce.setMedias(List.of(photo));
         annonce.setActif(true);
         annonce.setStatutModeration(StatutAnnonce.PUBLIEE);
-        annonce.setOwner(new User());
+        User proprietaire = new User();
+        proprietaire.setStatut(com.app.AnnoncesAPI.enums.StatutUtilisateur.ACTIF);
+        annonce.setOwner(proprietaire);
 
         when(repo.findByPublicId("k3x9a2bz7q4m")).thenReturn(Optional.of(annonce));
         when(repo.findById(30L)).thenReturn(Optional.of(annonce));

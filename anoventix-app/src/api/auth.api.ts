@@ -4,9 +4,11 @@ import type {
     ForgotPasswordRequest,
     MessageResponse,
     ResetPasswordRequest,
+    ResultatSignin,
     SigninRequest,
     SigninResponse,
     SignupRequest,
+    VerificationRequise,
 } from '../types/auth.types';
 import { apiClient } from './client';
 
@@ -24,8 +26,8 @@ export const signup = async (data: SignupRequest): Promise<MessageResponse> => {
 /**
  * Connexion utilisateur. Retourne un token JWT et les infos utilisateur.
  */
-export const signin = async (data: SigninRequest): Promise<SigninResponse> => {
-  const response = await apiClient.post<SigninResponse>('/api/auth/signin', {
+export const signin = async (data: SigninRequest): Promise<ResultatSignin> => {
+  const response = await apiClient.post<ResultatSignin>('/api/auth/signin', {
     identifier: data.identifier,
     password: data.password,
   });
@@ -104,5 +106,33 @@ export const activateAccount = async (token: string): Promise<MessageResponse> =
   const response = await apiClient.get<MessageResponse>('/api/auth/activate', {
     params: { token },
   });
+  return response.data;
+};
+
+// ─── Double authentification du staff ─────────────────────────────────────────
+
+/** Saisie du code reçu par email (6 chiffres) ou d'un code de secours : ouvre la session. */
+export const verifierCode = async (verificationId: string, code: string): Promise<SigninResponse> => {
+  const response = await apiClient.post<SigninResponse>('/api/auth/verification-code', { verificationId, code });
+  return response.data;
+};
+
+/** « Renvoyer le code » : annule le code en cours et en envoie un nouveau (3 renvois par 15 minutes). */
+export const renvoyerCode = async (verificationId: string): Promise<VerificationRequise> => {
+  const response = await apiClient.post<VerificationRequise>('/api/auth/verification-code/renvoyer', { verificationId });
+  return response.data;
+};
+
+/** Nouveaux codes de secours (les précédents sont annulés) ; le mot de passe est redemandé. */
+export const regenererCodesSecours = async (password: string): Promise<string[]> => {
+  const response = await apiClient.post<{ codesSecours: string[] }>('/api/users/me/codes-secours', { password });
+  return response.data.codesSecours;
+};
+
+// ─── Invitation d'un agent ────────────────────────────────────────────────────
+
+/** L'agent invité choisit son mot de passe depuis le lien de l'email : son compte devient actif. */
+export const accepterInvitation = async (token: string, password: string): Promise<MessageResponse> => {
+  const response = await apiClient.post<MessageResponse>('/api/auth/accept-invitation', { token, password });
   return response.data;
 };

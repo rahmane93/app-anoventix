@@ -36,6 +36,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     long countByEntrepriseIdAndStatut(UUID entrepriseId, StatutUtilisateur statut);
     long countByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite);
     Page<User> findByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite, Pageable pageable);
+
+    /** File de vérification : dossiers les plus anciens d'abord, ceux d'avant le selfie (sans date) en tête (RG-02-40). */
+    @Query("SELECT u FROM User u WHERE u.statutPieceIdentite = :statut "
+         + "ORDER BY CASE WHEN u.dateEnvoiVerification IS NULL THEN 0 ELSE 1 END, u.dateEnvoiVerification ASC")
+    Page<User> findByStatutPieceIdentiteOrderByDateEnvoiVerificationAsc(
+            @org.springframework.data.repository.query.Param("statut") StatutPieceIdentite statut, Pageable pageable);
     boolean existsByRoleName(com.app.AnnoncesAPI.enums.TypeRole name);
 
     @Query("SELECT u FROM User u WHERE u.dateSuppressionDefinitive IS NULL AND (" +

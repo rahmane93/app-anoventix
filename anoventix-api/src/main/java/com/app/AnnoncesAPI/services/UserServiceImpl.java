@@ -1,5 +1,6 @@
 package com.app.AnnoncesAPI.services;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
     private final CompteSuppressionService compteSuppressionService;
     private final EmailNotificationService emailNotificationService;
     private final AuditService audit;
+    private final SessionService sessionService;
 
     public UserServiceImpl(UserRepository userRepository,
                            MediaService mediaService,
@@ -58,7 +60,9 @@ public class UserServiceImpl implements UserService {
                            AvertissementRepository avertissementRepository,
                            CompteSuppressionService compteSuppressionService,
                            EmailNotificationService emailNotificationService,
-                           AuditService audit) {
+                           AuditService audit,
+                           SessionService sessionService) {
+        this.sessionService = sessionService;
         this.emailNotificationService = emailNotificationService;
         this.audit = audit;
         this.userRepository = userRepository;
@@ -157,42 +161,84 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO uploadPieceIdentite(String username, MultipartFile file,
+    public UserDTO uploadPieceIdentite(String username, MultipartFile file, MultipartFile selfie,
                                        String typePieceIdentiteStr, String numeroPieceIdentite) {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé."));
 
+        // Un dossier validé est figé : ni la pièce ni le selfie ne se remplacent (RG-02-34).
         if (user.getStatutPieceIdentite() == StatutPieceIdentite.VALIDEE) {
-            throw new IllegalStateException("Votre pièce d'identité a déjà été validée et ne peut pas être remplacée.");
+            throw new IllegalStateException("Votre dossier de vérification a déjà été validé et ne peut pas être modifié.");
+        }
+        // La pièce et le selfie partent ensemble (RG-02-28).
+        if (file == null || file.isEmpty() || selfie == null || selfie.isEmpty()) {
+            throw new IllegalArgumentException("La photo de la pièce et le selfie sont obligatoires.");
+        }
+        com.app.AnnoncesAPI.enums.TypePieceIdentite type = parserTypePiece(typePieceIdentiteStr);
+
+        // 1. Sauvegarder les nouveaux fichiers — si ça échoue, rien n'est perdu
+        String pieceChemin = mediaService.savePieceIdentite(file, user.getId());
+        String selfieChemin;
+        try {
+            selfieChemin = mediaService.saveSelfie(selfie, user.getId());
+        } catch (RuntimeException e) {
+            mediaService.deletePieceIdentite(pieceChemin);
+            throw e;
         }
 
-        // 1. Sauvegarder la nouvelle pièce — si ça échoue, rien n'est perdu
-        String relativePath = mediaService.savePieceIdentite(file, user.getId());
-
-        // 2. Mettre à jour la base avec le nouveau chemin
-        String previous = user.getPieceIdentiteUrl();
-        user.setPieceIdentiteUrl(relativePath);
+        // 2. Mettre à jour la base
+        String anciennePiece = user.getPieceIdentiteUrl();
+        String ancienSelfie = user.getSelfieUrl();
+        user.setPieceIdentiteUrl(pieceChemin);
+        user.setSelfieUrl(selfieChemin);
         user.setStatutPieceIdentite(StatutPieceIdentite.EN_ATTENTE);
         user.setMotifRejetPieceIdentite(null);
-
-        if (typePieceIdentiteStr != null && !typePieceIdentiteStr.isBlank()) {
-            try {
-                user.setTypePieceIdentite(
-                        com.app.AnnoncesAPI.enums.TypePieceIdentite.valueOf(typePieceIdentiteStr.toUpperCase()));
-            } catch (IllegalArgumentException ignored) {}
+        user.setDateEnvoiVerification(LocalDateTime.now());
+        user.setDateDecisionVerification(null);
+        user.setDecisionVerificationPar(null);
+        if (type != null) {
+            user.setTypePieceIdentite(type);
         }
         if (numeroPieceIdentite != null && !numeroPieceIdentite.isBlank()) {
             user.setNumeroPieceIdentite(numeroPieceIdentite);
         }
         UserDTO result = toDTO(userRepository.save(user));
 
-        // 3. Supprimer l'ancien fichier seulement après que la base est à jour
+        // 3. Supprimer les anciens fichiers seulement après que la base est à jour
         //    Si la suppression échoue, la base est correcte — fuite disque mineure, pas de perte de données
-        if (previous != null && !previous.isBlank()) {
-            mediaService.deletePieceIdentite(previous);
-        }
-
+        mediaService.deletePieceIdentite(anciennePiece);
+        mediaService.deletePieceIdentite(ancienSelfie);
         return result;
+    }
+
+    @Override
+    @Transactional
+    public UserDTO uploadSelfie(String username, MultipartFile selfie) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé."));
+        if (user.getStatutPieceIdentite() != StatutPieceIdentite.EN_ATTENTE
+                || user.getPieceIdentiteUrl() == null || user.getSelfieUrl() != null) {
+            throw new IllegalStateException(
+                    "Le selfie seul n'est accepté que pour un dossier en attente auquel il manque le selfie.");
+        }
+        if (selfie == null || selfie.isEmpty()) {
+            throw new IllegalArgumentException("Le selfie est obligatoire.");
+        }
+        user.setSelfieUrl(mediaService.saveSelfie(selfie, user.getId()));
+        user.setDateEnvoiVerification(LocalDateTime.now());
+        return toDTO(userRepository.save(user));
+    }
+
+    private static com.app.AnnoncesAPI.enums.TypePieceIdentite parserTypePiece(String valeur) {
+        if (valeur == null || valeur.isBlank()) {
+            return null;
+        }
+        try {
+            return com.app.AnnoncesAPI.enums.TypePieceIdentite.valueOf(valeur.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Type de pièce d'identité inconnu : " + valeur
+                    + " (CARTE_IDENTITE, PASSEPORT, PERMIS_DE_CONDUIRE ou AUTRE).");
+        }
     }
 
     @Override
@@ -216,6 +262,25 @@ public class UserServiceImpl implements UserService {
             audit.enregistrer(ActionAudit.PIECE_IDENTITE_CONSULTEE, userId);
         }
         return piece;
+    }
+
+    @Override
+    @Transactional
+    public Resource servirSelfie(UUID userId, Authentication authentication) {
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId));
+        if (target.getSelfieUrl() == null || target.getSelfieUrl().isBlank()) {
+            throw new ResourceNotFoundException("Aucun selfie enregistré pour cet utilisateur.");
+        }
+        if (!isOwnerOrAdminMod(authentication, userId)) {
+            throw new AccessDeniedException(
+                    "Accès refusé : seul le propriétaire ou un ADMIN/MOD peut consulter ce selfie.");
+        }
+        Resource selfie = mediaService.loadPieceIdentite(target.getSelfieUrl());
+        if (!(authentication.getPrincipal() instanceof UserDetailsImpl lecteur && userId.equals(lecteur.getId()))) {
+            audit.enregistrer(ActionAudit.PIECE_IDENTITE_CONSULTEE, userId, "selfie");
+        }
+        return selfie;
     }
 
     /**
@@ -254,7 +319,15 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Un motif de rejet est obligatoire.");
         }
 
+        // La modération ne valide qu'un dossier complet (RG-02-29).
+        if (request.getStatut() == StatutPieceIdentite.VALIDEE
+                && (target.getSelfieUrl() == null || target.getSelfieUrl().isBlank())) {
+            throw new IllegalStateException("Le selfie de vérification est manquant.");
+        }
+
         target.setStatutPieceIdentite(request.getStatut());
+        target.setDateDecisionVerification(LocalDateTime.now());
+        target.setDecisionVerificationPar(authentication.getName());
         target.setMotifRejetPieceIdentite(
                 request.getStatut() == StatutPieceIdentite.REJETEE ? request.getMotifRejet() : null);
         User saved = userRepository.save(target);
@@ -341,6 +414,10 @@ public class UserServiceImpl implements UserService {
         // d'anonymisation effacerait un compte que l'admin vient de réactiver.
         target.setDateSuppressionDemandee(null);
         UserDTO dto = toDTO(userRepository.save(target));
+        if (request.getStatut() != StatutUtilisateur.ACTIF) {
+            // Suspendu ou désactivé : ses appareils sont déconnectés et ne reviennent pas à la levée.
+            sessionService.fermerToutesLesSessions(userId);
+        }
         audit.enregistrer(ActionAudit.COMPTE_STATUT_MODIFIE, userId,
                 ancienStatut + " → " + request.getStatut()
                         + (request.getMotif() == null ? "" : " — " + request.getMotif()));
@@ -391,6 +468,9 @@ public class UserServiceImpl implements UserService {
                 .pieceIdentiteUrl(pieceIdentiteApiUrl)
                 .statutPieceIdentite(user.getStatutPieceIdentite())
                 .motifRejetPieceIdentite(user.getMotifRejetPieceIdentite())
+                .selfieFourni(user.getSelfieUrl() != null && !user.getSelfieUrl().isBlank())
+                .dateEnvoiVerification(user.getDateEnvoiVerification())
+                .dateDecisionVerification(user.getDateDecisionVerification())
                 .createdAt(user.getCreatedAt())
                 .statut(user.getStatut())
                 .motifStatut(user.getMotifStatut())

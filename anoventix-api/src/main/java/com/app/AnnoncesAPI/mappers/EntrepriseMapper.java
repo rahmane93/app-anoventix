@@ -26,6 +26,8 @@ public interface EntrepriseMapper {
     @Mapping(target = "nombreAgents", ignore = true)
     @Mapping(target = "annoncesRestantes", ignore = true)
     @Mapping(target = "agentsRestants", ignore = true)
+    @Mapping(target = "justificatifFourni",
+             expression = "java(entreprise.getJustificatifRccmUrl() != null && !entreprise.getJustificatifRccmUrl().isBlank())")
     EntrepriseDTO toDTO(Entreprise entreprise);
     
     /**
@@ -40,6 +42,12 @@ public interface EntrepriseMapper {
     @Mapping(target = "dateCreation", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "dateModification", ignore = true)
     @Mapping(target = "photoProfil", ignore = true)
+    @Mapping(target = "statutVerification", ignore = true)
+    @Mapping(target = "justificatifRccmUrl", ignore = true)
+    @Mapping(target = "dateEnvoiVerification", ignore = true)
+    @Mapping(target = "dateDecisionVerification", ignore = true)
+    @Mapping(target = "decisionVerificationPar", ignore = true)
+    @Mapping(target = "motifRejetVerification", ignore = true)
     Entreprise toEntity(EntrepriseRequest request);
     
     /**
@@ -54,5 +62,11 @@ public interface EntrepriseMapper {
     @Mapping(target = "dateCreation", ignore = true)
     @Mapping(target = "dateModification", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "photoProfil", ignore = true)
+    @Mapping(target = "statutVerification", ignore = true)
+    @Mapping(target = "justificatifRccmUrl", ignore = true)
+    @Mapping(target = "dateEnvoiVerification", ignore = true)
+    @Mapping(target = "dateDecisionVerification", ignore = true)
+    @Mapping(target = "decisionVerificationPar", ignore = true)
+    @Mapping(target = "motifRejetVerification", ignore = true)
     void updateEntityFromRequest(EntrepriseRequest request, @MappingTarget Entreprise entreprise);
 }
