@@ -61,6 +61,11 @@ public class ApplicationExceptionHandler {
         return erreur(CodeErreur.TROP_DE_REQUETES, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ConflitException.class)
+    public ResponseEntity<ErreurApi> conflit(ConflitException ex, HttpServletRequest request) {
+        return erreur(CodeErreur.CONFLIT, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErreurApi> optimisticLock(ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
         return erreur(CodeErreur.CONFLIT,

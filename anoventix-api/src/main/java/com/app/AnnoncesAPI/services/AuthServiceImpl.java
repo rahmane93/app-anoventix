@@ -115,6 +115,12 @@ public class AuthServiceImpl implements AuthService {
         checkNotLocked(attemptKey);
         User user = resolveUserCountingFailure(identifier, attemptKey);
 
+        if (UserDetailsImpl.estAgentDUneEntrepriseDesactivee(user)
+                && encoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new DisabledException("L'entreprise " + user.getEntreprise().getNom()
+                    + " est désactivée. Contactez votre responsable.");
+        }
+
         // Vérifier le statut du compte
         // Les agents avec mustChangePassword peuvent se connecter (statut EN_ATTENTE_ACTIVATION toléré)
         boolean isAgentPendingPasswordChange = Boolean.TRUE.equals(user.getMustChangePassword())
@@ -378,6 +384,26 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
         envoyerLienActivation(compte);
+    }
+
+    @Override
+    public void relancerActivation(UUID userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.getStatut() != StatutUtilisateur.EN_ATTENTE_ACTIVATION
+                || user.isRelanceActivationEnvoyee()) {
+            return;
+        }
+        user.setActivationCode(UUID.randomUUID().toString());
+        user.setActivationCodeExpiry(System.currentTimeMillis() + ACTIVATION_TTL_MS);
+        user.setRelanceActivationEnvoyee(true);
+        userRepository.save(user);
+
+        String lien = baseUrl + "/activate?token=" + user.getActivationCode();
+        notificationService.envoyerRelanceActivation(user.getEmail(), Utility.renderEmail(
+                "templates/email-relance-activation.html",
+                Map.of("prenom", user.getPrenom() == null ? "" : user.getPrenom(), "activationLink", lien),
+                "Votre compte AnoventiX sera supprimé dans 2 jours s'il n'est pas activé.",
+                "Vous n'avez pas créé de compte sur AnoventiX ? Ignorez simplement cet e-mail."));
     }
 
     /** Génère un nouveau token d'activation (48 h), le sauvegarde et envoie l'email. */

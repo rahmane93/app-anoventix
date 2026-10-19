@@ -7,6 +7,7 @@ import { Chip } from '@/src/components/ui/chip';
 import { LeafletMap } from '@/src/components/ui/LeafletMap';
 import { Sheet } from '@/src/components/ui/sheet';
 import { AnnonceurCard } from '@/src/features/annonce/AnnonceurCard';
+import { ModerationBanner } from '@/src/features/annonce/ModerationBanner';
 import { Prix } from '@/src/components/annonce/Prix';
 import { PointFort, Section } from '@/src/features/annonce/atoms';
 import { DetailSkeleton } from '@/src/features/annonce/DetailSkeleton';
@@ -361,26 +362,7 @@ export default function AnnonceDetailScreen() {
             )}
           </View>
 
-          {isOwnAnnonce && (a.statutModeration === 'MASQUEE' || a.statutModeration === 'REJETEE') && (
-            <View style={s.moderationBanner}>
-              <Ionicons name="alert-circle" size={18} color={colors.errorText} />
-              <View style={{ flex: 1 }}>
-                <AppText style={s.moderationTitle}>
-                  {a.statutModeration === 'REJETEE'
-                    ? 'Annonce rejetée par la modération'
-                    : 'Annonce masquée par la modération'}
-                </AppText>
-                {a.motifModeration ? (
-                  <AppText style={s.moderationText}>Motif : {a.motifModeration}</AppText>
-                ) : null}
-                <AppText style={s.moderationHint}>
-                  {a.statutModeration === 'REJETEE'
-                    ? 'Elle n’est plus visible et ne peut pas être remise en ligne.'
-                    : 'Elle n’est plus visible. Corrigez-la puis contactez le support pour la remettre en ligne.'}
-                </AppText>
-              </View>
-            </View>
-          )}
+          {isOwnAnnonce && <ModerationBanner annonce={a} />}
           {a.statutModeration === 'CLOTUREE' && (
             <View style={s.clotureBanner}>
               <Ionicons name="lock-closed" size={14} color={colors.textSecondary} />
@@ -688,26 +670,7 @@ export default function AnnonceDetailScreen() {
             )}
           </View>
 
-          {isOwnAnnonce && (a.statutModeration === 'MASQUEE' || a.statutModeration === 'REJETEE') && (
-            <View style={s.moderationBanner}>
-              <Ionicons name="alert-circle" size={18} color={colors.errorText} />
-              <View style={{ flex: 1 }}>
-                <AppText style={s.moderationTitle}>
-                  {a.statutModeration === 'REJETEE'
-                    ? 'Annonce rejetée par la modération'
-                    : 'Annonce masquée par la modération'}
-                </AppText>
-                {a.motifModeration ? (
-                  <AppText style={s.moderationText}>Motif : {a.motifModeration}</AppText>
-                ) : null}
-                <AppText style={s.moderationHint}>
-                  {a.statutModeration === 'REJETEE'
-                    ? 'Elle n’est plus visible et ne peut pas être remise en ligne.'
-                    : 'Elle n’est plus visible. Corrigez-la puis contactez le support pour la remettre en ligne.'}
-                </AppText>
-              </View>
-            </View>
-          )}
+          {isOwnAnnonce && <ModerationBanner annonce={a} />}
           {a.statutModeration === 'CLOTUREE' && (
             <View style={s.clotureBanner}>
               <Ionicons name="lock-closed" size={14} color={colors.textSecondary} />
@@ -1250,16 +1213,6 @@ const s = StyleSheet.create({
     borderColor: colors.primary,
   },
   sheetBtn: { flex: 1 },
-  moderationBanner: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.errorLight,
-  },
-  moderationTitle: { fontSize: typography.sizes.sm, fontWeight: '700', color: colors.errorText },
-  moderationText: { fontSize: typography.sizes.sm, color: colors.textPrimary, marginTop: 2, lineHeight: 20 },
-  moderationHint: { fontSize: typography.sizes.xs, color: colors.textSecondary, marginTop: 4 },
   ctaClosed: { alignItems: 'center', gap: spacing.sm },
   ctaClosedText: { flex: 1, fontSize: typography.sizes.sm, color: colors.textSecondary },
 

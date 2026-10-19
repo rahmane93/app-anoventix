@@ -151,6 +151,9 @@ public class ExportDonneesService {
         // Le fichier de la pièce n'est pas joint à l'export (document d'identité sensible) : sa
         // présence est indiquée, et le titulaire peut le consulter dans l'application.
         m.put("pieceIdentiteFournie", user.getPieceIdentiteUrl() != null);
+        m.put("selfieFourni", user.getSelfieUrl() != null);
+        m.put("dateEnvoiVerification", user.getDateEnvoiVerification());
+        m.put("dateDecisionVerification", user.getDateDecisionVerification());
         m.put("annoncesMasqueesParLAdministrateur", user.isAnnoncesMasquees());
         m.put("photoProfil", user.getPhotoProfil());
         m.put("entreprise", user.getEntreprise() != null ? user.getEntreprise().getNom() : null);

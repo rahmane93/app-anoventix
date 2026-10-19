@@ -3,6 +3,7 @@ import { AlertBanner } from '@/src/components/ui/alert-banner';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { EntrepriseFormFields } from '@/src/features/entreprise/EntrepriseFormFields';
+import { VerificationAgenceCard } from '@/src/features/entreprise/VerificationAgenceCard';
 import { MiniAnnonceCard } from '@/src/features/entreprise/MiniAnnonceCard';
 import { AgentCard, InfoRow, SectionLabel } from '@/src/features/entreprise/parts';
 import { styles } from '@/src/features/entreprise/styles';
@@ -244,6 +245,15 @@ export default function EntrepriseScreen() {
           <InfoRow icon="location-outline" label="Adresse" value={entreprise.adresse} />
           <InfoRow icon="document-text-outline" label="N° RCCM" value={entreprise.numeroRCCM} />
         </View>
+      ) : null}
+
+      {canManageEntreprise ? (
+        <VerificationAgenceCard
+          entrepriseId={entreprise.id}
+          statut={entreprise.statutVerification}
+          motifRejet={entreprise.motifRejetVerification}
+          onEnvoye={onRefresh}
+        />
       ) : null}
 
       <View style={styles.entrepriseStatsRow}>

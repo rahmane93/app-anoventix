@@ -144,7 +144,7 @@ class SuppressionCompteAdminTest {
                 mock(MessageRepository.class), mock(NotificationService.class), mock(AnnonceMapper.class),
                 mock(EmailNotificationService.class),
                 mock(AnnonceExpirationService.class), suppression, mock(AuditService.class),
-                mock(SessionService.class));
+                mock(SessionService.class), mock(ModerationAnnonceService.class));
     }
 
     @Test

@@ -40,6 +40,9 @@ public class UserDetailsImpl implements UserDetails {
     /** Timestamp ms du dernier changement de mot de passe (null = jamais). */
     private Long passwordChangedAt;
 
+    /** Agent dont l'entreprise est désactivée : sans accès tant qu'elle ne l'est pas à nouveau (DEC-12). */
+    private boolean entrepriseDesactivee;
+
     public boolean isMustChangePassword() {
         return mustChangePassword;
     }
@@ -61,6 +64,7 @@ public class UserDetailsImpl implements UserDetails {
                 Boolean.TRUE.equals(user.getMustChangePassword()),
                 authorities);
         details.passwordChangedAt = user.getPasswordChangedAt();
+        details.entrepriseDesactivee = estAgentDUneEntrepriseDesactivee(user);
         return details;
     }
 
@@ -105,8 +109,22 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         // Compte actif, OU agent en attente de changement de mot de passe initial
-        return statut == StatutUtilisateur.ACTIF
-                || (statut == StatutUtilisateur.EN_ATTENTE_ACTIVATION && mustChangePassword);
+        return !entrepriseDesactivee
+                && (statut == StatutUtilisateur.ACTIF
+                    || (statut == StatutUtilisateur.EN_ATTENTE_ACTIVATION && mustChangePassword));
+    }
+
+    /**
+     * Le professionnel propriétaire garde l'accès quand son entreprise est désactivée (il consulte sa
+     * situation et contacte le support) ; ses agents l'ont perdu (RG-01-42). Statut du compte inchangé.
+     */
+    public static boolean estAgentDUneEntrepriseDesactivee(User user) {
+        com.app.AnnoncesAPI.entities.Entreprise entreprise = user.getEntreprise();
+        if (entreprise == null || !Boolean.FALSE.equals(entreprise.getActive())) {
+            return false;
+        }
+        User proprietaire = entreprise.getAnnonceurProfessionnel();
+        return proprietaire == null || !proprietaire.getId().equals(user.getId());
     }
 
     @Override

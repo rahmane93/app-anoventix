@@ -20,4 +20,8 @@ public class AdminStatsResponse {
     private long annoncesRejetees;
     private long signalementsEnAttente;
     private long messagesSignalesEnAttente;
+    /** Annonces masquées dont le propriétaire attend un réexamen (DEC-09). */
+    private long reexamensEnAttente;
+    /** Entreprises dont le justificatif RCCM attend une décision (DEC-04). */
+    private long entreprisesAVerifier;
 }

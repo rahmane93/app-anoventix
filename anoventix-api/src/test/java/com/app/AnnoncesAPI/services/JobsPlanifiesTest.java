@@ -52,7 +52,9 @@ class JobsPlanifiesTest {
         b.setReferenceAnnonce("VE-0101-ABCD");
         b.setActif(true);
         b.setDateExpiration(expiration);
-        b.setOwner(new User());
+        User proprietaire = new User();
+        proprietaire.setStatut(StatutUtilisateur.ACTIF);
+        b.setOwner(proprietaire);
         return b;
     }
 

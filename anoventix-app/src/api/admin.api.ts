@@ -6,6 +6,7 @@ import type {
     Avertissement,
     ChangePieceIdentiteStatutRequest,
     ChangeStatutUserRequest,
+    DecisionSignalementRequest,
     EmettrAvertissementRequest,
     MessageSignale,
     QuotasPro,
@@ -64,6 +65,17 @@ export async function traiterSignalement(
   body: TraiterSignalementRequest,
 ): Promise<void> {
   await apiClient.put(`/api/admin/signalements/${id}/traiter`, body);
+}
+
+/** Décision unique : action sur l'annonce et clôture de ses signalements en une seule opération. */
+export async function deciderSignalement(id: number, body: DecisionSignalementRequest): Promise<void> {
+  await apiClient.put(`/api/admin/signalements/${id}/decision`, body);
+}
+
+/** File « Réexamens » : annonces masquées dont le propriétaire attend une décision. */
+export async function getReexamens(page = 0, size = 20): Promise<AdminAnnoncesPage> {
+  const res = await apiClient.get<AdminAnnoncesPage>('/api/admin/reexamens', { params: { page, size } });
+  return res.data;
 }
 
 export async function deleteSignalement(id: number): Promise<void> {

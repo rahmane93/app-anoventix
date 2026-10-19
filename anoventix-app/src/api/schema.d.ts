@@ -90,7 +90,7 @@ export interface paths {
         get?: never;
         /**
          * Remettre une annonce en ligne
-         * @description Remet une annonce masquée ou rejetée en ligne. L'action est enregistrée dans l'historique.
+         * @description Remet une annonce masquée en ligne. Une annonce rejetée ne peut pas être remise en ligne (409). L'action est enregistrée dans l'historique.
          */
         put: operations["publierAnnonce"];
         post?: never;
@@ -160,6 +160,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/entreprises/a-verifier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * File des entreprises à vérifier
+         * @description Entreprises dont le justificatif RCCM attend une décision, des plus anciennes aux plus récentes.
+         */
+        get: operations["getEntreprisesAVerifier"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/entreprises/{entrepriseId}/quotas": {
         parameters: {
             query?: never;
@@ -173,6 +193,26 @@ export interface paths {
          * @description Une valeur nulle ramène le quota à la valeur globale.
          */
         put: operations["setQuotasEntreprise"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/entreprises/{id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Vérifier ou refuser une entreprise
+         * @description VERIFIEE : badge « Agence vérifiée », nom et RCCM figés. REJETEE : motif obligatoire, communiqué au propriétaire. Un email part dans les deux cas.
+         */
+        put: operations["deciderVerificationEntreprise"];
         post?: never;
         delete?: never;
         options?: never;
@@ -281,6 +321,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reexamens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * File des réexamens
+         * @description Annonces masquées dont le propriétaire a demandé un réexamen, de la plus ancienne à la plus récente.
+         */
+        get: operations["getReexamens"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/signalements": {
         parameters: {
             query?: never;
@@ -316,6 +376,26 @@ export interface paths {
          * @description Supprime définitivement un signalement. Réservé à l'ADMIN et au MODÉRATEUR.
          */
         delete: operations["supprimerSignalement"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/signalements/{id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Décider d'un signalement
+         * @description Masque, rejette ou remet l'annonce en ligne, ou classe le signalement sans suite. La décision sur l'annonce et la clôture de tous ses signalements en attente se font en une seule opération. Le motif est obligatoire pour masquer ou rejeter.
+         */
+        put: operations["deciderSignalement"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1057,6 +1137,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/biens-immo/{id}/reexamen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Demander le réexamen d'une annonce masquée
+         * @description Le propriétaire (ou son entreprise) demande à la modération de réexaminer une annonce masquée après l'avoir corrigée. Message facultatif (500 caractères). Une seule demande en cours, trois demandes au plus par annonce.
+         */
+        post: operations["demanderReexamen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/biens-immo/{id}/signaler": {
         parameters: {
             query?: never;
@@ -1377,6 +1477,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/entreprises/{id}/justificatif": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Servir le justificatif RCCM
+         * @description Propriétaire de l'entreprise ou modération uniquement (no-store).
+         */
+        get: operations["getJustificatif"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/entreprises/{id}/photo": {
         parameters: {
             query?: never;
@@ -1431,6 +1551,26 @@ export interface paths {
          */
         put: operations["enableEntreprise"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/entreprises/{id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Demander la vérification de l'entreprise
+         * @description Le propriétaire envoie l'extrait RCCM en photo (image uniquement, 10 Mo au plus, champ « justificatif »). Son identité doit déjà être vérifiée. Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.
+         */
+        post: operations["demanderVerification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1918,11 +2058,31 @@ export interface paths {
         put?: never;
         /**
          * Uploader sa pièce d'identité
-         * @description Envoi en multipart/form-data.
-         *     Champs : file (obligatoire, image), typePieceIdentite (obligatoire), numeroPieceIdentite (obligatoire).
-         *     Le statut passe automatiquement à EN_ATTENTE jusqu'à validation par un admin/modérateur.
+         * @description Envoi en multipart/form-data du dossier de vérification.
+         *     Champs : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.
+         *     La pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.
          */
         post: operations["uploadPieceIdentite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/selfie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ajouter le selfie à un dossier en attente
+         * @description Transitoire : pour un dossier EN_ATTENTE envoyé avant la mise en service du selfie. 422 dans tout autre cas.
+         */
+        post: operations["uploadSelfie"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2029,6 +2189,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{userId}/selfie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Servir le selfie de vérification
+         * @description Image du selfie (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement. Jamais affiché publiquement.
+         */
+        get: operations["getSelfie"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/uploads/public/**": {
         parameters: {
             query?: never;
@@ -2067,7 +2247,11 @@ export interface components {
             /** Format: date-time */
             dateExpiration?: string;
             /** Format: date-time */
+            dateMasquage?: string;
+            /** Format: date-time */
             dateModification?: string;
+            /** Format: date-time */
+            dateReexamen?: string;
             description?: string;
             documentsDisponibles?: string;
             fraisHonoraire?: number;
@@ -2076,7 +2260,9 @@ export interface components {
             latitude?: number;
             localisation?: components["schemas"]["LocalisationDTO"];
             longitude?: number;
+            masquageAutomatique?: boolean;
             medias?: components["schemas"]["MediaDTO"][];
+            messageReexamen?: string;
             /** @enum {string} */
             motifCloture?: "VENDU" | "LOUE" | "RETIRE" | "EXPIREE";
             motifModeration?: string;
@@ -2087,6 +2273,8 @@ export interface components {
             /** Format: int32 */
             nbPieces?: number;
             /** Format: int32 */
+            nbReexamens?: number;
+            /** Format: int32 */
             nbSallesBain?: number;
             prix?: number;
             prixRevise?: number;
@@ -2096,6 +2284,7 @@ export interface components {
             proprietaireMasque?: boolean;
             proprietaireNom?: string;
             publicId?: string;
+            reexamenDemande?: boolean;
             referenceAnnonce?: string;
             slug?: string;
             /** @enum {string} */
@@ -2126,9 +2315,13 @@ export interface components {
             /** Format: int64 */
             annoncesRejetees?: number;
             /** Format: int64 */
+            entreprisesAVerifier?: number;
+            /** Format: int64 */
             messagesSignalesEnAttente?: number;
             /** Format: int64 */
             piecesIdentiteEnAttente?: number;
+            /** Format: int64 */
+            reexamensEnAttente?: number;
             /** Format: int64 */
             signalementsEnAttente?: number;
             /** Format: int64 */
@@ -2190,7 +2383,11 @@ export interface components {
             /** Format: date-time */
             dateExpiration?: string;
             /** Format: date-time */
+            dateMasquage?: string;
+            /** Format: date-time */
             dateModification?: string;
+            /** Format: date-time */
+            dateReexamen?: string;
             description?: string;
             documentsDisponibles?: string;
             fraisHonoraire?: number;
@@ -2199,16 +2396,21 @@ export interface components {
             latitude?: number;
             localisation?: components["schemas"]["LocalisationDTO"];
             longitude?: number;
+            masquageAutomatique?: boolean;
             medias?: components["schemas"]["MediaDTO"][];
+            messageReexamen?: string;
             /** @enum {string} */
             motifCloture?: "VENDU" | "LOUE" | "RETIRE" | "EXPIREE";
             motifModeration?: string;
             /** Format: int32 */
             nbFavoris?: number;
+            /** Format: int32 */
+            nbReexamens?: number;
             prix?: number;
             prixRevise?: number;
             proprietaireMasque?: boolean;
             publicId?: string;
+            reexamenDemande?: boolean;
             referenceAnnonce?: string;
             slug?: string;
             /** @enum {string} */
@@ -2231,6 +2433,7 @@ export interface components {
             vueCount?: number;
         };
         AnnonceurDTO: {
+            agenceVerifiee?: boolean;
             /** Format: uuid */
             entrepriseId?: string;
             nom?: string;
@@ -2246,11 +2449,11 @@ export interface components {
             acteurLibelle?: string;
             acteurRole?: string;
             /** @enum {string} */
-            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE";
+            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
             adresseIp?: string;
             cibleId?: string;
             /** @enum {string} */
-            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE";
+            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE";
             /** Format: date-time */
             date?: string;
             /** Format: int64 */
@@ -2349,6 +2552,17 @@ export interface components {
             /** Format: int64 */
             annonceId: number;
         };
+        DecisionSignalementRequest: {
+            /** @enum {string} */
+            decision: "MASQUER" | "REJETER" | "REMETTRE_EN_LIGNE" | "CLASSER";
+            motif?: string;
+            noteAdmin?: string;
+        };
+        DecisionVerificationEntrepriseRequest: {
+            motif?: string;
+            /** @enum {string} */
+            statut: "NON_VERIFIEE" | "EN_ATTENTE" | "VERIFIEE" | "REJETEE";
+        };
         DoubleAuthentificationResponse: {
             /** Format: int64 */
             expireDansSecondes?: number;
@@ -2371,11 +2585,17 @@ export interface components {
             /** Format: date-time */
             dateCreation?: string;
             /** Format: date-time */
+            dateDecisionVerification?: string;
+            /** Format: date-time */
+            dateEnvoiVerification?: string;
+            /** Format: date-time */
             dateModification?: string;
             description?: string;
             email?: string;
             /** Format: uuid */
             id?: string;
+            justificatifFourni?: boolean;
+            motifRejetVerification?: string;
             nom?: string;
             /** Format: int32 */
             nombreAgents?: number;
@@ -2387,6 +2607,8 @@ export interface components {
             /** Format: int32 */
             quotaAnnonces?: number;
             quotaAnnoncesPersonnalise?: boolean;
+            /** @enum {string} */
+            statutVerification?: "NON_VERIFIEE" | "EN_ATTENTE" | "VERIFIEE" | "REJETEE";
             telephone?: string;
         };
         EntrepriseProfilDTO: {
@@ -2410,6 +2632,7 @@ export interface components {
             nombreAgents?: number;
             photoProfil?: string;
             telephone?: string;
+            verifiee?: boolean;
         };
         EntrepriseRequest: {
             adresse: string;
@@ -2748,6 +2971,9 @@ export interface components {
             /** Format: int32 */
             quotaAnnonces?: number;
         };
+        ReexamenRequest: {
+            message?: string;
+        };
         RefreshResponse: {
             refreshToken?: string;
             token?: string;
@@ -2793,6 +3019,7 @@ export interface components {
         SignalementResponse: {
             /** Format: int64 */
             annonceId?: number;
+            annonceMasqueeAutomatiquement?: boolean;
             annule?: boolean;
             commentaire?: string;
             /** Format: date-time */
@@ -2871,6 +3098,10 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
+            dateDecisionVerification?: string;
+            /** Format: date-time */
+            dateEnvoiVerification?: string;
+            /** Format: date-time */
             dateMasquageAnnonces?: string;
             email?: string;
             /** Format: uuid */
@@ -2892,6 +3123,7 @@ export interface components {
             pieceIdentiteUrl?: string;
             prenom?: string;
             role?: string;
+            selfieFourni?: boolean;
             /** @enum {string} */
             statut?: "EN_ATTENTE_ACTIVATION" | "ACTIF" | "INACTIF" | "SUSPENDU";
             /** @enum {string} */
@@ -3081,8 +3313,8 @@ export interface operations {
                 page?: number;
                 size?: number;
                 acteurId?: string;
-                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE";
-                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE";
+                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE";
                 cibleId?: string;
             };
             header?: never;
@@ -3127,6 +3359,29 @@ export interface operations {
             };
         };
     };
+    getEntreprisesAVerifier: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseEntrepriseDTO"];
+                };
+            };
+        };
+    };
     setQuotasEntreprise: {
         parameters: {
             query?: never;
@@ -3139,6 +3394,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["QuotasDTO"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntrepriseDTO"];
+                };
+            };
+        };
+    };
+    deciderVerificationEntreprise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionVerificationEntrepriseRequest"];
             };
         };
         responses: {
@@ -3287,6 +3568,29 @@ export interface operations {
             };
         };
     };
+    getReexamens: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseAdminAnnonceDTO"];
+                };
+            };
+        };
+    };
     getSignalements: {
         parameters: {
             query?: {
@@ -3328,6 +3632,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    deciderSignalement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionSignalementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SignalementResponse"];
+                };
             };
         };
     };
@@ -4386,6 +4716,30 @@ export interface operations {
             };
         };
     };
+    demanderReexamen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReexamenRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     signalerAnnonce: {
         parameters: {
             query?: never;
@@ -4842,6 +5196,28 @@ export interface operations {
             };
         };
     };
+    getJustificatif: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     uploadPhoto_1: {
         parameters: {
             query?: never;
@@ -4908,6 +5284,35 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntrepriseDTO"];
+                };
+            };
+        };
+    };
+    demanderVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    justificatif?: string;
+                };
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -5760,7 +6165,36 @@ export interface operations {
             content: {
                 "multipart/form-data": {
                     /** Format: binary */
-                    file: string;
+                    file?: string;
+                    /** Format: binary */
+                    selfie?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserDTO"];
+                };
+            };
+        };
+    };
+    uploadSelfie: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    selfie?: string;
                 };
             };
         };
@@ -5873,6 +6307,28 @@ export interface operations {
         };
     };
     getPieceIdentite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    getSelfie: {
         parameters: {
             query?: never;
             header?: never;

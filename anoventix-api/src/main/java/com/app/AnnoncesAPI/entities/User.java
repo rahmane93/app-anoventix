@@ -95,6 +95,20 @@ public class User {
 
     private String motifRejetPieceIdentite;
 
+    /** Selfie de vérification (EVO-01) : même dossier privé et mêmes protections que la pièce. */
+    @Column(length = 500)
+    private String selfieUrl;
+
+    /** Relance d'activation (E19) envoyée à J+5 : une seule par compte (DEC-06). */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean relanceActivationEnvoyee = false;
+
+    private LocalDateTime dateEnvoiVerification;
+    private LocalDateTime dateDecisionVerification;
+
+    @Column(length = 100)
+    private String decisionVerificationPar;
+
     // --- Sécurité / authentification ---
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

@@ -74,6 +74,20 @@ const MOTIFS_REJET_PIECE = [
   'Document expiré',
   'Nom différent de celui du compte',
   'Document incomplet ou recadré',
+  // Selfie de vérification (RG-02-30) : le nouvel envoi contient toujours la pièce ET le selfie.
+  'Selfie flou ou trop sombre',
+  'Visage non visible ou couvert',
+  'Pièce non visible sur le selfie',
+  'Le visage ne correspond pas à la pièce',
+  'Photo d’écran ou photo d’une photo',
+];
+
+// Ce que la modération contrôle avant de valider un dossier (RG-02-29).
+const CONTROLES_DOSSIER = [
+  'Le visage du selfie correspond à la photo de la pièce.',
+  'La pièce tenue est bien celle envoyée (même type, même apparence).',
+  'Le nom de la pièce correspond à celui du compte.',
+  'Le selfie n’est pas une photo d’écran ou la photo d’une photo.',
 ];
 
 // ─── Modale de rejet pièce ────────────────────────────────────────────────────
@@ -399,6 +413,7 @@ export default function AdminUserDetail() {
   const [annoncesLoading, setAnnoncesLoading] = useState(false);
   const [roleLoading, setRoleLoading] = useState<string | null>(null);
   const [viewingPiece, setViewingPiece] = useState(false);
+  const [viewingSelfie, setViewingSelfie] = useState(false);
 
   const { profile } = useUserStore(useShallow((s) => ({ profile: s.profile })));
   // Même source de rôles que le layout d'administration.
@@ -627,6 +642,9 @@ export default function AdminUserDetail() {
   // Pièce en attente : c'est l'action attendue, elle passe en tête de page.
   const pieceEnAttente = u.statutPieceIdentite === 'EN_ATTENTE';
   const pieceUri = `${API_BASE_URL}/api/users/${u.id}/piece-identite?v=${encodeURIComponent(u.numeroPieceIdentite ?? '')}`;
+  const selfieUri = `${API_BASE_URL}/api/users/${u.id}/selfie?v=${encodeURIComponent(u.dateEnvoiVerification ?? '')}`;
+  const selfieFourni = Boolean(u.selfieFourni);
+  const dossierComplet = selfieFourni;
   const pieceSection = u.typePieceIdentite ? (
     <Section title="Pièce d'identité">
       {/* Nom déclaré à côté du document : comparaison directe. */}
@@ -639,23 +657,65 @@ export default function AdminUserDetail() {
         last={!u.motifRejetPieceIdentite}
       />
       <FieldRow label="Motif du rejet" value={u.motifRejetPieceIdentite} last />
+      {u.dateEnvoiVerification ? (
+        <FieldRow label="Envoyé le" value={new Date(u.dateEnvoiVerification).toLocaleString('fr-FR')} />
+      ) : null}
+      {!selfieFourni ? (
+        <FieldRow label="Selfie" value={<StatusBadge label="Selfie manquant" tone="warning" icon="alert-circle" />} />
+      ) : null}
       <View style={s.pieceBody}>
-        <TouchableOpacity
-          onPress={() => setViewingPiece(true)}
-          activeOpacity={0.85}
-          accessibilityRole="imagebutton"
-          accessibilityLabel="Agrandir la pièce d'identité"
-        >
-          <Image
-            source={{ uri: pieceUri, headers: { Authorization: `Bearer ${token}` } }}
-            style={s.pieceImage}
-            contentFit="contain"
-          />
-          <View style={s.pieceImageOverlay}>
-            <Ionicons name="expand-outline" size={16} color={colors.white} />
-            <AppText style={s.pieceImageOverlayText}>Agrandir</AppText>
+        {/* Pièce et selfie côte à côte, avec zoom : comparaison directe (RG-02-29). */}
+        <View style={s.pieceDuo}>
+          <TouchableOpacity
+            style={s.flex}
+            onPress={() => setViewingPiece(true)}
+            activeOpacity={0.85}
+            accessibilityRole="imagebutton"
+            accessibilityLabel="Agrandir la pièce d'identité"
+          >
+            <AppText style={s.pieceLegende}>Pièce</AppText>
+            <Image
+              source={{ uri: pieceUri, headers: { Authorization: `Bearer ${token}` } }}
+              style={s.pieceImage}
+              contentFit="contain"
+            />
+            <View style={s.pieceImageOverlay}>
+              <Ionicons name="expand-outline" size={16} color={colors.white} />
+              <AppText style={s.pieceImageOverlayText}>Agrandir</AppText>
+            </View>
+          </TouchableOpacity>
+          {selfieFourni ? (
+            <TouchableOpacity
+              style={s.flex}
+              onPress={() => setViewingSelfie(true)}
+              activeOpacity={0.85}
+              accessibilityRole="imagebutton"
+              accessibilityLabel="Agrandir le selfie"
+            >
+              <AppText style={s.pieceLegende}>Selfie</AppText>
+              <Image
+                source={{ uri: selfieUri, headers: { Authorization: `Bearer ${token}` } }}
+                style={s.pieceImage}
+                contentFit="contain"
+              />
+              <View style={s.pieceImageOverlay}>
+                <Ionicons name="expand-outline" size={16} color={colors.white} />
+                <AppText style={s.pieceImageOverlayText}>Agrandir</AppText>
+              </View>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        {canActOnUser && pieceEnAttente ? (
+          <View style={s.controles}>
+            <AppText style={s.controlesTitre}>À vérifier avant de valider</AppText>
+            {CONTROLES_DOSSIER.map((c) => (
+              <View key={c} style={s.controle}>
+                <Ionicons name="checkmark-circle-outline" size={14} color={colors.textSecondary} />
+                <AppText style={s.controleTexte}>{c}</AppText>
+              </View>
+            ))}
           </View>
-        </TouchableOpacity>
+        ) : null}
         {canActOnUser && pieceEnAttente ? (
           <View style={s.twoButtons}>
             <Button
@@ -675,6 +735,7 @@ export default function AdminUserDetail() {
               style={s.flex}
               leftIcon={<Ionicons name="checkmark-circle-outline" size={16} color={colors.white} />}
               onPress={handleValidePiece}
+              disabled={!dossierComplet}
               isLoading={actionLoading}
             />
           </View>
@@ -912,6 +973,24 @@ export default function AdminUserDetail() {
 
       </ScrollView>
 
+      {/* ── Visualisation du selfie ── */}
+      <FullscreenOverlay
+        visible={viewingSelfie}
+        onRequestClose={() => setViewingSelfie(false)}
+        backgroundColor="rgba(0,0,0,0.92)"
+      >
+        <View style={s.pieceModal}>
+          <TouchableOpacity style={s.pieceModalClose} onPress={() => setViewingSelfie(false)} accessibilityRole="button" accessibilityLabel="Fermer le selfie">
+            <Ionicons name="close" size={24} color={colors.white} />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: selfieUri, headers: { Authorization: `Bearer ${token}` } }}
+            style={s.pieceModalImage}
+            contentFit="contain"
+          />
+        </View>
+      </FullscreenOverlay>
+
       {/* ── Visualisation pièce d'identité ── */}
       <FullscreenOverlay
         visible={viewingPiece}
@@ -1001,6 +1080,12 @@ const s = StyleSheet.create({
 
   // Pièce d'identité
   pieceBody: { padding: spacing.base, gap: spacing.md },
+  pieceDuo: { flexDirection: 'row', gap: spacing.sm },
+  pieceLegende: { fontSize: typography.sizes.xs, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 },
+  controles: { gap: 4, padding: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.background },
+  controlesTitre: { fontSize: typography.sizes.xs, fontWeight: '700', color: colors.textSecondary },
+  controle: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  controleTexte: { flex: 1, fontSize: typography.sizes.xs, color: colors.textSecondary, lineHeight: 17 },
   pieceImage: { width: '100%', height: 200, borderRadius: radius.sm, backgroundColor: colors.background },
   pieceImageOverlay: {
     position: 'absolute', bottom: 8, right: 8,

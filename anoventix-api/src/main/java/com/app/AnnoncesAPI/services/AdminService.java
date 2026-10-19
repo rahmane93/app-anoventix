@@ -32,6 +32,16 @@ public interface AdminService {
     /** Traite un signalement (EN_ATTENTE → TRAITE ou IGNORE). */
     SignalementResponse traiterSignalement(Long id, TraiterSignalementRequest request, String adminUsername);
 
+    /**
+     * Décide d'un signalement : masquer, rejeter, remettre en ligne ou classer sans suite. La décision
+     * sur l'annonce et la clôture de ses signalements se font dans une seule transaction.
+     */
+    SignalementResponse deciderSignalement(Long id, com.app.AnnoncesAPI.payload.request.DecisionSignalementRequest request,
+                                           String adminUsername);
+
+    /** File « Réexamens » : annonces masquées dont le propriétaire attend une décision, des plus anciennes aux plus récentes. */
+    Page<com.app.AnnoncesAPI.dto.AdminAnnonceDTO> getReexamens(Pageable pageable);
+
     void supprimerSignalement(Long id);
 
     /** Masque une annonce (statut=MASQUEE) et enregistre dans l'historique. */

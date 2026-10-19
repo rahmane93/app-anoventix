@@ -21,9 +21,8 @@ import com.app.AnnoncesAPI.services.media.MediaService;
  * conservation. Tâche quotidienne de 04:00 ; chaque purge est indépendante (l'échec de l'une
  * n'empêche pas les autres) et idempotente.
  *
- * Reste à venir, faute des dates nécessaires : fichiers de la pièce d'identité et du selfie (30 jours
- * après la décision, EVO-01 apporte la date de décision) et comptes inactifs depuis 2 ans (la date de
- * dernière connexion n'est pas enregistrée).
+ * Reste à venir, faute de la date nécessaire : comptes inactifs depuis 2 ans (la date de dernière
+ * connexion n'est pas enregistrée).
  */
 @Service
 public class PurgeConservationService {
@@ -40,6 +39,8 @@ public class PurgeConservationService {
     static final int ANS_DECISIONS = 3;
     /** Adresses IP du journal : 90 jours. */
     static final int JOURS_ADRESSE_IP = 90;
+    /** Fichiers de la pièce d'identité et du selfie : 30 jours après la décision (RG-02-41). */
+    static final int JOURS_FICHIERS_VERIFICATION = 30;
     /** Photos traitées par passage : borne la durée d'une purge, la suivante reprend. */
     static final int LOT_PHOTOS = 500;
 
@@ -61,6 +62,8 @@ public class PurgeConservationService {
         LocalDateTime maintenant = LocalDateTime.now();
         executer("photos des annonces terminées", () -> purgerPhotos(maintenant.minusMonths(MOIS_ANNONCE_TERMINEE)));
         executer("historique des annonces terminées", () -> purgerHistorique(maintenant.minusMonths(MOIS_ANNONCE_TERMINEE)));
+        executer("fichiers de vérification d'identité",
+                () -> purgerFichiersVerification(maintenant.minusDays(JOURS_FICHIERS_VERIFICATION)));
         executer("conversations", () -> purgerConversations(maintenant));
         executer("signalements traités", () -> purgerSignalements(maintenant.minusYears(ANS_DECISIONS)));
         executer("avertissements", () -> purgerAvertissements(maintenant.minusYears(ANS_DECISIONS)));
@@ -100,6 +103,29 @@ public class PurgeConservationService {
                   AND ((a.motif_cloture IS NOT NULL AND a.date_cloture < ?)
                     OR (a.statut_moderation = 'DESACTIVEE' AND a.date_modification < ?))
                 """, limite, limite);
+    }
+
+    // ─── Vérification d'identité ───────────────────────────────────────────
+
+    /**
+     * Pièce et selfie décidés (validés ou rejetés) depuis plus de 30 jours : les fichiers sont supprimés
+     * du disque ; on garde le type, le numéro, le statut, les dates et l'auteur de la décision.
+     */
+    int purgerFichiersVerification(LocalDateTime limite) {
+        List<java.util.Map<String, Object>> dossiers = jdbc.queryForList("""
+                SELECT id, piece_identite_url, selfie_url FROM account
+                WHERE date_decision_verification < ?
+                  AND (piece_identite_url IS NOT NULL OR selfie_url IS NOT NULL)
+                ORDER BY date_decision_verification
+                LIMIT ?
+                """, limite, LOT_PHOTOS);
+        for (java.util.Map<String, Object> d : dossiers) {
+            // Fichiers d'abord : une fois les chemins effacés, ils seraient introuvables.
+            mediaService.deletePieceIdentite((String) d.get("piece_identite_url"));
+            mediaService.deletePieceIdentite((String) d.get("selfie_url"));
+            jdbc.update("UPDATE account SET piece_identite_url = NULL, selfie_url = NULL WHERE id = ?", d.get("id"));
+        }
+        return dossiers.size();
     }
 
     // ─── Messagerie ────────────────────────────────────────────────────────

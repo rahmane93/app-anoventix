@@ -26,6 +26,7 @@ import com.app.AnnoncesAPI.dto.MediaDTO;
 import com.app.AnnoncesAPI.entities.Entreprise;
 import com.app.AnnoncesAPI.entities.Role;
 import com.app.AnnoncesAPI.entities.User;
+import com.app.AnnoncesAPI.enums.StatutVerificationEntreprise;
 import com.app.AnnoncesAPI.enums.StatutUtilisateur;
 import com.app.AnnoncesAPI.enums.TypeRole;
 import com.app.AnnoncesAPI.exceptions.ResourceNotFoundException;
@@ -106,8 +107,9 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Vous avez déjà une entreprise enregistrée");
         }
         
-        // Vérifier que le numéro RCCM n'existe pas déjà
-        if (request.getNumeroRCCM() != null && entrepriseRepository.existsByNumeroRCCM(request.getNumeroRCCM())) {
+        // Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28).
+        if (request.getNumeroRCCM() != null && entrepriseRepository.existsByNumeroRCCMAndStatutVerification(
+                request.getNumeroRCCM(), StatutVerificationEntreprise.VERIFIEE)) {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
@@ -148,9 +150,18 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new UnauthorizedActionException("Vous n'êtes pas autorisé à modifier cette entreprise");
         }
         
-        // Vérifier le numéro RCCM si modifié
+        // Après vérification, le nom et le RCCM sont figés : le support s'en charge (RG-07-27).
+        if (entreprise.getStatutVerification() == StatutVerificationEntreprise.VERIFIEE
+                && ((request.getNom() != null && !request.getNom().equals(entreprise.getNom()))
+                    || (request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM())))) {
+            throw new IllegalStateException(
+                    "Votre agence est vérifiée : le nom et le numéro RCCM ne peuvent plus être modifiés. "
+                    + "Contactez le support pour les changer.");
+        }
+        // Le RCCM n'est réservé que par une entreprise vérifiée (RG-07-28).
         if (request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM())
-                && entrepriseRepository.existsByNumeroRCCM(request.getNumeroRCCM())) {
+                && entrepriseRepository.existsByNumeroRCCMAndStatutVerificationAndIdNot(
+                        request.getNumeroRCCM(), StatutVerificationEntreprise.VERIFIEE, id)) {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
@@ -161,7 +172,12 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé par une autre entreprise");
         }
         
+        boolean rccmChange = request.getNumeroRCCM() != null && !request.getNumeroRCCM().equals(entreprise.getNumeroRCCM());
         entrepriseMapper.updateEntityFromRequest(request, entreprise);
+        // Un RCCM modifié pendant l'examen invalide la demande en cours : à renvoyer.
+        if (rccmChange && entreprise.getStatutVerification() == StatutVerificationEntreprise.EN_ATTENTE) {
+            entreprise.setStatutVerification(StatutVerificationEntreprise.NON_VERIFIEE);
+        }
         Entreprise updated = entrepriseRepository.save(entreprise);
         
         logger.info("Entreprise mise à jour avec succès: {}", updated.getNom());
@@ -529,6 +545,10 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     public com.app.AnnoncesAPI.dto.EntrepriseProfilDTO getEntrepriseProfil(UUID entrepriseId, Pageable pageable) {
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
+        // Entreprise désactivée : la page publique se ferme (DEC-12, RG-07-22).
+        if (Boolean.FALSE.equals(entreprise.getActive())) {
+            throw new ResourceNotFoundException("Cette agence n'est plus disponible.");
+        }
         EntrepriseDTO entrepriseDTO = quotaService.toDTO(entreprise);
         // Endpoint public : uniquement les annonces visibles du public.
         Page<AnnonceDTO> annonces = bienImmoRepository

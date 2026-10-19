@@ -22,6 +22,10 @@ export interface UserProfile {
   pieceIdentiteUrl: string | null;
   statutPieceIdentite: StatutPieceIdentite | null;
   motifRejetPieceIdentite: string | null;
+  /** Selfie de vérification enregistré (EVO-01). Faux pour un dossier d'avant la mise en service du selfie. */
+  selfieFourni?: boolean;
+  dateEnvoiVerification?: string | null;
+  dateDecisionVerification?: string | null;
   statut: StatutCompte;
   motifStatut: string | null;
   /** Annonces du compte masquées par l'administrateur (masquage système). */

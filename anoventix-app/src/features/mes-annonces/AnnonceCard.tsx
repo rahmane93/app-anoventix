@@ -2,7 +2,7 @@ import { annonceHref } from '@/src/lib/annonce-url';
 import { Image } from 'expo-image';
 import { Prix } from '@/src/components/annonce/Prix';
 import { useAnnonceStore } from '@/src/stores/annonce.store';
-import { getStatutChip } from '@/src/lib/annonce-statut';
+import { estRejetee, getEtatReexamen, getStatutChip } from '@/src/lib/annonce-statut';
 import { isLoyerMensuel } from '@/src/lib/bien';
 import { colors, radius, shadows, spacing, typography, typeAnnonceColors } from '@/src/theme';
 import type { BienImmo } from '@/src/types/annonce.types';
@@ -15,6 +15,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { useBreakpoint } from '@/src/lib/responsive';
 import { CloturerModal } from './CloturerModal';
+import { ReexamenModal } from './ReexamenModal';
 import { appAlert } from '@/src/components/ui/app-alert';
 import { Button } from '@/src/components/ui/button';
 
@@ -27,6 +28,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
   const reactiverAnnonce = useAnnonceStore((s) => s.reactiverAnnonce);
   const toggleActifAnnonce = useAnnonceStore((s) => s.toggleActifAnnonce);
   const [cloturerOpen, setCloturerOpen] = useState(false);
+  const [reexamenOpen, setReexamenOpen] = useState(false);
   // Web desktop : carte de grille (marges portées par la grille).
   const { isDesktop } = useBreakpoint();
   const [deleting, setDeleting] = useState(false);
@@ -37,6 +39,9 @@ export const AnnonceCard = React.memo(function AnnonceCard({
   const isExpiree = item.motifCloture === 'EXPIREE';
   // En ligne côté serveur (publiée, non clôturée) ; « actif » distingue visible / masquée.
   const isPubliee = item.statutModeration === 'PUBLIEE';
+  // Masquée : corrigeable puis réexamen (DEC-09). Rejetée : définitif, seule la suppression reste (DEC-10).
+  const rejetee = estRejetee(item);
+  const etatReexamen = getEtatReexamen(item);
 
   const handleReactiver = async () => {
     setReactivating(true);
@@ -179,6 +184,9 @@ export const AnnonceCard = React.memo(function AnnonceCard({
             {item.motifModeration
               ? `Motif de la modération : ${item.motifModeration}`
               : 'Annonce retirée par la modération.'}
+            {rejetee ? ' Rejet définitif : vous pouvez seulement supprimer cette annonce.' : ''}
+            {etatReexamen === 'EN_COURS' ? ' Réexamen en cours : la modération vous répondra par email.' : ''}
+            {etatReexamen === 'EPUISE' ? ' Trois demandes de réexamen déjà faites : contactez le support.' : ''}
           </AppText>
         </View>
       )}
@@ -186,7 +194,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
       {/* Actions — proposées selon le statut : on ne clôture pas une annonce qui
           n'est pas en ligne. Compte masqué par l'admin : ni modifier ni remettre en ligne. */}
       <View style={cardStyles.actionsRow}>
-        {!item.proprietaireMasque && (
+        {!item.proprietaireMasque && !rejetee && (
           <Button
             title="Modifier"
             variant="secondary"
@@ -196,6 +204,19 @@ export const AnnonceCard = React.memo(function AnnonceCard({
             leftIcon={<Ionicons name="create-outline" size={16} color={colors.primary} />}
             onPress={() => router.push({ pathname: '/(tabs)/publier', params: { editId: String(item.id) } })}
             accessibilityLabel="Modifier l'annonce"
+          />
+        )}
+        {etatReexamen !== 'AUCUN' && !item.proprietaireMasque && (
+          <Button
+            title={etatReexamen === 'EN_COURS' ? 'Réexamen en cours' : 'Demander un réexamen'}
+            variant="secondary"
+            size="sm"
+            fullWidth={false}
+            style={cardStyles.actionBtn}
+            disabled={etatReexamen !== 'DISPONIBLE'}
+            leftIcon={<Ionicons name="refresh-outline" size={16} color={colors.primary} />}
+            onPress={() => setReexamenOpen(true)}
+            accessibilityLabel={etatReexamen === 'EN_COURS' ? 'Réexamen en cours' : "Demander un réexamen de l'annonce"}
           />
         )}
         {item.statutModeration === 'CLOTUREE' && !item.proprietaireMasque && (
@@ -251,6 +272,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
         />
       </View>
 
+      <ReexamenModal visible={reexamenOpen} annonceId={item.id} titre={item.titre} onClose={() => setReexamenOpen(false)} />
       <CloturerModal visible={cloturerOpen} annonceId={item.id} titre={item.titre} onClose={() => setCloturerOpen(false)} />
     </TouchableOpacity>
   );

@@ -44,19 +44,28 @@ export const uploadPhoto = async (
  * Statut initial du document → EN_ATTENTE.
  */
 export const uploadPieceIdentite = async (
-  recto: { uri: string; name: string; type: string },
+  piece: { uri: string; name: string; type: string },
+  selfie: { uri: string; name: string; type: string },
   typePiece: TypePieceIdentite,
   numeroPiece: string,
-  verso?: { uri: string; name: string; type: string },
 ): Promise<void> => {
+  // La pièce et le selfie partent ensemble : l'API refuse l'un sans l'autre (RG-02-28).
   const formData = new FormData();
-  formData.append('file', { uri: recto.uri, name: recto.name, type: recto.type } as any);
+  formData.append('file', { uri: piece.uri, name: piece.name, type: piece.type } as any);
+  formData.append('selfie', { uri: selfie.uri, name: selfie.name, type: selfie.type } as any);
   formData.append('typePieceIdentite', typePiece);
   formData.append('numeroPieceIdentite', numeroPiece);
-  if (verso) {
-    formData.append('fileVerso', { uri: verso.uri, name: verso.name, type: verso.type } as any);
-  }
   await multipartPost<unknown>('/api/users/me/piece-identite', formData);
+};
+
+/**
+ * Selfie seul, pour un dossier envoyé avant la mise en service du selfie (RG-02-28, transitoire).
+ * POST /api/users/me/selfie
+ */
+export const uploadSelfie = async (selfie: { uri: string; name: string; type: string }): Promise<void> => {
+  const formData = new FormData();
+  formData.append('selfie', { uri: selfie.uri, name: selfie.name, type: selfie.type } as any);
+  await multipartPost<unknown>('/api/users/me/selfie', formData);
 };
 
 /**

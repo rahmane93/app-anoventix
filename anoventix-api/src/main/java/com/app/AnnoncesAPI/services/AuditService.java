@@ -57,6 +57,13 @@ public class AuditService {
                 adresseIp()));
     }
 
+    /** Action décidée par la plateforme elle-même, même si une requête d'utilisateur la déclenche. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void enregistrerParLeSysteme(ActionAudit action, Object cibleId, String motif) {
+        repository.save(new AuditEvent(null, SYSTEME, null, action, String.valueOf(cibleId), tronquer(motif),
+                adresseIp()));
+    }
+
     @Transactional(propagation = Propagation.MANDATORY)
     public void enregistrer(ActionAudit action, Object cibleId) {
         enregistrer(action, cibleId, null);

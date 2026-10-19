@@ -68,6 +68,14 @@ export interface ChangePieceIdentiteStatutRequest {
   motifRejet?: string | null;
 }
 
+/** Décision sur un signalement : l'annonce et tous ses signalements en attente sont traités ensemble. */
+export interface DecisionSignalementRequest {
+  decision: 'MASQUER' | 'REJETER' | 'REMETTRE_EN_LIGNE' | 'CLASSER';
+  /** Obligatoire pour masquer ou rejeter : il est communiqué au propriétaire. */
+  motif?: string;
+  noteAdmin?: string | null;
+}
+
 export interface TraiterSignalementRequest {
   statut: 'TRAITE' | 'IGNORE';
   noteAdmin?: string | null;
@@ -88,6 +96,8 @@ export interface AdminStats {
   utilisateursEnAttenteActivation: number;
   piecesIdentiteEnAttente: number;
   messagesSignalesEnAttente?: number;
+  reexamensEnAttente?: number;
+  entreprisesAVerifier?: number;
 }
 
 export interface Signalement {
@@ -104,6 +114,8 @@ export interface Signalement {
   date: string;
   annule: boolean;
   dateAnnulation: string | null;
+  /** L'annonce a été masquée par le système après plusieurs signalements (DEC-11). */
+  annonceMasqueeAutomatiquement?: boolean;
 }
 
 export interface SignalementsPage {
@@ -127,6 +139,10 @@ export interface AdminUser {
   pieceIdentiteUrl: string | null;
   statutPieceIdentite: StatutPieceIdentite | null;
   motifRejetPieceIdentite: string | null;
+  /** Le selfie de vérification est enregistré (EVO-01) ; absent d'un dossier d'avant sa mise en service. */
+  selfieFourni?: boolean;
+  dateEnvoiVerification?: string | null;
+  dateDecisionVerification?: string | null;
   statut: StatutUtilisateur;
   motifStatut: string | null;
   role?: string;
@@ -185,6 +201,14 @@ export interface AdminAnnonce {
   entrepriseId: string | null;
   /** Annonces du propriétaire masquées par l'administrateur (masquage système). */
   proprietaireMasque?: boolean;
+  /** Motif communiqué au propriétaire (annonce masquée ou rejetée). */
+  motifModeration?: string | null;
+  masquageAutomatique?: boolean;
+  /** Réexamen demandé par le propriétaire (file « Réexamens », DEC-09). */
+  reexamenDemande?: boolean;
+  dateReexamen?: string | null;
+  messageReexamen?: string | null;
+  nbReexamens?: number;
 }
 
 export interface AdminAnnoncesPage {

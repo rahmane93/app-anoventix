@@ -113,21 +113,45 @@ public class UserController {
     @PostMapping(value = "/me/piece-identite", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Uploader sa pièce d'identité",
-               description = "Envoi en multipart/form-data.\n"
-                           + "Champs : file (obligatoire, image), typePieceIdentite (obligatoire), numeroPieceIdentite (obligatoire).\n"
-                           + "Le statut passe automatiquement à EN_ATTENTE jusqu'à validation par un admin/modérateur.")
+               description = "Envoi en multipart/form-data du dossier de vérification.\n"
+                           + "Champs : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, "
+                           + "720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.\n"
+                           + "La pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE "
+                           + "jusqu'à la décision de la modération.")
     public ResponseEntity<UserDTO> uploadPieceIdentite(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "selfie", required = false) MultipartFile selfie,
             @RequestParam String typePieceIdentite,
             @RequestParam String numeroPieceIdentite,
             Authentication authentication) {
-
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.uploadPieceIdentite(
-                        authentication.getName(), file, typePieceIdentite, numeroPieceIdentite));
+                        authentication.getName(), file, selfie, typePieceIdentite, numeroPieceIdentite));
+    }
+
+    @PostMapping(value = "/me/selfie", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Ajouter le selfie à un dossier en attente",
+               description = "Transitoire : pour un dossier EN_ATTENTE envoyé avant la mise en service du selfie. "
+                           + "422 dans tout autre cas.")
+    public ResponseEntity<UserDTO> uploadSelfie(
+            @RequestParam(value = "selfie", required = false) MultipartFile selfie,
+            Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userService.uploadSelfie(authentication.getName(), selfie));
+    }
+
+    @GetMapping("/{userId}/selfie")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Servir le selfie de vérification",
+               description = "Image du selfie (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement. "
+                           + "Jamais affiché publiquement.")
+    public ResponseEntity<Resource> getSelfie(@PathVariable UUID userId, Authentication authentication) {
+        Resource resource = userService.servirSelfie(userId, authentication);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 
     // -------------------------------------------------------------------------

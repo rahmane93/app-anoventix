@@ -69,6 +69,7 @@ public class BienImmoServiceImpl implements BienImmoService {
     private final LicenceService licenceService;
     private final QuotaEntrepriseService quotaService;
     private final MediaRepository mediaRepository;
+    private final ModerationAnnonceService moderation;
 
     public BienImmoServiceImpl(BienImmoRepository bienImmoRepository,
                                AnnonceRepository annonceRepository,
@@ -82,8 +83,10 @@ public class BienImmoServiceImpl implements BienImmoService {
                                AnnonceExpirationService annonceExpirationService,
                                LicenceService licenceService,
                                QuotaEntrepriseService quotaService,
-                               MediaRepository mediaRepository) {
+                               MediaRepository mediaRepository,
+                               ModerationAnnonceService moderation) {
         this.mediaRepository = mediaRepository;
+        this.moderation = moderation;
         this.bienImmoRepository = bienImmoRepository;
         this.annonceRepository = annonceRepository;
         this.annonceMapper = annonceMapper;
@@ -162,11 +165,14 @@ public class BienImmoServiceImpl implements BienImmoService {
         }
         BienImmoRequest request = (BienImmoRequest) annonceRequest;
 
-        BienImmo existing = bienImmoRepository.findByIdAndActifTrue(id)
+        // Modifiable : en ligne, ou masquée par la modération (DEC-09) — pas rejetée, clôturée ni supprimée.
+        BienImmo existing = bienImmoRepository.findById(id)
+                .filter(a -> Boolean.TRUE.equals(a.getActif()) || a.getStatutModeration() == StatutAnnonce.MASQUEE)
                 .orElseThrow(() -> new ResourceNotFoundException("Bien immobilier introuvable avec l'ID : " + id));
 
         User user = getCurrentUser(authentication);
-        if (!isOwnerOrModerator(user, existing)) {
+        if (!isOwnerOrModerator(user, existing)
+                || (existing.getStatutModeration() == StatutAnnonce.MASQUEE && !estProprietaireOuParent(user, existing))) {
             throw new AccessDeniedException("Vous n'êtes pas autorisé à modifier ce bien immobilier.");
         }
         MasquageCompte.verifierAnnoncesNonMasquees(user);
@@ -464,8 +470,26 @@ public class BienImmoServiceImpl implements BienImmoService {
             signalement.setNoteAdmin(null);
         }
         signalement.setMotif(motif.getLibelle());
+        signalement.setCodeMotif(motif.name());
         signalement.setCommentaire(commentaire);
         signalementRepository.save(signalement);
+        // DEC-11 : trois signalements « arnaque / fraude » masquent l'annonce en attendant la modération.
+        if (motif == com.app.AnnoncesAPI.enums.MotifSignalement.ARNAQUE_FRAUDE) {
+            moderation.evaluerSignalements(bienImmo);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void demanderReexamen(Long id, String message, Authentication authentication) {
+        BienImmo bienImmo = bienImmoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Bien immobilier introuvable : " + id));
+        User user = getCurrentUser(authentication);
+        if (!estProprietaireOuParent(user, bienImmo)) {
+            throw new AccessDeniedException("Seul le propriétaire peut demander le réexamen de son annonce.");
+        }
+        MasquageCompte.verifierAnnoncesNonMasquees(bienImmo.getOwner());
+        moderation.demanderReexamen(bienImmo, message, user);
     }
 
     @Override
@@ -607,10 +631,18 @@ public class BienImmoServiceImpl implements BienImmoService {
     }
 
     private boolean isOwnerOrModerator(User user, BienImmo bienImmo) {
+        return isOwnerParentOrModerator(user, bienImmo);
+    }
+
+    /** Le propriétaire, ou le professionnel dont l'agent est propriétaire (DEC-27). */
+    private boolean estProprietaireOuParent(User user, BienImmo bienImmo) {
         if (bienImmo.getOwner().getId().equals(user.getId())) {
             return true;
         }
-        return user.isAdministrateur() || user.isModerateur();
+        User owner = bienImmo.getOwner();
+        return owner.getEntreprise() != null
+                && owner.getEntreprise().getAnnonceurProfessionnel() != null
+                && owner.getEntreprise().getAnnonceurProfessionnel().getId().equals(user.getId());
     }
 
     private User getCurrentUser(Authentication authentication) {
@@ -693,8 +725,8 @@ public class BienImmoServiceImpl implements BienImmoService {
         User user = getCurrentUser(authentication);
         BienImmo bienImmo = bienImmoRepository.findByIdAndActifTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bien immobilier introuvable : " + id));
-        if (!bienImmo.getOwner().getId().equals(user.getId())) {
-            throw new AccessDeniedException("Seul le propriétaire peut clôturer son annonce.");
+        if (!estProprietaireOuParent(user, bienImmo)) {
+            throw new AccessDeniedException("Seul le propriétaire (ou son entreprise) peut clôturer l'annonce.");
         }
         bienImmo.setActif(false);
         bienImmo.setMotifCloture(motif);
@@ -708,8 +740,8 @@ public class BienImmoServiceImpl implements BienImmoService {
         User user = getCurrentUser(authentication);
         BienImmo bienImmo = bienImmoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bien immobilier introuvable : " + id));
-        if (!bienImmo.getOwner().getId().equals(user.getId())) {
-            throw new AccessDeniedException("Seul le propriétaire peut réactiver son annonce.");
+        if (!estProprietaireOuParent(user, bienImmo)) {
+            throw new AccessDeniedException("Seul le propriétaire (ou son entreprise) peut réactiver l'annonce.");
         }
         if (bienImmo.getMotifCloture() == null) {
             throw new IllegalStateException("Cette annonce n'a pas été clôturée par son propriétaire et ne peut pas être réactivée via cet endpoint.");

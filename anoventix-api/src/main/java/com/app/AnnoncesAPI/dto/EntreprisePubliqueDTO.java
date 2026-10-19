@@ -26,6 +26,9 @@ public class EntreprisePubliqueDTO {
     private String photoProfil;
     private Integer nombreAgents;
 
+    /** Badge « Agence vérifiée » (DEC-04). */
+    private boolean verifiee;
+
     /** Contacts de l'agence : réservés aux utilisateurs connectés, comme celui des annonceurs (DEC-14). */
     @JsonSerialize(using = ContactReserveAuxConnectes.class)
     private String telephone;
@@ -35,6 +38,8 @@ public class EntreprisePubliqueDTO {
 
     public static EntreprisePubliqueDTO de(EntrepriseDTO e) {
         return new EntreprisePubliqueDTO(e.getId(), e.getNom(), e.getDescription(), e.getAdresse(),
-                e.getPhotoProfil(), e.getNombreAgents(), e.getTelephone(), e.getEmail());
+                e.getPhotoProfil(), e.getNombreAgents(),
+                e.getStatutVerification() == com.app.AnnoncesAPI.enums.StatutVerificationEntreprise.VERIFIEE,
+                e.getTelephone(), e.getEmail());
     }
 }

@@ -17,7 +17,8 @@ public interface SignalementRepository extends JpaRepository<Signalement, Long> 
      * Tous les signalements avec annonce et reporter chargés (JOIN FETCH).
      * Évite les LazyInitializationException lors du mapping en dehors de la session JPA.
      */
-    @Query(value = "SELECT s FROM Signalement s JOIN FETCH s.annonce JOIN FETCH s.reporter ORDER BY s.date DESC",
+    @Query(value = "SELECT s FROM Signalement s JOIN FETCH s.annonce a JOIN FETCH s.reporter "
+                 + "ORDER BY CASE WHEN a.masquageAutomatique = true AND s.statut = 'EN_ATTENTE' THEN 0 ELSE 1 END, s.date DESC",
            countQuery = "SELECT COUNT(s) FROM Signalement s")
     Page<Signalement> findAllWithAnnonceAndReporter(Pageable pageable);
 
@@ -33,10 +34,20 @@ public interface SignalementRepository extends JpaRepository<Signalement, Long> 
     Page<Signalement> findByReporterEmail(@org.springframework.data.repository.query.Param("email") String email, Pageable pageable);
 
     /** Signalements filtrés par statut avec annonce et reporter chargés. */
-    @Query(value = "SELECT s FROM Signalement s JOIN FETCH s.annonce JOIN FETCH s.reporter WHERE s.statut = :statut ORDER BY s.date DESC",
+    @Query(value = "SELECT s FROM Signalement s JOIN FETCH s.annonce a JOIN FETCH s.reporter WHERE s.statut = :statut "
+                 + "ORDER BY CASE WHEN a.masquageAutomatique = true AND s.statut = 'EN_ATTENTE' THEN 0 ELSE 1 END, s.date DESC",
            countQuery = "SELECT COUNT(s) FROM Signalement s WHERE s.statut = :statut")
     Page<Signalement> findByStatutWithAnnonceAndReporter(
             @org.springframework.data.repository.query.Param("statut") StatutSignalement statut, Pageable pageable);
+
+    /** Signalements non retirés d'une annonce, dans un statut donné. */
+    java.util.List<Signalement> findByAnnonceIdAndStatutAndAnnuleFalse(Long annonceId, StatutSignalement statut);
+
+    /** Signaleurs distincts ayant une plainte en attente, non retirée, pour ce motif (masquage automatique). */
+    @Query("SELECT COUNT(DISTINCT s.reporter.id) FROM Signalement s WHERE s.annonce.id = :annonceId "
+         + "AND s.codeMotif = :codeMotif AND s.statut = 'EN_ATTENTE' AND s.annule = false")
+    long compterSignaleursEnAttente(@org.springframework.data.repository.query.Param("annonceId") Long annonceId,
+                                    @org.springframework.data.repository.query.Param("codeMotif") String codeMotif);
 
     /** Nombre de signalements actifs (non annulés). */
     long countByAnnuleFalse();

@@ -170,6 +170,11 @@ public class CompteSuppressionService {
         if (entreprise.getPhotoProfil() != null) {
             mediaService.deleteMediaFromDisk(entreprise.getPhotoProfil());
         }
+        if (entreprise.getJustificatifRccmUrl() != null) {
+            mediaService.deletePieceIdentite(entreprise.getJustificatifRccmUrl());
+        }
+        entreprise.setJustificatifRccmUrl(null);
+        entreprise.setStatutVerification(com.app.AnnoncesAPI.enums.StatutVerificationEntreprise.NON_VERIFIEE);
         entreprise.setNom(NOM_ENTREPRISE_SUPPRIMEE);
         entreprise.setDescription(null);
         entreprise.setNumeroRCCM(null);
@@ -213,6 +218,9 @@ public class CompteSuppressionService {
         if (user.getPieceIdentiteUrl() != null) {
             mediaService.deletePieceIdentite(user.getPieceIdentiteUrl());
         }
+        if (user.getSelfieUrl() != null) {
+            mediaService.deletePieceIdentite(user.getSelfieUrl());
+        }
 
         // ≤ 50 caractères (@Size sur User.email) et unique.
         user.setEmail("supprime-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20)
@@ -222,6 +230,10 @@ public class CompteSuppressionService {
         user.setTelephone(null);
         user.setPhotoProfil(null);
         user.setPieceIdentiteUrl(null);
+        user.setSelfieUrl(null);
+        user.setDateEnvoiVerification(null);
+        user.setDateDecisionVerification(null);
+        user.setDecisionVerificationPar(null);
         user.setNumeroPieceIdentite(null);
         user.setTypePieceIdentite(null);
         user.setStatutPieceIdentite(null);

@@ -1,5 +1,7 @@
 package com.app.AnnoncesAPI.services;
 
+import java.util.UUID;
+
 import com.app.AnnoncesAPI.payload.request.LoginRequest;
 import com.app.AnnoncesAPI.payload.request.SignupRequest;
 import com.app.AnnoncesAPI.payload.response.DoubleAuthentificationResponse;
@@ -69,6 +71,12 @@ public interface AuthService {
      * Silencieux sinon (anti-énumération).
      */
     void resendActivation(String email);
+
+    /**
+     * Relance à J+5 d'un compte jamais activé : nouveau lien d'activation (E19), une seule fois
+     * (DEC-06). Ne fait rien si le compte a été activé entre-temps.
+     */
+    void relancerActivation(UUID userId);
 
     /**
      * Réactive un compte précédemment soft-deleté (statut INACTIF) après vérification

@@ -42,6 +42,13 @@
         }
       ],
       "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "AnoventiX utilise l'appareil photo pour votre selfie de vérification d'identité",
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-secure-store",
       [
         "expo-font",

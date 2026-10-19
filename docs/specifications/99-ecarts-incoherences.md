@@ -25,6 +25,7 @@ Mis à jour le 18/10/2026. Les écarts non listés restent ouverts. Détail du c
 |---|---|---|
 | Phase 0 (socle) | 04 (installation sur base vierge), 40 (pagination), 63 (journal d'audit, hors administration des entreprises, licences, quotas et localisations) | — (file d'envoi des emails, DEC-31) |
 | Phase 1 (corrections) | 01, 07, 08, 09, 10, 11, 12, 18, 19, 20, 36, 37, 38, 39, 44, 48, 56, 57 | — |
+| Phase 3 (parcours métier) | 03 (annonce masquée corrigeable), 26 (décision de signalement transactionnelle, code du motif), 52 (annonces d'un compte non actif ou d'une entreprise désactivée), 61 (vérification des entreprises), 13 (droits du professionnel sur les annonces de ses agents), 53 (purge des comptes non activés ; vérification du téléphone **non faite**) | DEC-01, DEC-04, DEC-06, DEC-08, DEC-09, DEC-10, DEC-11, DEC-12, DEC-25, DEC-26 (pièces et selfies, 30 jours après la décision), DEC-27, EVO-01. **Reporté, non bloquant** : DEC-05 (téléphone vérifié par SMS, décision du 19/10/2026 : pas d'implémentation dans l'immédiat) ; ECART-16, 22, 35 sans décision, inchangés |
 | Phase 2 (sécurité et conformité) | 05, 15, 21, 31, 32, 41, 47, 51, 54 (CSP en mode rapport), 60, 64 ; 06 (page de politique de confidentialité rédigée, à faire valider par un juriste) | DEC-02, DEC-03, DEC-14, DEC-26 (sauf pièces d'identité, selfies et comptes inactifs) |
 
 **Les points à traiter en premier**

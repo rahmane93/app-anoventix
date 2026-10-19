@@ -93,6 +93,45 @@ class PurgeConservationTest {
         userRepository.deleteAll();
     }
 
+    // ── Vérification d'identité (RG-02-41) ─────────────────────────────────
+
+    @Test
+    void lesFichiersDeVerificationSontSupprimes30JoursApresLaDecisionEtLeResteEstGarde() {
+        User decide = compte("decide.purge@example.com");
+        User recent = compte("recent.purge@example.com");
+        User enAttente = compte("attente.purge@example.com");
+        jdbc.update("""
+                UPDATE account SET piece_identite_url = ?, selfie_url = ?, statut_piece_identite = 'VALIDEE',
+                       numero_piece_identite = 'CNI-1', date_decision_verification = ?, decision_verification_par = 'mod@x'
+                WHERE id = ?""", "private/piece-identite/d/piece.jpg", "private/piece-identite/d/selfie.jpg",
+                LocalDateTime.now().minusDays(31), decide.getId());
+        jdbc.update("""
+                UPDATE account SET piece_identite_url = ?, selfie_url = ?, statut_piece_identite = 'REJETEE',
+                       date_decision_verification = ? WHERE id = ?""", "private/piece-identite/r/piece.jpg",
+                "private/piece-identite/r/selfie.jpg", LocalDateTime.now().minusDays(5), recent.getId());
+        jdbc.update("UPDATE account SET piece_identite_url = ?, selfie_url = ?, statut_piece_identite = 'EN_ATTENTE' WHERE id = ?",
+                "private/piece-identite/a/piece.jpg", "private/piece-identite/a/selfie.jpg", enAttente.getId());
+
+        purge.purgerFichiersVerification(LocalDateTime.now().minusDays(30));
+
+        Map<String, Object> purge = jdbc.queryForMap(
+                "SELECT piece_identite_url, selfie_url, statut_piece_identite, numero_piece_identite, "
+                + "decision_verification_par FROM account WHERE id = ?", decide.getId());
+        assertThat(purge.get("piece_identite_url")).isNull();
+        assertThat(purge.get("selfie_url")).isNull();
+        // Type, numéro, statut et auteur de la décision sont conservés.
+        assertThat(purge.get("statut_piece_identite")).isEqualTo("VALIDEE");
+        assertThat(purge.get("numero_piece_identite")).isEqualTo("CNI-1");
+        assertThat(purge.get("decision_verification_par")).isEqualTo("mod@x");
+        verify(mediaService).deletePieceIdentite("private/piece-identite/d/piece.jpg");
+        verify(mediaService).deletePieceIdentite("private/piece-identite/d/selfie.jpg");
+        // Décision récente ou dossier en attente : fichiers conservés.
+        assertThat(jdbc.queryForObject("SELECT selfie_url FROM account WHERE id = ?", String.class, recent.getId()))
+                .isNotNull();
+        assertThat(jdbc.queryForObject("SELECT selfie_url FROM account WHERE id = ?", String.class, enAttente.getId()))
+                .isNotNull();
+    }
+
     // ── Annonces terminées ─────────────────────────────────────────────────
 
     @Test

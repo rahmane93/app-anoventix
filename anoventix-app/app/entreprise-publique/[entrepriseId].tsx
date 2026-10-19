@@ -158,6 +158,12 @@ export default function EntreprisePubliqueScreen() {
             </View>
 
             <AppText style={s.nom}>{entreprise.nom}</AppText>
+            {entreprise.verifiee ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessibilityLabel="Agence vérifiée">
+                <Ionicons name="shield-checkmark" size={14} color={colors.successText} />
+                <AppText style={{ fontSize: 12, fontWeight: '700', color: colors.successText }}>Agence vérifiée</AppText>
+              </View>
+            ) : null}
 
             {entreprise.description ? (
               <AppText style={s.description}>{entreprise.description}</AppText>

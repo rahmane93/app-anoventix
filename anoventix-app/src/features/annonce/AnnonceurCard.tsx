@@ -75,6 +75,12 @@ export function AnnonceurCard({ annonceur }: { annonceur: Annonceur }) {
             <View style={ac.entrepriseRow}>
               <Ionicons name="business-outline" size={12} color={colors.textMuted} />
               <AppText style={ac.entreprise}>{entrepriseNom}</AppText>
+              {annonceur.agenceVerifiee ? (
+                <View style={ac.verifiee} accessibilityLabel="Agence vérifiée">
+                  <Ionicons name="shield-checkmark" size={12} color={colors.successText} />
+                  <AppText style={ac.verifieeTexte}>Agence vérifiée</AppText>
+                </View>
+              ) : null}
             </View>
           ) : null}
           {annonceur.telephone ? (
@@ -108,6 +114,8 @@ export function AnnonceurCard({ annonceur }: { annonceur: Annonceur }) {
 }
 
 const ac = StyleSheet.create({
+  verifiee: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 6 },
+  verifieeTexte: { fontSize: 11, fontWeight: '700', color: colors.successText },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,

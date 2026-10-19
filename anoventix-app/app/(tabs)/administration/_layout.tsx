@@ -56,6 +56,8 @@ export default function AdministrationLayout() {
       <Stack.Screen name="users" options={{ title: 'Utilisateurs' }} />
       <Stack.Screen name="users/[id]" options={{ title: 'Détail utilisateur' }} />
       <Stack.Screen name="signalements" options={{ title: 'Signalements' }} />
+      <Stack.Screen name="reexamens" options={{ title: 'Réexamens' }} />
+      <Stack.Screen name="entreprises-a-verifier" options={{ title: 'Entreprises à vérifier' }} />
       <Stack.Screen name="annonces" options={{ title: 'Annonces' }} />
       <Stack.Screen name="pieces-identite" options={{ title: 'Pièces d\'identité' }} />
       <Stack.Screen name="entreprises" options={{ title: 'Entreprises' }} />

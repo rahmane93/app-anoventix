@@ -18,4 +18,12 @@ final class TestPhotos {
         ImageIO.write(img, "png", out);
         return new MockMultipartFile("medias", "photo.png", "image/png", out.toByteArray());
     }
+
+    /** Image JPEG de la taille demandée, sous le nom de partie voulu (« file » pour la pièce, « selfie »). */
+    static MockMultipartFile image(String partie, int largeur, int hauteur) throws Exception {
+        BufferedImage img = new BufferedImage(largeur, hauteur, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(img, "jpg", out);
+        return new MockMultipartFile(partie, partie + ".jpg", "image/jpeg", out.toByteArray());
+    }
 }

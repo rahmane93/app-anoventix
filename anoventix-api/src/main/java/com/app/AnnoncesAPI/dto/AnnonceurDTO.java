@@ -23,4 +23,6 @@ public class AnnonceurDTO {
     private String photoProfil;
     private TypeRole role;
     private UUID entrepriseId;
+    /** L'entreprise de l'annonceur est vérifiée (DEC-04) : badge « Agence vérifiée ». */
+    private boolean agenceVerifiee;
 }

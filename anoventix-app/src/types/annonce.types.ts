@@ -73,6 +73,8 @@ export interface Annonceur {
   role: RoleAnnonceur | null;
   entrepriseId?: string | null;
   entrepriseNom?: string | null;
+  /** L'entreprise de l'annonceur est vérifiée : badge « Agence vérifiée » (DEC-04). */
+  agenceVerifiee?: boolean;
 }
 
 // ─── BienImmo (réponse API) ───────────────────────────────────────────────────
@@ -111,6 +113,14 @@ export interface BienImmo {
   dateCloture: string | null;
   /** Motif communiqué par la modération (annonce masquée ou rejetée). */
   motifModeration?: string | null;
+  /** Masquée par le système après plusieurs signalements (en attente de vérification). */
+  masquageAutomatique?: boolean;
+  /** Réexamen demandé par le propriétaire et pas encore tranché. */
+  reexamenDemande?: boolean;
+  dateReexamen?: string | null;
+  messageReexamen?: string | null;
+  /** Demandes de réexamen déjà faites sur cette annonce (3 au plus). */
+  nbReexamens?: number;
   /** Fin de validité : clôture automatique (EXPIREE) à cette date, prolongeable gratuitement. */
   dateExpiration?: string | null;
   /** Annonces du propriétaire masquées par l'administrateur (vues propriétaire / admin). */

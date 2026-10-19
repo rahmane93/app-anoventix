@@ -16,6 +16,8 @@ export interface EntrepriseProfilDTO {
   email: string | null;
   photoProfil: string | null;
   nombreAgents: number;
+  /** Badge « Agence vérifiée » (DEC-04). */
+  verifiee?: boolean;
 }
 
 export interface EntrepriseProfilResponse {
@@ -50,6 +52,9 @@ export interface EntrepriseDTO {
   proprietaireId: string;
   proprietaireUsername?: string | null;
   agents: AgentDTO[];
+  /** Vérification sur justificatif RCCM (DEC-04). */
+  statutVerification?: 'NON_VERIFIEE' | 'EN_ATTENTE' | 'VERIFIEE' | 'REJETEE';
+  motifRejetVerification?: string | null;
 }
 
 // ─── Requests ─────────────────────────────────────────────────────────────────

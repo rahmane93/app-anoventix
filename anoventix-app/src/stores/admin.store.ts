@@ -12,6 +12,7 @@ import type {
     Avertissement,
     ChangePieceIdentiteStatutRequest,
     ChangeStatutUserRequest,
+    DecisionSignalementRequest,
     EmettrAvertissementRequest,
     MessageSignale,
     MessagesSignalesPage,
@@ -124,6 +125,14 @@ interface AdminStore {
   loadSignalements: (page?: number, statut?: StatutSignalement) => Promise<void>;
   loadMoreSignalements: (statut?: StatutSignalement) => Promise<void>;
   traiterSignalement: (id: number, body: TraiterSignalementRequest) => Promise<void>;
+  deciderSignalement: (id: number, body: DecisionSignalementRequest) => Promise<void>;
+  reexamens: AdminAnnonce[];
+  reexamensPage: number;
+  reexamensTotalPages: number;
+  reexamensTotalElements: number;
+  isLoadingReexamens: boolean;
+  reexamensError: string | null;
+  loadReexamens: (page?: number) => Promise<void>;
   deleteSignalement: (id: number) => Promise<void>;
   loadUsers: (page?: number, filtre?: AdminUsersFiltre) => Promise<void>;
   loadMoreUsers: () => Promise<void>;
@@ -292,6 +301,45 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     const nextPage = signalementsPage + 1;
     if (isLoadingSignalements || signalementsError || nextPage >= signalementsTotalPages) return;
     await get().loadSignalements(nextPage, statut);
+  },
+
+  reexamens: [],
+  reexamensPage: 0,
+  reexamensTotalPages: 0,
+  reexamensTotalElements: 0,
+  isLoadingReexamens: false,
+  reexamensError: null,
+
+  loadReexamens: async (page = 0) => {
+    set({ isLoadingReexamens: true, reexamensError: null });
+    try {
+      const res = await adminApi.getReexamens(page, 20);
+      set((s) => ({
+        reexamens: page === 0 ? res.data : [...s.reexamens, ...res.data],
+        reexamensPage: res.currentPage,
+        reexamensTotalPages: res.totalPages,
+        reexamensTotalElements: res.totalItems,
+      }));
+    } catch (e: unknown) {
+      set({ reexamensError: getErrorMessage(e, 'Impossible de charger les demandes de réexamen.') });
+    } finally {
+      set({ isLoadingReexamens: false });
+    }
+  },
+
+  deciderSignalement: async (id, body) => {
+    const ids = new Set(get().traitingSignalementIds);
+    ids.add(id);
+    set({ traitingSignalementIds: ids });
+    try {
+      await adminApi.deciderSignalement(id, body);
+      // La décision clôt tous les signalements de l'annonce : on recharge la file telle qu'elle est filtrée.
+      await get().loadSignalements(0, get().signalementsStatut ?? undefined);
+    } finally {
+      const next = new Set(get().traitingSignalementIds);
+      next.delete(id);
+      set({ traitingSignalementIds: next });
+    }
   },
 
   traiterSignalement: async (id, body) => {

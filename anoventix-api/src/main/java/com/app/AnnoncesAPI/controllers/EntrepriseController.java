@@ -40,9 +40,38 @@ public class EntrepriseController {
             java.util.Set.of("dateCreation", "prix", "titre");
 
     private final EntrepriseService entrepriseService;
+    private final com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationService;
 
-    public EntrepriseController(EntrepriseService entrepriseService) {
+    public EntrepriseController(EntrepriseService entrepriseService,
+                                com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationService) {
         this.entrepriseService = entrepriseService;
+        this.verificationService = verificationService;
+    }
+
+    @PostMapping(value = "/{id}/verification", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('PROFESSIONNEL')")
+    @Operation(summary = "Demander la vérification de l'entreprise",
+               description = "Le propriétaire envoie l'extrait RCCM en photo (image uniquement, 10 Mo au plus, champ « justificatif »). "
+                           + "Son identité doit déjà être vérifiée. Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.")
+    public ResponseEntity<EntrepriseDTO> demanderVerification(
+            @PathVariable UUID id,
+            @RequestParam(value = "justificatif", required = false) MultipartFile justificatif,
+            Authentication authentication) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(verificationService.envoyerJustificatif(id, justificatif, authentication));
+    }
+
+    @GetMapping("/{id}/justificatif")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Servir le justificatif RCCM",
+               description = "Propriétaire de l'entreprise ou modération uniquement (no-store).")
+    public ResponseEntity<org.springframework.core.io.Resource> getJustificatif(
+            @PathVariable UUID id, Authentication authentication) {
+        org.springframework.core.io.Resource fichier = verificationService.servirJustificatif(id, authentication);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(fichier);
     }
     
     /**

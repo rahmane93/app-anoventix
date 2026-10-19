@@ -60,6 +60,7 @@ public class MediaService {
      * via une « image bombe » : quelques Mo compressés pour des centaines de Mpx.
      */
     static final long MAX_PIXELS = 50_000_000L;
+    static final int SELFIE_PETIT_COTE_MIN = 720;
 
     private final AnnonceRepository annonceRepository;
     private final UserRepository userRepository;
@@ -234,6 +235,7 @@ public class MediaService {
         if (!isOwnerOrModerator(user, annonce)) {
             throw new AccessDeniedException("Vous n'êtes pas autorisé à ajouter des médias à cette annonce");
         }
+        verifierAnnonceNonRejetee(annonce);
         MasquageCompte.verifierAnnoncesNonMasquees(user);
         licenceService.verifierNonBloque(user);
         int existants = annonce.getMedias() != null ? annonce.getMedias().size() : 0;
@@ -280,6 +282,7 @@ public class MediaService {
         if (!isOwnerOrModerator(user, annonce)) {
             throw new AccessDeniedException("Vous n'êtes pas autorisé à supprimer ce média");
         }
+        verifierAnnonceNonRejetee(annonce);
         MasquageCompte.verifierAnnoncesNonMasquees(user);
         if (annonce.getMedias() != null && annonce.getMedias().size() <= 1) {
             throw new IllegalArgumentException(
@@ -319,6 +322,11 @@ public class MediaService {
      * images illisibles ou trop grandes avant que Thumbnailator ne les charge en mémoire.
      */
     void verifierDimensions(MultipartFile file) {
+        verifierDimensions(file, 0);
+    }
+
+    /** Même contrôle, avec en plus un petit côté minimal (le selfie de vérification en exige 720 px). */
+    void verifierDimensions(MultipartFile file, int petitCoteMin) {
         try (InputStream raw = file.getInputStream();
              ImageInputStream in = ImageIO.createImageInputStream(raw)) {
             Iterator<ImageReader> readers = in != null ? ImageIO.getImageReaders(in) : null;
@@ -329,6 +337,10 @@ public class MediaService {
             try {
                 reader.setInput(in, true, true);
                 long pixels = (long) reader.getWidth(0) * reader.getHeight(0);
+                if (petitCoteMin > 0 && Math.min(reader.getWidth(0), reader.getHeight(0)) < petitCoteMin) {
+                    throw new IllegalArgumentException("Image trop petite (" + reader.getWidth(0) + "x"
+                            + reader.getHeight(0) + ") : au moins " + petitCoteMin + " pixels sur le petit côté.");
+                }
                 if (pixels > MAX_PIXELS) {
                     throw new IllegalArgumentException(
                             "Image trop grande (" + reader.getWidth(0) + "x" + reader.getHeight(0)
@@ -342,11 +354,25 @@ public class MediaService {
         }
     }
 
+    /** Une annonce rejetée (DEC-10) n'est plus modifiable, photos comprises. */
+    private void verifierAnnonceNonRejetee(Annonce annonce) {
+        if (annonce.getStatutModeration() == com.app.AnnoncesAPI.enums.StatutAnnonce.REJETEE) {
+            throw new com.app.AnnoncesAPI.exceptions.ConflitException("Une annonce rejetée n'est plus modifiable.");
+        }
+    }
+
     /**
      * Vérifie si l'utilisateur est le propriétaire de l'annonce ou possède un rôle de modérateur/admin.
      */
     private boolean isOwnerOrModerator(User user, Annonce annonce) {
         if (annonce.getOwner().getId().equals(user.getId())) {
+            return true;
+        }
+        // Le professionnel a tous les droits sur les annonces de ses agents (DEC-27).
+        User owner = annonce.getOwner();
+        if (owner.getEntreprise() != null
+                && owner.getEntreprise().getAnnonceurProfessionnel() != null
+                && owner.getEntreprise().getAnnonceurProfessionnel().getId().equals(user.getId())) {
             return true;
         }
         return user.isAdministrateur() || user.isModerateur();
@@ -403,13 +429,58 @@ public class MediaService {
      * Ce chemin ne doit jamais être servi directement par {@link com.app.AnnoncesAPI.controllers.FileController}.
      */
     public String savePieceIdentite(MultipartFile file, UUID userId) {
+        return saveFichierPrive(file, userId, 0);
+    }
+
+    /** Dossier privé des justificatifs d'entreprise, relatif à {@code uploadRoot}. */
+    public static final String JUSTIFICATIF_ENTREPRISE_PREFIX = "private/entreprise/";
+    static final long JUSTIFICATIF_TAILLE_MAX = 10L * 1024 * 1024;
+
+    /**
+     * Extrait RCCM d'une entreprise (DEC-04, RG-07-24) : image uniquement (réencodée en JPEG), 10 Mo au
+     * plus, dans {@code private/entreprise/<id>/}. Retourne le chemin relatif à {@code uploadRoot}.
+     */
+    public String saveJustificatifEntreprise(MultipartFile file, UUID entrepriseId) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Le justificatif est obligatoire.");
+        }
+        if (file.getSize() > JUSTIFICATIF_TAILLE_MAX) {
+            throw new IllegalArgumentException("Le justificatif ne peut pas dépasser 10 Mo.");
+        }
+        String type = file.getContentType() == null ? "" : file.getContentType();
+        if (!type.startsWith("image/")) {
+            throw new IllegalArgumentException("Le justificatif doit être une photo ou une image (pas de PDF).");
+        }
+        Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path dossier = uploadRoot.resolve(JUSTIFICATIF_ENTREPRISE_PREFIX + entrepriseId).normalize();
+        if (!dossier.startsWith(uploadRoot)) {
+            throw new IllegalStateException("Chemin cible hors du répertoire d'upload.");
+        }
+        verifierDimensions(file);
+        try {
+            Files.createDirectories(dossier);
+            String nom = UUID.randomUUID() + ".jpg";
+            Thumbnails.of(file.getInputStream()).width(1920).outputFormat("jpg").outputQuality(0.85)
+                    .toFile(dossier.resolve(nom).toFile());
+            return JUSTIFICATIF_ENTREPRISE_PREFIX + entrepriseId + "/" + nom;
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur de sauvegarde du justificatif.", e);
+        }
+    }
+
+    /** Selfie de vérification (EVO-01) : 720 px au moins sur le petit côté, mêmes protections que la pièce. */
+    public String saveSelfie(MultipartFile file, UUID userId) {
+        return saveFichierPrive(file, userId, SELFIE_PETIT_COTE_MIN);
+    }
+
+    private String saveFichierPrive(MultipartFile file, UUID userId, int petitCoteMin) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Fichier manquant.");
         }
         if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
             throw new IllegalArgumentException("Seuls les fichiers images sont autorisés.");
         }
-        verifierDimensions(file);
+        verifierDimensions(file, petitCoteMin);
 
         String relativeFolder = "private/piece-identite/" + userId;
         Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();

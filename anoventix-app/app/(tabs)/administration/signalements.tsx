@@ -2,9 +2,11 @@ import { LIST_PERF_PROPS } from '@/src/constants/list';
 import { MOTIF_LABELS } from '@/src/api/annonce.api';
 import { Sheet } from '@/src/components/ui/sheet';
 import { useAdminStore } from '@/src/stores/admin.store';
+import { getErrorMessage } from '@/src/utils/format';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import {
     STATUT_SIGNALEMENT_LABELS,
+    type DecisionSignalementRequest,
     type Signalement,
     type StatutSignalement,
 } from '@/src/types/admin.types';
@@ -65,16 +67,23 @@ const DECISIONS: Record<Decision, {
   },
   publier: {
     label: 'Remettre en ligne',
-    description: 'Annule un masquage ou un rejet.',
+    description: 'Annule un masquage (un rejet est définitif).',
     icon: 'refresh-circle-outline',
   },
 };
 
+const DECISION_API: Record<Decision, DecisionSignalementRequest['decision']> = {
+  classer: 'CLASSER',
+  masquer: 'MASQUER',
+  rejeter: 'REJETER',
+  publier: 'REMETTRE_EN_LIGNE',
+};
+
 /**
  * Une seule décision, choisie explicitement (aucune option présélectionnée).
- * Signalement en attente : classer, masquer ou rejeter — les deux dernières
- * modèrent l'annonce ET clôturent le signalement. Signalement déjà clos :
- * l'annonce reste modérable (y compris remise en ligne).
+ * Signalement en attente : une seule opération côté serveur agit sur l'annonce ET clôture tous ses
+ * signalements en attente (ECART-26). Une annonce masquée automatiquement se remet en ligne ou reste
+ * masquée / rejetée ; on ne la « classe » pas. Signalement déjà clos : l'annonce reste modérable.
  */
 function DecisionSheet({
   visible,
@@ -86,14 +95,14 @@ function DecisionSheet({
   onClose: () => void;
 }) {
   const {
-    masquerAnnonce, rejeterAnnonce, publierAnnonce, traiterSignalement,
+    masquerAnnonce, rejeterAnnonce, publierAnnonce, deciderSignalement,
     moderatingAnnonceIds, traitingSignalementIds,
   } = useAdminStore(
     useShallow((s) => ({
       masquerAnnonce: s.masquerAnnonce,
       rejeterAnnonce: s.rejeterAnnonce,
       publierAnnonce: s.publierAnnonce,
-      traiterSignalement: s.traiterSignalement,
+      deciderSignalement: s.deciderSignalement,
       moderatingAnnonceIds: s.moderatingAnnonceIds,
       traitingSignalementIds: s.traitingSignalementIds,
     })),
@@ -102,7 +111,10 @@ function DecisionSheet({
   const [texte, setTexte] = useState('');
 
   const isPending = (signalement.statut ?? 'EN_ATTENTE') === 'EN_ATTENTE';
-  const options: Decision[] = isPending ? ['classer', 'masquer', 'rejeter'] : ['masquer', 'rejeter', 'publier'];
+  const automatique = Boolean(signalement.annonceMasqueeAutomatiquement);
+  const options: Decision[] = !isPending
+    ? ['masquer', 'rejeter', 'publier']
+    : automatique ? ['publier', 'masquer', 'rejeter'] : ['classer', 'masquer', 'rejeter'];
   const isLoading = moderatingAnnonceIds.has(signalement.annonceId) || traitingSignalementIds.has(signalement.id);
   const motifRequis = decision === 'masquer' || decision === 'rejeter';
   const canConfirm = decision != null && (!motifRequis || texte.trim().length > 0);
@@ -117,8 +129,12 @@ function DecisionSheet({
     if (!decision || !canConfirm) return;
     const motif = texte.trim();
     try {
-      if (decision === 'classer') {
-        await traiterSignalement(signalement.id, { statut: 'IGNORE', noteAdmin: motif || null });
+      if (isPending) {
+        await deciderSignalement(signalement.id, {
+          decision: DECISION_API[decision],
+          ...(motifRequis ? { motif } : {}),
+          noteAdmin: motifRequis ? null : motif || null,
+        });
       } else if (decision === 'masquer') {
         await masquerAnnonce(signalement.annonceId, motif);
       } else if (decision === 'rejeter') {
@@ -126,19 +142,9 @@ function DecisionSheet({
       } else {
         await publierAnnonce(signalement.annonceId);
       }
-    } catch {
-      appAlert("Décision non appliquée", "La décision n'a pas été enregistrée. Vérifiez votre connexion puis réessayez.");
+    } catch (e) {
+      appAlert('Décision non appliquée', getErrorMessage(e, "La décision n'a pas été enregistrée. Vérifiez votre connexion puis réessayez."));
       return;
-    }
-    if (isPending && motifRequis) {
-      try {
-        await traiterSignalement(signalement.id, {
-          statut: 'TRAITE',
-          noteAdmin: `Annonce ${decision === 'masquer' ? 'masquée' : 'rejetée'} : ${motif}`,
-        });
-      } catch {
-        appAlert('Signalement non clos', "L'annonce a bien été modérée, mais le signalement n'a pas pu être marqué comme traité.");
-      }
     }
     fermer();
   };
@@ -285,6 +291,9 @@ function SignalementCard({ item }: { item: Signalement }) {
         <StatusBadge label={motifLabel} tone="danger" icon="flag" />
         {!isPending ? (
           <StatusBadge label={STATUT_SIGNALEMENT_LABELS[statut]} tone={SIGNALEMENT_TONE[statut]} />
+        ) : null}
+        {isPending && item.annonceMasqueeAutomatiquement ? (
+          <StatusBadge label="Masquée automatiquement" tone="warning" icon="alert-circle" />
         ) : null}
         <AppText style={s.date}>
           {new Date(item.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}

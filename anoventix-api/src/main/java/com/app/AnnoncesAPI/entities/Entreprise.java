@@ -1,5 +1,6 @@
 package com.app.AnnoncesAPI.entities;
 
+import com.app.AnnoncesAPI.enums.StatutVerificationEntreprise;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.persistence.Transient;
@@ -36,8 +37,26 @@ public class Entreprise {
     @Column(length = 200)
     private String description;
     
-    @Column(unique = true, length = 50)
+    /** Réservé une fois l'entreprise vérifiée (index partiel, V27) ; figé après vérification. */
+    @Column(length = 50)
     private String numeroRCCM;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatutVerificationEntreprise statutVerification = StatutVerificationEntreprise.NON_VERIFIEE;
+
+    /** Extrait RCCM (image ou PDF) dans uploads/private/entreprise/&lt;id&gt;/, lisible par le propriétaire et la modération. */
+    @Column(length = 500)
+    private String justificatifRccmUrl;
+
+    private LocalDateTime dateEnvoiVerification;
+    private LocalDateTime dateDecisionVerification;
+
+    @Column(length = 100)
+    private String decisionVerificationPar;
+
+    @Column(length = 255)
+    private String motifRejetVerification;
     
     @Column(length = 100)
     private String adresse;
