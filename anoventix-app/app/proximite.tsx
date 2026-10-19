@@ -45,15 +45,16 @@ export default function ProximiteScreen() {
   const [fetching, setFetching] = useState(false);
 
   const fetchNearby = useCallback(
-    async (c: { lat: number; lng: number }, r: number) => {
+    async (c: { lat: number; lng: number }, r: number, type: TypeAnnonce | null = typeFilter) => {
       setFetching(true);
       try {
-        await loadNearby({ lat: c.lat, lng: c.lng, rayon: r });
+        // Le filtre par type est appliqué par l'API avant la pagination (ECART-33).
+        await loadNearby({ lat: c.lat, lng: c.lng, rayon: r, typeAnnonce: type ?? undefined });
       } finally {
         setFetching(false);
       }
     },
-    [loadNearby],
+    [loadNearby, typeFilter],
   );
 
   // setState uniquement dans les callbacks : appelable depuis l'effet initial.
@@ -93,10 +94,12 @@ export default function ProximiteScreen() {
     if (coords) fetchNearby(coords, r);
   };
 
-  // Filtre type d'annonce appliqué côté client (l'endpoint /nearby ne filtre pas par type).
-  const results = typeFilter
-    ? nearbyResults.filter((a) => a.typeAnnonce === typeFilter)
-    : nearbyResults;
+  const results = nearbyResults;
+
+  const choisirType = (t: TypeAnnonce | null) => {
+    setTypeFilter(t);
+    if (coords) fetchNearby(coords, rayon, t);
+  };
 
   // ── Header custom (flèche retour + titre) ─────────────────────────────────────
   const Header = isDesktop ? (
@@ -129,7 +132,7 @@ export default function ProximiteScreen() {
       >
         <TouchableOpacity
           style={[s.typeChip, typeFilter === null && s.typeChipActive]}
-          onPress={() => setTypeFilter(null)}
+          onPress={() => choisirType(null)}
           activeOpacity={0.8}
         >
           <AppText style={[s.typeChipText, typeFilter === null && s.typeChipTextActive]}>Tous</AppText>
@@ -140,7 +143,7 @@ export default function ProximiteScreen() {
             <TouchableOpacity
               key={t}
               style={[s.typeChip, active && s.typeChipActive]}
-              onPress={() => setTypeFilter(active ? null : t!)}
+              onPress={() => choisirType(active ? null : t!)}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -243,7 +246,7 @@ export default function ProximiteScreen() {
             <View style={s.empty}>
               <Ionicons name="map-outline" size={40} color={colors.border} />
               <AppText style={s.muted}>
-                {typeFilter && nearbyResults.length > 0
+                {typeFilter
                   ? `Aucune annonce « ${TYPE_ANNONCE_LABELS[typeFilter]} » dans ce rayon.`
                   : 'Aucune annonce localisée dans ce rayon.'}
               </AppText>

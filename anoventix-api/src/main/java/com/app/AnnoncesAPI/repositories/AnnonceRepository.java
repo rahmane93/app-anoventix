@@ -56,19 +56,19 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
     @Query("SELECT a.vueCount FROM Annonce a WHERE a.id = :id")
     Optional<Long> findVueCountById(@Param("id") Long id);
 
-    /** Nombre d'annonces actives par type de bien. Retourne [TypeBien, count]. */
-    @Query("SELECT a.typeBien, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.typeBien ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public (une seule définition de « active », ECART-27) par type de bien. Retourne [TypeBien, count]. */
+    @Query("SELECT a.typeBien, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.typeBien ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByTypeBien();
 
-    /** Nombre d'annonces actives par type d'annonce. Retourne [TypeAnnonce, count]. */
-    @Query("SELECT a.typeAnnonce, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.typeAnnonce ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public par type d'annonce. Retourne [TypeAnnonce, count]. */
+    @Query("SELECT a.typeAnnonce, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.typeAnnonce ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByTypeAnnonce();
 
-    /** Nombre d'annonces actives par région. Retourne [region, count]. */
-    @Query("SELECT a.localisation.region, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.localisation.region ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public par région. Retourne [region, count]. */
+    @Query("SELECT a.localisation.region, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.localisation.region ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByRegion();
 
-    /** Évolution mensuelle des créations d'annonces sur les 12 derniers mois. Retourne [periode 'YYYY-MM', count]. */
+    /** Évolution mensuelle des créations d'annonces (toutes, quel que soit leur état) sur les 12 derniers mois. Retourne [periode 'YYYY-MM', count]. */
     @Query(value = """
             SELECT TO_CHAR(DATE_TRUNC('month', date_creation), 'YYYY-MM') AS periode,
                    COUNT(*) AS count

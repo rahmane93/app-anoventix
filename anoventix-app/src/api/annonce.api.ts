@@ -26,9 +26,25 @@ export function normalizeMediaUrls(item: BienImmo): BienImmo {
     ...item,
     statutModeration:
       item.motifCloture != null && item.statutModeration === 'PUBLIEE' ? 'CLOTUREE' : item.statutModeration,
-    medias: (item.medias ?? []).map((m) => ({ ...m, url: buildMediaUrl(m.url) })),
+    medias: (item.medias ?? []).map(urlsAbsolues),
   };
 }
+
+/** URL absolues d'une photo et de ses variantes. */
+export function urlsAbsolues<T extends { url: string; urlMiniature?: string | null; urlMoyenne?: string | null }>(m: T): T {
+  return {
+    ...m,
+    url: buildMediaUrl(m.url),
+    urlMiniature: m.urlMiniature ? buildMediaUrl(m.urlMiniature) : null,
+    urlMoyenne: m.urlMoyenne ? buildMediaUrl(m.urlMoyenne) : null,
+  };
+}
+
+/** Miniature pour les listes et les cartes, repli sur la photo d'origine. */
+export const vignette = (m: { url: string; urlMiniature?: string | null }): string => m.urlMiniature || m.url;
+
+/** Version moyenne pour la fiche, repli sur la photo d'origine. */
+export const photoMoyenne = (m: { url: string; urlMoyenne?: string | null }): string => m.urlMoyenne || m.url;
 
 // ─── Annonce API ──────────────────────────────────────────────────────────────
 
@@ -301,6 +317,10 @@ export const getAnnoncesNearby = async (
   qs.set('lat', String(params.lat));
   qs.set('lng', String(params.lng));
   if (params.rayon != null) qs.set('rayon', String(params.rayon));
+  if (params.typeAnnonce) qs.set('typeAnnonce', params.typeAnnonce);
+  if (params.typeBien) qs.set('typeBien', params.typeBien);
+  if (params.prixMin != null) qs.set('prixMin', String(params.prixMin));
+  if (params.prixMax != null) qs.set('prixMax', String(params.prixMax));
   qs.set('page', String(params.page ?? 0));
   qs.set('size', String(params.size ?? 10));
 

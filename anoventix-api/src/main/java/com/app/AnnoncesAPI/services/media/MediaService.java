@@ -125,8 +125,11 @@ public class MediaService {
                         .outputFormat("jpg")
                         .outputQuality(0.80)
                         .toFile(filePath.toFile());
+                // Miniature et version moyenne : les listes et les cartes ne chargent plus la photo en 1920 px.
+                VariantesPhoto.generer(filePath);
 
                 MediaDTO mediaDto = new MediaDTO();
+                mediaDto.setVariantes(true);
                 mediaDto.setUrl("/uploads/" + publicFolder + "/" + uniqueName);
                 mediaDto.setTypeMime("image/jpeg");
                 mediaDto.setOrdre(i + 1);
@@ -180,6 +183,7 @@ public class MediaService {
         }
         try {
             Files.deleteIfExists(filePath);
+            VariantesPhoto.supprimer(filePath);
             logger.debug("Fichier supprimé : {}", filePath);
         } catch (IOException e) {
             throw new RuntimeException("Erreur de suppression du fichier : " + mediaUrl, e);

@@ -119,7 +119,7 @@ public class AdminServiceImpl implements AdminService {
     public AdminStatsResponse getStats() {
         return AdminStatsResponse.builder()
                 .totalUtilisateurs(userRepository.countByDateSuppressionDefinitiveIsNull())
-                .totalAnnoncesActives(bienImmoRepository.countByActifTrue())
+                .totalAnnoncesActives(bienImmoRepository.countByVisiblePublicTrue())
                 .totalSignalements(signalementRepository.countByAnnuleFalse())
                 .totalEntreprises(entrepriseRepository.countNonSupprimees())
                 .utilisateursEnAttenteActivation(

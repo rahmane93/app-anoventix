@@ -5,9 +5,8 @@ import { WebTopBar } from '@/src/components/web/WebTopBar';
 import { useLicenceGate } from '@/src/features/licence/useLicenceGate';
 import { consumeReturnTo } from '@/src/lib/auth-redirect';
 import { useBreakpoint, type ContainerSize } from '@/src/lib/responsive';
-import { enregistrerSiAutorise, installerGestionnaire, ouvrirNotification } from '@/src/lib/push';
+import { ecouterOuvertures, enregistrerSiAutorise, installerGestionnaire, ouvrirDerniereNotification } from '@/src/lib/push';
 import { useAuthStore } from '@/src/stores/auth.store';
-import * as Notifications from 'expo-notifications';
 import { colors, typography } from '@/src/theme';
 import {
     Nunito_400Regular,
@@ -88,20 +87,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     installerGestionnaire();
-    const abonnement = Notifications.addNotificationResponseReceivedListener((reponse) => {
-      ouvrirNotification(reponse.notification.request.content.data);
-    });
-    return () => abonnement.remove();
+    return ecouterOuvertures();
   }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'android' || !isAuthenticated) return;
     enregistrerSiAutorise();
-    Notifications.getLastNotificationResponseAsync()
-      .then((reponse) => {
-        if (reponse) ouvrirNotification(reponse.notification.request.content.data);
-      })
-      .catch(() => {});
+    ouvrirDerniereNotification();
   }, [isAuthenticated]);
 
   useEffect(() => {

@@ -318,11 +318,10 @@ public class BienImmoServiceImpl implements BienImmoService {
     @Override
     @Transactional(readOnly = true)
     public Page<AnnonceDTO> naturalLanguageSearch(String query, Pageable pageable) {
-        List<Long> ids = bienImmoRepository.findIdsByFullTextSearch(query);
-        int total = ids.size();
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), total);
-        List<Long> pageIds = start >= total ? List.of() : ids.subList(start, end);
+        // Pagination SQL (LIMIT / OFFSET) sur l'index plein texte : plus de chargement de tous les identifiants.
+        List<Long> pageIds = bienImmoRepository.findIdsByFullTextSearchPage(query, pageable.getPageSize(), pageable.getOffset());
+        long total = pageIds.isEmpty() && pageable.getOffset() == 0
+                ? 0 : bienImmoRepository.countByFullTextSearch(query);
         return new PageImpl<>(chargerDansLOrdre(pageIds), pageable, total);
     }
 
@@ -713,12 +712,15 @@ public class BienImmoServiceImpl implements BienImmoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AnnonceDTO> findNearby(double lat, double lng, double rayonKm, Pageable pageable) {
-        List<Long> ids = bienImmoRepository.findIdsByProximite(lat, lng, rayonKm);
-        int total = ids.size();
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), total);
-        List<Long> pageIds = start >= total ? List.of() : ids.subList(start, end);
+    public Page<AnnonceDTO> findNearby(double lat, double lng, double rayonKm, TypeAnnonce typeAnnonce, TypeBien typeBien,
+                                       BigDecimal prixMin, BigDecimal prixMax, Pageable pageable) {
+        // Filtres et pagination côté SQL (ECART-33, ECART-46) : un filtre appliqué à la page déjà chargée perdait des résultats.
+        String ta = typeAnnonce == null ? null : typeAnnonce.name();
+        String tb = typeBien == null ? null : typeBien.name();
+        List<Long> pageIds = bienImmoRepository.findIdsByProximitePage(lat, lng, rayonKm, ta, tb, prixMin, prixMax,
+                pageable.getPageSize(), pageable.getOffset());
+        long total = pageIds.isEmpty() && pageable.getOffset() == 0
+                ? 0 : bienImmoRepository.countByProximite(lat, lng, rayonKm, ta, tb, prixMin, prixMax);
         return new PageImpl<>(chargerDansLOrdre(pageIds), pageable, total);
     }
 

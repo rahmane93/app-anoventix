@@ -1,3 +1,4 @@
+import { vignette } from '@/src/api/annonce.api';
 import { annonceHref } from '@/src/lib/annonce-url';
 import { Image } from 'expo-image';
 import { Prix } from '@/src/components/annonce/Prix';
@@ -130,7 +131,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
         <View style={cardStyles.thumb}>
           {m0 ? (
             <Image
-              source={{ uri: m0.url }}
+              source={{ uri: vignette(m0) }}
               style={cardStyles.thumbImg}
               contentFit="cover"
               cachePolicy="memory-disk"

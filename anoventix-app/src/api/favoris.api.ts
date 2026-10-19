@@ -1,5 +1,5 @@
 import type { BienImmo, PageResponse } from '../types/annonce.types';
-import { buildMediaUrl } from './annonce.api';
+import { urlsAbsolues } from './annonce.api';
 import { apiClient } from './client';
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function extractFavorisIds(payload: any): number[] | null {
 function normalizeItem(item: BienImmo): BienImmo {
   return {
     ...item,
-    medias: (item.medias ?? []).map((m) => ({ ...m, url: buildMediaUrl(m.url) })),
+    medias: (item.medias ?? []).map(urlsAbsolues),
   };
 }
 

@@ -1,4 +1,4 @@
-import { buildMediaUrl } from '@/src/api/annonce.api';
+import { buildMediaUrl, vignette } from '@/src/api/annonce.api';
 import { colors, radius } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +32,7 @@ export function AnnonceMosaic({
   children?: React.ReactNode;
 }) {
   const urls = (Array.isArray(medias) ? medias : [])
-    .map((m) => (m?.url ? buildMediaUrl(m.url) : ''))
+    .map((m) => (m?.url ? buildMediaUrl(vignette(m)) : ''))
     .filter(Boolean)
     .slice(0, 3);
   const key = recyclingKey != null ? String(recyclingKey) : undefined;

@@ -993,7 +993,7 @@ export interface paths {
         };
         /**
          * Annonces à proximité (Haversine)
-         * @description Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS.
+         * @description Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS, avec les filtres facultatifs typeAnnonce, typeBien, prixMin et prixMax appliqués avant la pagination.
          */
         get: operations["nearby"];
         put?: never;
@@ -1952,6 +1952,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/messagerie/blocages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mes interlocuteurs bloqués */
+        get: operations["mesBlocages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/messagerie/blocages/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bloquer un interlocuteur
+         * @description Plus aucun message dans un sens comme dans l'autre.
+         */
+        post: operations["bloquer"];
+        /** Débloquer un interlocuteur */
+        delete: operations["debloquer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/messagerie/conversations": {
         parameters: {
             query?: never;
@@ -1983,6 +2021,30 @@ export interface paths {
         /** Obtenir une conversation par ID */
         get: operations["getConversationById"];
         put?: never;
+        post?: never;
+        /**
+         * Supprimer une conversation (pour moi)
+         * @description Masquée pour moi seulement : l'interlocuteur la garde, et un nouveau message la fait réapparaître.
+         */
+        delete: operations["supprimer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/messagerie/conversations/{conversationId}/archiver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Archiver une conversation
+         * @description Rangée à part ; un nouveau message la ramène dans la boîte.
+         */
+        put: operations["archiver"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2018,6 +2080,23 @@ export interface paths {
         get?: never;
         /** Marquer une conversation comme lue */
         put: operations["markConversationAsRead"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/messagerie/conversations/{conversationId}/restaurer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Sortir une conversation des archives */
+        put: operations["restaurer"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2815,10 +2894,15 @@ export interface components {
             annonceId?: number;
             annonceReference?: string;
             annonceTitre?: string;
+            bloqueParMoi?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: uuid */
             createdById?: string;
+            ecritureImpossibleMotif?: string;
+            ecriturePossible?: boolean;
+            /** @enum {string} */
+            etat?: "ACTIVE" | "ARCHIVEE" | "SUPPRIMEE";
             /** Format: int64 */
             id?: number;
             /** Format: date-time */
@@ -3112,6 +3196,8 @@ export interface components {
             ordre?: number;
             typeMime?: string;
             url?: string;
+            urlMiniature?: string;
+            urlMoyenne?: string;
         };
         MediaRequest: {
             medias: string[];
@@ -3506,6 +3592,14 @@ export interface components {
             telephone?: string;
             /** @enum {string} */
             typePieceIdentite?: "CARTE_IDENTITE" | "PASSEPORT" | "PERMIS_DE_CONDUIRE" | "AUTRE";
+        };
+        UtilisateurBloque: {
+            /** Format: date-time */
+            dateBlocage?: string;
+            /** Format: uuid */
+            id?: string;
+            nomComplet?: string;
+            photoProfil?: string;
         };
         ValidationPieceIdentiteRequest: {
             motifRejet?: string;
@@ -4925,6 +5019,10 @@ export interface operations {
                 lat: number;
                 lng: number;
                 rayon?: number;
+                typeAnnonce?: "VENTE" | "LOCATION" | "BAIL";
+                typeBien?: "APPARTEMENT" | "MAISON" | "VILLA" | "TERRAIN" | "DOMAINE" | "MAGASIN" | "BUREAU" | "ENTREPOT" | "AUTRE";
+                prixMin?: number;
+                prixMax?: number;
                 page?: number;
                 size?: number;
             };
@@ -6359,6 +6457,66 @@ export interface operations {
             };
         };
     };
+    mesBlocages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UtilisateurBloque"][];
+                };
+            };
+        };
+    };
+    bloquer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    debloquer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getMyConversations: {
         parameters: {
             query?: {
@@ -6366,6 +6524,7 @@ export interface operations {
                 size?: number;
                 sort?: string;
                 direction?: string;
+                etat?: "ACTIVE" | "ARCHIVEE" | "SUPPRIMEE";
             };
             header?: never;
             path?: never;
@@ -6430,6 +6589,46 @@ export interface operations {
             };
         };
     };
+    supprimer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archiver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getMessages: {
         parameters: {
             query?: {
@@ -6484,6 +6683,26 @@ export interface operations {
         };
     };
     markConversationAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restaurer: {
         parameters: {
             query?: never;
             header?: never;

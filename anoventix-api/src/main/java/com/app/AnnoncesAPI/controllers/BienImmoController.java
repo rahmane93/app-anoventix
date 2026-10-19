@@ -386,16 +386,22 @@ public class BienImmoController {
 
     @GetMapping("/nearby")
     @Operation(summary = "Annonces à proximité (Haversine)",
-               description = "Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS.")
+               description = "Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS, "
+                           + "avec les filtres facultatifs typeAnnonce, typeBien, prixMin et prixMax appliqués avant la pagination.")
     public ResponseEntity<PageResponse<AnnonceDTO>> nearby(
             @RequestParam @DecimalMin("-90.0") @DecimalMax("90.0") double lat,
             @RequestParam @DecimalMin("-180.0") @DecimalMax("180.0") double lng,
             @RequestParam(defaultValue = "5") double rayon,
+            @RequestParam(required = false) TypeAnnonce typeAnnonce,
+            @RequestParam(required = false) TypeBien typeBien,
+            @RequestParam(required = false) BigDecimal prixMin,
+            @RequestParam(required = false) BigDecimal prixMax,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
         size = Math.min(size, MAX_PAGE_SIZE);
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(PageResponse.of(bienImmoService.findNearby(lat, lng, rayon, pageable)));
+        return ResponseEntity.ok(PageResponse.of(
+                bienImmoService.findNearby(lat, lng, rayon, typeAnnonce, typeBien, prixMin, prixMax, pageable)));
     }
 
     // ─── Zones actives ────────────────────────────────────────────────────────

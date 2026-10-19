@@ -2155,7 +2155,7 @@
     },
     "/api/biens-immo/nearby" : {
       "get" : {
-        "description" : "Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS.",
+        "description" : "Recherche les annonces actives dans un rayon donné (km) autour d'un point GPS, avec les filtres facultatifs typeAnnonce, typeBien, prixMin et prixMax appliqués avant la pagination.",
         "operationId" : "nearby",
         "parameters" : [ {
           "in" : "query",
@@ -2185,6 +2185,36 @@
             "type" : "number",
             "format" : "double",
             "default" : 5.0
+          }
+        }, {
+          "in" : "query",
+          "name" : "typeAnnonce",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "VENTE", "LOCATION", "BAIL" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "typeBien",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "APPARTEMENT", "MAISON", "VILLA", "TERRAIN", "DOMAINE", "MAGASIN", "BUREAU", "ENTREPOT", "AUTRE" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "prixMin",
+          "required" : false,
+          "schema" : {
+            "type" : "number"
+          }
+        }, {
+          "in" : "query",
+          "name" : "prixMax",
+          "required" : false,
+          "schema" : {
+            "type" : "number"
           }
         }, {
           "in" : "query",
@@ -4359,6 +4389,69 @@
         "tags" : [ "Localisations" ]
       }
     },
+    "/api/messagerie/blocages" : {
+      "get" : {
+        "operationId" : "mesBlocages",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/UtilisateurBloque"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Mes interlocuteurs bloqués",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/blocages/{userId}" : {
+      "delete" : {
+        "operationId" : "debloquer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Débloquer un interlocuteur",
+        "tags" : [ "Messagerie" ]
+      },
+      "post" : {
+        "description" : "Plus aucun message dans un sens comme dans l'autre.",
+        "operationId" : "bloquer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Bloquer un interlocuteur",
+        "tags" : [ "Messagerie" ]
+      }
+    },
     "/api/messagerie/conversations" : {
       "get" : {
         "operationId" : "getMyConversations",
@@ -4395,6 +4488,15 @@
           "schema" : {
             "type" : "string",
             "default" : "desc"
+          }
+        }, {
+          "in" : "query",
+          "name" : "etat",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "ACTIVE",
+            "enum" : [ "ACTIVE", "ARCHIVEE", "SUPPRIMEE" ]
           }
         } ],
         "responses" : {
@@ -4442,6 +4544,26 @@
       }
     },
     "/api/messagerie/conversations/{conversationId}" : {
+      "delete" : {
+        "description" : "Masquée pour moi seulement : l'interlocuteur la garde, et un nouveau message la fait réapparaître.",
+        "operationId" : "supprimer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Supprimer une conversation (pour moi)",
+        "tags" : [ "Messagerie" ]
+      },
       "get" : {
         "operationId" : "getConversationById",
         "parameters" : [ {
@@ -4466,6 +4588,28 @@
           }
         },
         "summary" : "Obtenir une conversation par ID",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/conversations/{conversationId}/archiver" : {
+      "put" : {
+        "description" : "Rangée à part ; un nouveau message la ramène dans la boîte.",
+        "operationId" : "archiver",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Archiver une conversation",
         "tags" : [ "Messagerie" ]
       }
     },
@@ -4585,6 +4729,27 @@
           }
         },
         "summary" : "Marquer une conversation comme lue",
+        "tags" : [ "Messagerie" ]
+      }
+    },
+    "/api/messagerie/conversations/{conversationId}/restaurer" : {
+      "put" : {
+        "operationId" : "restaurer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "conversationId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Sortir une conversation des archives",
         "tags" : [ "Messagerie" ]
       }
     },
@@ -6278,6 +6443,9 @@
           "annonceTitre" : {
             "type" : "string"
           },
+          "bloqueParMoi" : {
+            "type" : "boolean"
+          },
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
@@ -6285,6 +6453,16 @@
           "createdById" : {
             "type" : "string",
             "format" : "uuid"
+          },
+          "ecritureImpossibleMotif" : {
+            "type" : "string"
+          },
+          "ecriturePossible" : {
+            "type" : "boolean"
+          },
+          "etat" : {
+            "type" : "string",
+            "enum" : [ "ACTIVE", "ARCHIVEE", "SUPPRIMEE" ]
           },
           "id" : {
             "type" : "integer",
@@ -7055,6 +7233,12 @@
             "type" : "string"
           },
           "url" : {
+            "type" : "string"
+          },
+          "urlMiniature" : {
+            "type" : "string"
+          },
+          "urlMoyenne" : {
             "type" : "string"
           }
         }
@@ -8083,6 +8267,25 @@
           "typePieceIdentite" : {
             "type" : "string",
             "enum" : [ "CARTE_IDENTITE", "PASSEPORT", "PERMIS_DE_CONDUIRE", "AUTRE" ]
+          }
+        }
+      },
+      "UtilisateurBloque" : {
+        "type" : "object",
+        "properties" : {
+          "dateBlocage" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "nomComplet" : {
+            "type" : "string"
+          },
+          "photoProfil" : {
+            "type" : "string"
           }
         }
       },

@@ -143,7 +143,7 @@ function ConversationCard({ conversation, active, replace }: {
 
 export function ConversationList({ activeId, replace = false }: { activeId?: string | null; replace?: boolean }) {
   const { isAuthenticated } = useAuthStore(useShallow((s) => ({ isAuthenticated: s.isAuthenticated })));
-  const { conversations, isLoadingConversations, error, loadConversations, clearError } = useMessagerieStore(useShallow((s) => ({ conversations: s.conversations, isLoadingConversations: s.isLoadingConversations, error: s.error, loadConversations: s.loadConversations, clearError: s.clearError })));
+  const { conversations, isLoadingConversations, error, loadConversations, clearError, etatListe, setEtatListe } = useMessagerieStore(useShallow((s) => ({ etatListe: s.etatListe, setEtatListe: s.setEtatListe, conversations: s.conversations, isLoadingConversations: s.isLoadingConversations, error: s.error, loadConversations: s.loadConversations, clearError: s.clearError })));
 
   useFocusEffect(
     useCallback(() => {
@@ -157,8 +157,27 @@ export function ConversationList({ activeId, replace = false }: { activeId?: str
     (c) => c.lastMessagePreview || (c.unreadCount ?? 0) > 0,
   );
 
+  const changerOnglet = (etat: 'ACTIVE' | 'ARCHIVEE') => {
+    if (etat === etatListe) return;
+    setEtatListe(etat);
+    loadConversations();
+  };
+
   return (
     <>
+      <View style={styles.tabs}>
+        {([['ACTIVE', 'Boîte de réception'], ['ARCHIVEE', 'Archives']] as const).map(([etat, label]) => (
+          <TouchableOpacity
+            key={etat}
+            style={[styles.tab, etatListe === etat && styles.tabActive]}
+            onPress={() => changerOnglet(etat)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: etatListe === etat }}
+          >
+            <AppText style={[styles.tabText, etatListe === etat && styles.tabTextActive]}>{label}</AppText>
+          </TouchableOpacity>
+        ))}
+      </View>
       {error ? (
         <View style={styles.bannerWrap}>
           <AlertBanner message={error} variant="error" />
@@ -209,6 +228,16 @@ export function ConversationList({ activeId, replace = false }: { activeId?: str
 }
 
 const styles = StyleSheet.create({
+  tabs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.base, paddingTop: spacing.base },
+  tab: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
+  },
+  tabActive: { backgroundColor: colors.primarySurface },
+  tabText: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  tabTextActive: { color: colors.primary, fontWeight: '700' },
   bannerWrap: {
     paddingHorizontal: spacing.base,
     paddingTop: spacing.base,

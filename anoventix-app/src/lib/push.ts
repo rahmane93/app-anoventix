@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import type * as NotificationsModule from 'expo-notifications';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import * as notificationApi from '@/src/api/notification.api';
@@ -13,7 +13,22 @@ import * as notificationApi from '@/src/api/notification.api';
 const CLE_JETON = 'push.jeton';
 const CLE_PERMISSION_DEMANDEE = 'push.permissionDemandee';
 
-const actif = () => Platform.OS === 'android' && Device.isDevice;
+// Chargé à la demande : un binaire compilé sans le module natif (ancien build de développement) doit
+// démarrer quand même, sans notifications, au lieu de planter à l'import.
+let notificationsChargees: typeof NotificationsModule | null | undefined;
+function charger(): typeof NotificationsModule | null {
+  if (notificationsChargees === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      notificationsChargees = require('expo-notifications') as typeof NotificationsModule;
+    } catch {
+      notificationsChargees = null;
+    }
+  }
+  return notificationsChargees;
+}
+
+const actif = () => Platform.OS === 'android' && Device.isDevice && charger() !== null;
 
 /** Conversation affichée à l'écran : ses notifications ne s'affichent pas par-dessus (RG-06-22). */
 let conversationOuverte: string | null = null;
@@ -25,7 +40,8 @@ let gestionnaireInstalle = false;
 
 /** À appeler une fois au démarrage : règle l'affichage des notifications reçues app ouverte. */
 export function installerGestionnaire(): void {
-  if (gestionnaireInstalle || Platform.OS !== 'android') return;
+  const Notifications = charger();
+  if (gestionnaireInstalle || Platform.OS !== 'android' || !Notifications) return;
   gestionnaireInstalle = true;
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
@@ -48,7 +64,8 @@ export function installerGestionnaire(): void {
 
 async function lireJeton(): Promise<string | null> {
   const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
-  if (!projectId) return null;
+  const Notifications = charger();
+  if (!projectId || !Notifications) return null;
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
   return data;
 }
@@ -62,7 +79,8 @@ async function enregistrerJeton(): Promise<void> {
 
 /** À la connexion : enregistre l'appareil si la permission est déjà accordée (sans jamais la demander). */
 export async function enregistrerSiAutorise(): Promise<void> {
-  if (!actif()) return;
+  const Notifications = charger();
+  if (!actif() || !Notifications) return;
   try {
     const { granted } = await Notifications.getPermissionsAsync();
     if (granted) await enregistrerJeton();
@@ -73,7 +91,8 @@ export async function enregistrerSiAutorise(): Promise<void> {
 
 /** Au premier message envoyé ou reçu : demande la permission (une seule fois), puis enregistre l'appareil. */
 export async function demanderPermissionEtEnregistrer(): Promise<void> {
-  if (!actif()) return;
+  const Notifications = charger();
+  if (!actif() || !Notifications) return;
   try {
     const actuel = await Notifications.getPermissionsAsync();
     if (actuel.granted) {
@@ -101,6 +120,27 @@ export async function desenregistrer(): Promise<void> {
   } catch {
     // Un jeton non retiré sera supprimé par le serveur quand le service le déclarera invalide.
   }
+}
+
+/** Écoute les notifications touchées pendant que l'app tourne ; renvoie la fonction de désabonnement. */
+export function ecouterOuvertures(): () => void {
+  const Notifications = charger();
+  if (Platform.OS !== 'android' || !Notifications) return () => {};
+  const abonnement = Notifications.addNotificationResponseReceivedListener((reponse) => {
+    ouvrirNotification(reponse.notification.request.content.data as Donnees);
+  });
+  return () => abonnement.remove();
+}
+
+/** Notification qui a lancé l'app (app fermée) : l'ouvre une fois connecté. */
+export function ouvrirDerniereNotification(): void {
+  const Notifications = charger();
+  if (Platform.OS !== 'android' || !Notifications) return;
+  Notifications.getLastNotificationResponseAsync()
+    .then((reponse) => {
+      if (reponse) ouvrirNotification(reponse.notification.request.content.data as Donnees);
+    })
+    .catch(() => {});
 }
 
 type Donnees = { type?: string; conversationId?: number | string; alerteId?: number | string };

@@ -27,6 +27,10 @@ public class Media {
 
     private Integer ordre;
 
+    /** Miniature (_t) et version moyenne (_m) présentes sur le disque à côté du fichier d'origine (ECART-55). */
+    @jakarta.persistence.Column(nullable = false)
+    private boolean variantes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "annonce_id", nullable = false)
     @JsonBackReference

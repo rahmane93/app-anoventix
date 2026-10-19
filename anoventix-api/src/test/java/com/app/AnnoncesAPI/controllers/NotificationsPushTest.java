@@ -232,6 +232,8 @@ class NotificationsPushTest {
     void lAlerteNotifieLesNouvellesAnnoncesUneFoisParJour() throws Exception {
         enregistrer(jwtAcheteur, JETON).andExpect(status().isCreated());
         creerAlerte(jwtAcheteur, "Villas").andExpect(status().isCreated());
+        // Horloges JVM et base (Docker) pas forcément alignées à la milliseconde : la vérification part d'avant.
+        jdbc.update("UPDATE alerte_recherche SET derniere_verification = derniere_verification - INTERVAL '1 minute'");
         annonce("Villa neuve");
         annonce("Villa avec jardin");
         BienImmo appartement = annonce("Appartement");

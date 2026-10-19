@@ -79,7 +79,8 @@ public interface BienImmoService extends AnnonceService {
      * Recherche géospatiale des annonces actives dans un rayon donné (km).
      * Utilise la formule Haversine sur les champs latitude/longitude.
      */
-    Page<AnnonceDTO> findNearby(double lat, double lng, double rayonKm, Pageable pageable);
+    Page<AnnonceDTO> findNearby(double lat, double lng, double rayonKm, TypeAnnonce typeAnnonce, TypeBien typeBien,
+                                BigDecimal prixMin, BigDecimal prixMax, Pageable pageable);
 
     /**
      * Communes ayant le plus d'annonces publiées, toutes régions confondues.

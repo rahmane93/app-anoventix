@@ -76,33 +76,51 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
            "LOWER(b.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<BienImmo> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+    /** Nombre maximal d'identifiants renvoyés pour combiner le texte aux autres filtres (borne la mémoire). */
+    int PLEIN_TEXTE_MAX_COMBINE = 2000;
+
     /**
-     * Recherche plein texte PostgreSQL sur les annonces visibles — retourne les IDs triés
-     * par pertinence (pas les entités, à cause du mapping clazz_ de l'héritage JOINED).
-     * Le texte indexé couvre le titre, la description, le type de bien et la localisation
-     * (quartier, commune, préfecture, région) ; accents ignorés des deux côtés (ECART-57).
+     * Recherche plein texte PostgreSQL sur les annonces visibles : identifiants triés par pertinence, une page
+     * à la fois (pas les entités, à cause du mapping clazz_ de l'héritage JOINED). Le texte indexé
+     * ({@code annonce.recherche_doc}, V33, index GIN) couvre le titre, la description, le type de bien et la
+     * localisation ; accents ignorés des deux côtés (ECART-57).
      */
     @Query(value = """
             SELECT a.id FROM annonce a
             INNER JOIN bien_immo b ON b.annonce_id = a.id
-            LEFT JOIN localisation l ON l.id = a.localisation_id
-            CROSS JOIN LATERAL (SELECT to_tsvector('french', unaccent(
-                coalesce(a.titre, '') || ' ' ||
-                coalesce(a.description, '') || ' ' ||
-                coalesce(a.type_bien, '') || ' ' ||
-                coalesce(l.quartier, '') || ' ' ||
-                coalesce(l.commune, '') || ' ' ||
-                coalesce(l.prefecture, '') || ' ' ||
-                coalesce(l.region, '')
-            )) AS doc) t
             WHERE a.visible_public
-              AND t.doc @@ plainto_tsquery('french', unaccent(:query))
-            ORDER BY ts_rank(t.doc, plainto_tsquery('french', unaccent(:query))) DESC
+              AND a.recherche_doc @@ plainto_tsquery('french', unaccent(:query))
+            ORDER BY ts_rank(a.recherche_doc, plainto_tsquery('french', unaccent(:query))) DESC, a.id DESC
+            LIMIT :limite OFFSET :decalage
+            """, nativeQuery = true)
+    List<Long> findIdsByFullTextSearchPage(@Param("query") String query,
+                                           @Param("limite") int limite,
+                                           @Param("decalage") long decalage);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM annonce a
+            INNER JOIN bien_immo b ON b.annonce_id = a.id
+            WHERE a.visible_public
+              AND a.recherche_doc @@ plainto_tsquery('french', unaccent(:query))
+            """, nativeQuery = true)
+    long countByFullTextSearch(@Param("query") String query);
+
+    /** Les meilleurs résultats du texte (au plus {@link #PLEIN_TEXTE_MAX_COMBINE}), pour les combiner aux filtres. */
+    @Query(value = """
+            SELECT a.id FROM annonce a
+            INNER JOIN bien_immo b ON b.annonce_id = a.id
+            WHERE a.visible_public
+              AND a.recherche_doc @@ plainto_tsquery('french', unaccent(:query))
+            ORDER BY ts_rank(a.recherche_doc, plainto_tsquery('french', unaccent(:query))) DESC, a.id DESC
+            LIMIT 2000
             """, nativeQuery = true)
     List<Long> findIdsByFullTextSearch(@Param("query") String query);
 
     /** Compte les biens actifs. */
     long countByActifTrue();
+
+    /** Annonces visibles du public : la définition unique de « annonce active » pour les statistiques (ECART-27). */
+    long countByVisiblePublicTrue();
 
     /** Compte les annonces par statut de modération. */
     long countByStatutModeration(StatutAnnonce statut);
@@ -220,31 +238,57 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     Page<BienImmo> findByReexamenDemandeTrueOrderByDateReexamenAsc(Pageable pageable);
 
     /**
-     * Recherche géospatiale par rayon (Haversine) — retourne les IDs triés par distance.
-     * Utilise les colonnes {@code latitude}/{@code longitude} de la table {@code annonce}.
+     * Recherche géospatiale par rayon (Haversine) : identifiants triés par distance, une page à la fois, avec les
+     * filtres facultatifs de la recherche (type d'annonce, type de bien, prix). Paramètres nuls = pas de filtre.
      */
     @Query(value = """
-            SELECT a.id FROM annonce a
-            INNER JOIN bien_immo b ON b.annonce_id = a.id
-            WHERE a.visible_public
-              AND a.latitude  IS NOT NULL
-              AND a.longitude IS NOT NULL
-              AND (6371 * acos(LEAST(1.0,
-                    cos(radians(:lat))
-                    * cos(radians(CAST(a.latitude  AS double precision)))
-                    * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
-                    + sin(radians(:lat))
-                    * sin(radians(CAST(a.latitude  AS double precision)))
-                  ))) <= :rayonKm
-            ORDER BY (6371 * acos(LEAST(1.0,
-                    cos(radians(:lat))
-                    * cos(radians(CAST(a.latitude  AS double precision)))
-                    * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
-                    + sin(radians(:lat))
-                    * sin(radians(CAST(a.latitude  AS double precision)))
-                  ))) ASC
+            SELECT x.id FROM (
+              SELECT a.id,
+                     (6371 * acos(LEAST(1.0,
+                        cos(radians(:lat))
+                        * cos(radians(CAST(a.latitude  AS double precision)))
+                        * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
+                        + sin(radians(:lat))
+                        * sin(radians(CAST(a.latitude  AS double precision)))))) AS distance
+              FROM annonce a
+              INNER JOIN bien_immo b ON b.annonce_id = a.id
+              WHERE a.visible_public AND a.latitude IS NOT NULL AND a.longitude IS NOT NULL
+                AND (CAST(:typeAnnonce AS varchar) IS NULL OR a.type_annonce = CAST(:typeAnnonce AS varchar))
+                AND (CAST(:typeBien AS varchar) IS NULL OR a.type_bien = CAST(:typeBien AS varchar))
+                AND (CAST(:prixMin AS numeric) IS NULL OR a.prix >= CAST(:prixMin AS numeric))
+                AND (CAST(:prixMax AS numeric) IS NULL OR a.prix <= CAST(:prixMax AS numeric))
+            ) x
+            WHERE x.distance <= :rayonKm
+            ORDER BY x.distance ASC, x.id
+            LIMIT :limite OFFSET :decalage
             """, nativeQuery = true)
-    List<Long> findIdsByProximite(@Param("lat") double lat,
-                                  @Param("lng") double lng,
-                                  @Param("rayonKm") double rayonKm);
+    List<Long> findIdsByProximitePage(@Param("lat") double lat, @Param("lng") double lng,
+                                      @Param("rayonKm") double rayonKm,
+                                      @Param("typeAnnonce") String typeAnnonce, @Param("typeBien") String typeBien,
+                                      @Param("prixMin") java.math.BigDecimal prixMin,
+                                      @Param("prixMax") java.math.BigDecimal prixMax,
+                                      @Param("limite") int limite, @Param("decalage") long decalage);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM (
+              SELECT (6371 * acos(LEAST(1.0,
+                        cos(radians(:lat))
+                        * cos(radians(CAST(a.latitude  AS double precision)))
+                        * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
+                        + sin(radians(:lat))
+                        * sin(radians(CAST(a.latitude  AS double precision)))))) AS distance
+              FROM annonce a
+              INNER JOIN bien_immo b ON b.annonce_id = a.id
+              WHERE a.visible_public AND a.latitude IS NOT NULL AND a.longitude IS NOT NULL
+                AND (CAST(:typeAnnonce AS varchar) IS NULL OR a.type_annonce = CAST(:typeAnnonce AS varchar))
+                AND (CAST(:typeBien AS varchar) IS NULL OR a.type_bien = CAST(:typeBien AS varchar))
+                AND (CAST(:prixMin AS numeric) IS NULL OR a.prix >= CAST(:prixMin AS numeric))
+                AND (CAST(:prixMax AS numeric) IS NULL OR a.prix <= CAST(:prixMax AS numeric))
+            ) x
+            WHERE x.distance <= :rayonKm
+            """, nativeQuery = true)
+    long countByProximite(@Param("lat") double lat, @Param("lng") double lng, @Param("rayonKm") double rayonKm,
+                          @Param("typeAnnonce") String typeAnnonce, @Param("typeBien") String typeBien,
+                          @Param("prixMin") java.math.BigDecimal prixMin,
+                          @Param("prixMax") java.math.BigDecimal prixMax);
 }

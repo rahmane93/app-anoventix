@@ -125,6 +125,8 @@ export default function ConversationScreen() {
     loadConversation,
     loadMoreMessages,
     sendMessage,
+    changerEtatConversation,
+    basculerBlocage,
     retryMessage,
     clearCurrentConversation,
     fetchInitialPresence,
@@ -142,6 +144,8 @@ export default function ConversationScreen() {
       loadConversation: s.loadConversation,
       loadMoreMessages: s.loadMoreMessages,
       sendMessage: s.sendMessage,
+      changerEtatConversation: s.changerEtatConversation,
+      basculerBlocage: s.basculerBlocage,
       retryMessage: s.retryMessage,
       clearCurrentConversation: s.clearCurrentConversation,
       fetchInitialPresence: s.fetchInitialPresence,
@@ -273,6 +277,48 @@ export default function ConversationScreen() {
     );
   };
 
+  const ecritureImpossible = currentConversation?.ecriturePossible === false;
+  const bloqueParMoi = currentConversation?.bloqueParMoi === true;
+
+  const confirmerSuppression = () => {
+    if (!conversationId) return;
+    appAlert('Supprimer la conversation', "Elle disparaîtra de votre boîte ; votre interlocuteur la conserve.", [
+      { text: 'Annuler', style: 'cancel' as const },
+      {
+        text: 'Supprimer',
+        style: 'destructive' as const,
+        onPress: () => {
+          changerEtatConversation(conversationId, 'supprimer')
+            .then(() => router.replace('/(tabs)/messagerie'))
+            .catch(() => {});
+        },
+      },
+    ]);
+  };
+
+  const ouvrirMenu = () => {
+    if (!conversationId || !currentConversation) return;
+    const archivee = currentConversation.etat === 'ARCHIVEE';
+    appAlert(peerName, undefined, [
+      {
+        text: archivee ? 'Restaurer' : 'Archiver',
+        onPress: () => {
+          changerEtatConversation(conversationId, archivee ? 'restaurer' : 'archiver')
+            .then(() => router.replace('/(tabs)/messagerie'))
+            .catch(() => {});
+        },
+      },
+      {
+        text: bloqueParMoi ? 'Débloquer cet utilisateur' : 'Bloquer cet utilisateur',
+        onPress: () => {
+          basculerBlocage(conversationId, currentConversation.otherParticipantId, !bloqueParMoi).catch(() => {});
+        },
+      },
+      { text: 'Supprimer la conversation', style: 'destructive' as const, onPress: confirmerSuppression },
+      { text: 'Annuler', style: 'cancel' as const },
+    ]);
+  };
+
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
@@ -303,6 +349,16 @@ export default function ConversationScreen() {
                 </View>
               )}
             </View>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={ouvrirMenu}
+              style={styles.headerBackBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Actions de la conversation"
+            >
+              <Ionicons name="ellipsis-vertical" size={22} color={colors.headerText} />
+            </TouchableOpacity>
           ),
         }}
       />
@@ -415,9 +471,17 @@ export default function ConversationScreen() {
             />
           )}
 
+          {ecritureImpossible ? (
+            <View style={{ padding: spacing.base }}>
+              <AlertBanner
+                message={currentConversation?.ecritureImpossibleMotif ?? "Vous ne pouvez plus écrire dans cette conversation."}
+                variant="info"
+              />
+            </View>
+          ) : null}
           <Composer
             bottomInset={insets.bottom}
-            disabled={!conversationId}
+            disabled={!conversationId || ecritureImpossible}
             onSend={handleSend}
             onFocus={() => scrollToBottom(true)}
           />

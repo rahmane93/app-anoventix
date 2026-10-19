@@ -75,6 +75,28 @@ public class Conversation {
     @Column(nullable = false)
     private Boolean active = true;
 
+    /** État de la conversation pour le participant « one » : active, archivée ou supprimée pour lui (ECART-29). */
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "etat_participant_one", nullable = false, length = 10)
+    private com.app.AnnoncesAPI.enums.EtatConversation etatParticipantOne = com.app.AnnoncesAPI.enums.EtatConversation.ACTIVE;
+
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "etat_participant_two", nullable = false, length = 10)
+    private com.app.AnnoncesAPI.enums.EtatConversation etatParticipantTwo = com.app.AnnoncesAPI.enums.EtatConversation.ACTIVE;
+
+    /** État vu par un participant donné. */
+    public com.app.AnnoncesAPI.enums.EtatConversation etatPour(java.util.UUID userId) {
+        return participantOne.getId().equals(userId) ? etatParticipantOne : etatParticipantTwo;
+    }
+
+    public void definirEtatPour(java.util.UUID userId, com.app.AnnoncesAPI.enums.EtatConversation etat) {
+        if (participantOne.getId().equals(userId)) {
+            etatParticipantOne = etat;
+        } else {
+            etatParticipantTwo = etat;
+        }
+    }
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
