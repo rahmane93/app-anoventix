@@ -151,7 +151,28 @@ public class BienImmoControllerTest {
                 .header("Authorization", "Bearer " + jwt))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.titre").value("Maison avec jardin à Ratoma"));
+                .andExpect(jsonPath("$.titre").value("Maison avec jardin à Ratoma"))
+                // Le libellé saisi est enregistré sous son code (ECART-35).
+                .andExpect(jsonPath("$.documentsDisponibles").value("TITRE_FONCIER"));
+    }
+
+    @Test
+    void testCreateBienImmo_documentInconnuRefuse() throws Exception {
+        String jwt = signupActivateAndGetJWT("bien-doc", "bien-doc@test.com", "Test123!");
+
+        mockMvc.perform(multipart("/api/biens-immo")
+                .file(TestPhotos.photo())
+                .param("titre", "Maison avec jardin à Ratoma")
+                .param("description", "Grande maison familiale avec jardin arboré et garage double intégré")
+                .param("prix", "350000000")
+                .param("localisationId", LOC_ID)
+                .param("typeAnnonce", "VENTE")
+                .param("typeBien", "MAISON")
+                .param("documentsDisponibles", "Plan cadastral")
+                .param("surfaceTotal", "120.0")
+                .param("typeUsage", "HABITATION")
+                .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isBadRequest());
     }
 
     private org.springframework.test.web.servlet.ResultActions creerAvecCautionAvance(

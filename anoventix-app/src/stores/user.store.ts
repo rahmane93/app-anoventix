@@ -19,9 +19,11 @@ interface UserStore {
   uploadPhoto: (file: { uri: string; name: string; type: string }, photoType?: 'profil') => Promise<void>;
   uploadPieceIdentite: (
     piece: { uri: string; name: string; type: string },
+    verso: { uri: string; name: string; type: string } | null,
     selfie: { uri: string; name: string; type: string },
     typePiece: TypePieceIdentite,
     numeroPiece: string,
+    dateExpiration: string,
   ) => Promise<void>;
   /** Selfie seul, pour un dossier envoyé avant la mise en service du selfie. */
   uploadSelfie: (selfie: { uri: string; name: string; type: string }) => Promise<void>;
@@ -99,10 +101,10 @@ export const useUserStore = create<UserStore>((set) => ({
    * Après l'upload, le statut est EN_ATTENTE côté serveur.
    * Le profil est rechargé pour refléter le nouveau champ pieceIdentite.
    */
-  uploadPieceIdentite: async (piece, selfie, typePiece, numeroPiece) => {
+  uploadPieceIdentite: async (piece, verso, selfie, typePiece, numeroPiece, dateExpiration) => {
     set({ uploadingPiece: true, error: null });
     try {
-      await userApi.uploadPieceIdentite(piece, selfie, typePiece, numeroPiece);
+      await userApi.uploadPieceIdentite(piece, verso, selfie, typePiece, numeroPiece, dateExpiration);
       // Recharge le profil complet pour afficher le statut exact retourné par le serveur
       const profile = await userApi.getProfile();
       set({ profile });

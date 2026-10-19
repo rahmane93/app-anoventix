@@ -137,6 +137,7 @@ public class BienImmoServiceImpl implements BienImmoService {
                         "Localisation introuvable avec l'ID : " + request.getLocalisationId()));
 
         BienImmo bienImmo = annonceMapper.bienImmoRequestToEntity(request);
+        bienImmo.setDocumentsDisponibles(com.app.AnnoncesAPI.enums.DocumentDisponible.normaliser(bienImmo.getDocumentsDisponibles()));
         validerHierarchie(bienImmo.getTypeAnnonce(), bienImmo.getTypeBien(), bienImmo.getTypeUsage());
         normaliserComposition(bienImmo);
         if (bienImmo.getFraisHonoraire() == null) {
@@ -194,6 +195,7 @@ public class BienImmoServiceImpl implements BienImmoService {
         String ancienneDescription = existing.getDescription();
 
         annonceMapper.updateBienImmoFromRequest(request, existing);
+        existing.setDocumentsDisponibles(com.app.AnnoncesAPI.enums.DocumentDisponible.normaliser(existing.getDocumentsDisponibles()));
         if (existing.getFraisHonoraire() == null) {
             existing.setFraisHonoraire(BigDecimal.ZERO);
         }

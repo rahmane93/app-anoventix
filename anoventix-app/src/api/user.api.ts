@@ -46,14 +46,19 @@ export const uploadPhoto = async (
  */
 export const uploadPieceIdentite = async (
   piece: { uri: string; name: string; type: string },
+  verso: { uri: string; name: string; type: string } | null,
   selfie: { uri: string; name: string; type: string },
   typePiece: TypePieceIdentite,
   numeroPiece: string,
+  /** AAAA-MM-JJ (ECART-28). */
+  dateExpiration: string,
 ): Promise<void> => {
   // La pièce et le selfie partent ensemble : l'API refuse l'un sans l'autre (RG-02-28).
   const formData = new FormData();
   formData.append('file', { uri: piece.uri, name: piece.name, type: piece.type } as any);
+  if (verso) formData.append('verso', { uri: verso.uri, name: verso.name, type: verso.type } as any);
   formData.append('selfie', { uri: selfie.uri, name: selfie.name, type: selfie.type } as any);
+  formData.append('dateExpiration', dateExpiration);
   formData.append('typePieceIdentite', typePiece);
   formData.append('numeroPieceIdentite', numeroPiece);
   await multipartPost<unknown>('/api/users/me/piece-identite', formData);

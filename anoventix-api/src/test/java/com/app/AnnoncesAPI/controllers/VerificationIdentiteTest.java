@@ -92,6 +92,8 @@ class VerificationIdentiteTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.statutPieceIdentite").value("EN_ATTENTE"))
                 .andExpect(jsonPath("$.selfieFourni").value(true))
+                .andExpect(jsonPath("$.versoFourni").value(true))
+                .andExpect(jsonPath("$.dateExpirationPiece").exists())
                 .andExpect(jsonPath("$.dateEnvoiVerification").exists())
                 // L'API n'expose jamais le chemin du fichier du selfie.
                 .andExpect(jsonPath("$.selfieUrl").doesNotExist());
@@ -105,6 +107,43 @@ class VerificationIdentiteTest {
         User u = userRepository.findById(titulaire.getId()).orElseThrow();
         assertThat(u.getPieceIdentiteUrl()).isNull();
         assertThat(u.getSelfieUrl()).isNull();
+    }
+
+    @Test
+    void laCarteDIdentiteExigeSonVersoEtUneDateDExpirationValide() throws Exception {
+        // ECART-28 : sans verso, ou sans date, ou périmée : refusée.
+        mvc.perform(multipart("/api/users/me/piece-identite")
+                .file(TestPhotos.image("file", 800, 600)).file(TestPhotos.image("selfie", 800, 800))
+                .param("typePieceIdentite", "CARTE_IDENTITE").param("numeroPieceIdentite", "CNI-1")
+                .param("dateExpiration", java.time.LocalDate.now().plusYears(2).toString())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTitulaire))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("verso")));
+        mvc.perform(multipart("/api/users/me/piece-identite")
+                .file(TestPhotos.image("file", 800, 600)).file(TestPhotos.image("verso", 800, 600))
+                .file(TestPhotos.image("selfie", 800, 800))
+                .param("typePieceIdentite", "CARTE_IDENTITE").param("numeroPieceIdentite", "CNI-1")
+                .param("dateExpiration", java.time.LocalDate.now().minusDays(1).toString())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTitulaire))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("expirée")));
+        // Passeport : une seule face suffit.
+        mvc.perform(multipart("/api/users/me/piece-identite")
+                .file(TestPhotos.image("file", 800, 600)).file(TestPhotos.image("selfie", 800, 800))
+                .param("typePieceIdentite", "PASSEPORT").param("numeroPieceIdentite", "P-1")
+                .param("dateExpiration", java.time.LocalDate.now().plusYears(5).toString())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTitulaire))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.versoFourni").value(false));
+    }
+
+    @Test
+    void uneFoisExpireeLaPieceNePeutPlusEtreValidee() throws Exception {
+        envoyer(jwtTitulaire, TestPhotos.image("file", 800, 600), TestPhotos.image("selfie", 800, 800))
+                .andExpect(status().isCreated());
+        jdbc.update("UPDATE account SET date_expiration_piece = CURRENT_DATE - 1 WHERE id = ?", titulaire.getId());
+
+        decider(StatutPieceIdentite.VALIDEE, null).andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -230,6 +269,8 @@ class VerificationIdentiteTest {
                                   org.springframework.mock.web.MockMultipartFile selfie) throws Exception {
         var requete = multipart("/api/users/me/piece-identite")
                 .param("typePieceIdentite", "CARTE_IDENTITE").param("numeroPieceIdentite", "CNI-" + UUID.randomUUID())
+                .param("dateExpiration", java.time.LocalDate.now().plusYears(3).toString())
+                .file(TestPhotos.image("verso", 800, 600))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
         if (piece != null) {
             requete.file(piece);

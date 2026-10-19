@@ -45,6 +45,7 @@ Informer les utilisateurs des événements qui les concernent. Le seul canal imp
 | 🆕 E20 | Clé de licence générée (DEC-17) | Acheteur | Reçu : clé, type, montant, moyen et référence de paiement, date | à créer | module 08, RG-08-25 |
 | 🆕 E21 | Activation du mode licence (DEC-18) | Comptes au-delà des annonces gratuites | Date d'effet (J+30), prix, contact de vente | à créer | module 08, RG-08-27 |
 | 🆕 E22 | Avertissement reçu (DEC-33) | Titulaire | Niveau, motif, validité de 6 mois ; suspension éventuelle et moyen de la contester | `AdminServiceImpl.notifierAvertissement` | module 09, RG-09-24 |
+| 🆕 E23 | Compte inactif depuis 2 ans | Titulaire | Suppression du compte dans 3 mois sans connexion ; se connecter suffit à le garder | `InactiviteComptesService.relancer` | SFG §11.2 |
 
 Pages HTML associées (hors emails) : `page-activation-success.html`, `page-activation-error.html` (lien d'activation ouvert dans un navigateur).
 

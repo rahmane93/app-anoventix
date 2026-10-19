@@ -65,6 +65,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     private final MediaService mediaService;
     private final QuotaEntrepriseService quotaService;
     private final InvitationAgentService invitations;
+    private final TransfertAgentService transfertAgent;
+    private final AuditService audit;
 
     public EntrepriseServiceImpl(
             EntrepriseRepository entrepriseRepository,
@@ -77,8 +79,12 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             NotificationService notificationService,
             MediaService mediaService,
             QuotaEntrepriseService quotaService,
-            InvitationAgentService invitations) {
+            InvitationAgentService invitations,
+            TransfertAgentService transfertAgent,
+            AuditService audit) {
         this.invitations = invitations;
+        this.audit = audit;
+        this.transfertAgent = transfertAgent;
         this.entrepriseRepository = entrepriseRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -392,15 +398,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new UnauthorizedActionException("Impossible de retirer un Annonceur Professionnel de l'entreprise");
         }
         
-        // Transférer toutes les annonces actives de l'agent vers le caller (propriétaire de l'entreprise)
-        List<com.app.AnnoncesAPI.entities.BienImmo> annonces = bienImmoRepository.findActiveByOwnerId(agent.getId());
-        for (com.app.AnnoncesAPI.entities.BienImmo annonce : annonces) {
-            annonce.setOwner(owner);
-        }
-        if (!annonces.isEmpty()) {
-            bienImmoRepository.saveAll(annonces);
-            logger.info("{} annonce(s) transférée(s) de {} vers {}", annonces.size(), agent.getEmail(), owner.getEmail());
-        }
+        // Toutes ses annonces (en ligne ou non) et ses conversations passent au professionnel (ECART-16).
+        transfertAgent.transferer(agent, owner, entreprise.getNom());
 
         agent.setStatut(StatutUtilisateur.INACTIF);
         userRepository.save(agent);
@@ -557,6 +556,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         
         entreprise.setActive(false);
         entrepriseRepository.save(entreprise);
+        audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.ENTREPRISE_DESACTIVEE, id,
+                isAdmin ? "par l'administration" : "par son professionnel");
         
         logger.info("Entreprise désactivée: {}", entreprise.getNom());
     }
@@ -571,6 +572,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         if (!Boolean.TRUE.equals(entreprise.getActive())) {
             entreprise.setActive(true);
             entreprise = entrepriseRepository.save(entreprise);
+            audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.ENTREPRISE_REACTIVEE, id);
             logger.info("Entreprise réactivée: {}", entreprise.getNom());
         }
         return quotaService.toDTO(entreprise);

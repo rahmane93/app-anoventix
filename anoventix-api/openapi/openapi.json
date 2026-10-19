@@ -307,7 +307,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE", "ENTREPRISE_DESACTIVEE", "ENTREPRISE_REACTIVEE", "ENTREPRISE_QUOTAS_MODIFIES", "LOCALISATION_CREEE", "LOCALISATION_MODIFIEE", "LOCALISATION_SUPPRIMEE", "QUOTAS_GLOBAUX_MODIFIES", "LICENCE_MODE_MODIFIE", "LICENCE_REGLAGES_MODIFIES", "PARAMETRES_MODIFIES" ]
           }
         }, {
           "in" : "query",
@@ -315,7 +315,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE", "LICENCE", "LOCALISATION" ]
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE", "LICENCE", "LOCALISATION", "REGLAGE" ]
           }
         }, {
           "in" : "query",
@@ -599,6 +599,62 @@
           }
         },
         "summary" : "Supprimer un message",
+        "tags" : [ "Administration" ]
+      }
+    },
+    "/api/admin/parametres" : {
+      "get" : {
+        "description" : "seuilMasquageAuto : nombre de signalements « arnaque / fraude » de signaleurs distincts qui masquent une annonce en attendant la décision (0 = désactivé, DEC-11).",
+        "operationId" : "getParametres",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "integer",
+                    "format" : "int32"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Paramètres de la modération",
+        "tags" : [ "Administration" ]
+      },
+      "put" : {
+        "description" : "seuilMasquageAuto entre 0 (désactivé) et 50. La modification est journalisée.",
+        "operationId" : "setParametres",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ParametresModerationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "integer",
+                    "format" : "int32"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Modifier les paramètres de la modération",
         "tags" : [ "Administration" ]
       }
     },
@@ -1342,10 +1398,10 @@
         "tags" : [ "Administration" ]
       }
     },
-    "/api/admin/utilisateurs/{userId}/roles/{role}" : {
-      "delete" : {
-        "description" : "Retire un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR.",
-        "operationId" : "revoquerRole",
+    "/api/admin/utilisateurs/{userId}/role" : {
+      "put" : {
+        "description" : "Un compte a un seul rôle. Refusé pour soi-même, vers ADMINISTRATEUR ou AGENT_PROFESSIONNEL (un agent s'invite depuis son entreprise), pour un professionnel qui dirige une entreprise et pour un agent encore rattaché. Un modérateur promu voit ses annonces retirées du public. Le titulaire est prévenu par email et ses sessions sont fermées.",
+        "operationId" : "changerRole",
         "parameters" : [ {
           "in" : "path",
           "name" : "userId",
@@ -1354,15 +1410,17 @@
             "type" : "string",
             "format" : "uuid"
           }
-        }, {
-          "in" : "path",
-          "name" : "role",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
-          }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangementRoleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
         "responses" : {
           "200" : {
             "content" : {
@@ -1375,42 +1433,7 @@
             "description" : "OK"
           }
         },
-        "summary" : "Révoquer un rôle d'un utilisateur",
-        "tags" : [ "Administration" ]
-      },
-      "post" : {
-        "description" : "Ajoute un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR. Un admin ne peut pas modifier son propre rôle.",
-        "operationId" : "octroierRole",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "userId",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "in" : "path",
-          "name" : "role",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MessageResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "summary" : "Octroyer un rôle à un utilisateur",
+        "summary" : "Changer le rôle d'un compte",
         "tags" : [ "Administration" ]
       }
     },
@@ -1548,6 +1571,29 @@
         },
         "summary" : "Signaler l'ouverture d'une notification d'alerte",
         "tags" : [ "Notifications" ]
+      }
+    },
+    "/api/app/version" : {
+      "get" : {
+        "description" : "Public. versionMinimale (x.y.z) : une app plus ancienne doit être mise à jour depuis urlMiseAJour.",
+        "operationId" : "version",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Version minimale de l'app",
+        "tags" : [ "Application mobile" ]
       }
     },
     "/api/auth/accept-invitation" : {
@@ -4954,9 +5000,16 @@
     },
     "/api/users/me/piece-identite" : {
       "post" : {
-        "description" : "Envoi en multipart/form-data du dossier de vérification.\nChamps : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.\nLa pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.",
+        "description" : "Envoi en multipart/form-data du dossier de vérification.\nChamps : file (recto de la pièce, obligatoire), verso (obligatoire pour CARTE_IDENTITE et PERMIS_DE_CONDUIRE), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), dateExpiration (AAAA-MM-JJ, obligatoire, pièce en cours de validité), typePieceIdentite et numeroPieceIdentite.\nLa pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.",
         "operationId" : "uploadPieceIdentite",
         "parameters" : [ {
+          "in" : "query",
+          "name" : "dateExpiration",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "query",
           "name" : "typePieceIdentite",
           "required" : true,
@@ -4982,6 +5035,10 @@
                     "format" : "binary"
                   },
                   "selfie" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  },
+                  "verso" : {
                     "type" : "string",
                     "format" : "binary"
                   }
@@ -5250,6 +5307,36 @@
           }
         },
         "summary" : "Servir la pièce d'identité d'un utilisateur",
+        "tags" : [ "Utilisateurs" ]
+      }
+    },
+    "/api/users/{userId}/piece-identite/verso" : {
+      "get" : {
+        "description" : "Image du verso (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement.",
+        "operationId" : "getVersoPieceIdentite",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Servir le verso de la pièce d'identité",
         "tags" : [ "Utilisateurs" ]
       }
     },
@@ -5931,7 +6018,7 @@
           },
           "action" : {
             "type" : "string",
-            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE" ]
+            "enum" : [ "ANNONCE_MASQUEE", "ANNONCE_REJETEE", "ANNONCE_REMISE_EN_LIGNE", "ANNONCE_MASQUEE_AUTOMATIQUEMENT", "ANNONCE_REEXAMEN_DEMANDE", "ANNONCE_MASQUAGE_MAINTENU", "SIGNALEMENT_TRAITE", "SIGNALEMENT_SUPPRIME", "MESSAGE_SUPPRIME", "MESSAGE_SIGNALEMENT_IGNORE", "CONVERSATION_CONSULTEE", "COMPTE_STATUT_MODIFIE", "COMPTE_AVERTI", "COMPTE_SUSPENDU_AUTOMATIQUEMENT", "AVERTISSEMENT_LEVE", "COMPTE_ROLE_MODIFIE", "COMPTE_SUPPRIME", "COMPTE_ANNONCES_MASQUEES", "COMPTE_ANNONCES_REAFFICHEES", "PIECE_IDENTITE_VALIDEE", "PIECE_IDENTITE_REJETEE", "PIECE_IDENTITE_CONSULTEE", "QUARTIER_AJOUTE", "QUARTIER_RATTACHE", "QUARTIER_REFUSE", "LICENCE_VENDUE", "LICENCE_ACHETEUR_AFFECTE", "ENTREPRISE_VERIFIEE", "ENTREPRISE_VERIFICATION_REFUSEE", "ENTREPRISE_JUSTIFICATIF_CONSULTE", "ENTREPRISE_DESACTIVEE", "ENTREPRISE_REACTIVEE", "ENTREPRISE_QUOTAS_MODIFIES", "LOCALISATION_CREEE", "LOCALISATION_MODIFIEE", "LOCALISATION_SUPPRIMEE", "QUOTAS_GLOBAUX_MODIFIES", "LICENCE_MODE_MODIFIE", "LICENCE_REGLAGES_MODIFIES", "PARAMETRES_MODIFIES" ]
           },
           "adresseIp" : {
             "type" : "string"
@@ -5941,7 +6028,7 @@
           },
           "cibleType" : {
             "type" : "string",
-            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE", "LICENCE", "LOCALISATION" ]
+            "enum" : [ "ANNONCE", "SIGNALEMENT", "MESSAGE", "CONVERSATION", "COMPTE", "ENTREPRISE", "LICENCE", "LOCALISATION", "REGLAGE" ]
           },
           "date" : {
             "type" : "string",
@@ -6133,6 +6220,16 @@
           }
         },
         "required" : [ "newPassword", "oldPassword" ]
+      },
+      "ChangementRoleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "PARTICULIER", "PROFESSIONNEL", "AGENT_PROFESSIONNEL", "MODERATEUR", "ADMINISTRATEUR" ]
+          }
+        },
+        "required" : [ "role" ]
       },
       "CodesSecoursRequest" : {
         "type" : "object",
@@ -7443,6 +7540,18 @@
           }
         }
       },
+      "ParametresModerationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "seuilMasquageAuto" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 50,
+            "minimum" : 0
+          }
+        },
+        "required" : [ "seuilMasquageAuto" ]
+      },
       "PortefeuilleStats" : {
         "type" : "object",
         "properties" : {
@@ -7926,6 +8035,10 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "dateExpirationPiece" : {
+            "type" : "string",
+            "format" : "date"
+          },
           "dateMasquageAnnonces" : {
             "type" : "string",
             "format" : "date-time"
@@ -8010,6 +8123,9 @@
           "typePieceIdentite" : {
             "type" : "string",
             "enum" : [ "CARTE_IDENTITE", "PASSEPORT", "PERMIS_DE_CONDUIRE", "AUTRE" ]
+          },
+          "versoFourni" : {
+            "type" : "boolean"
           }
         }
       },

@@ -82,6 +82,7 @@ class ModerationAnnonceTest {
     }
 
     private void vider() {
+        jdbc.update("DELETE FROM parametre_plateforme WHERE cle = 'moderation.seuil-masquage-auto'");
         for (String table : TABLES) {
             jdbc.execute("DELETE FROM " + table);
         }
@@ -120,6 +121,29 @@ class ModerationAnnonceTest {
                 .isEqualTo("Système");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM email_sortant WHERE destinataire = ?", Integer.class,
                 "proprio@example.com")).isEqualTo(1);
+    }
+
+    @Test
+    void leSeuilDeMasquageSeRegleDansLesParametresEtZeroLeDesactive() throws Exception {
+        mvc.perform(put("/api/admin/parametres").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtAdmin)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"seuilMasquageAuto\":0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seuilMasquageAuto").value(0));
+        mvc.perform(put("/api/admin/parametres").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtAdmin)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"seuilMasquageAuto\":-1}"))
+                .andExpect(status().isBadRequest());
+
+        BienImmo annonce = annonce(StatutAnnonce.PUBLIEE, true);
+        signaler(annonce, "a@example.com", "ARNAQUE_FRAUDE");
+        signaler(annonce, "b@example.com", "ARNAQUE_FRAUDE");
+        signaler(annonce, "c@example.com", "ARNAQUE_FRAUDE");
+
+        assertThat(recharger(annonce).getStatutModeration()).isEqualTo(StatutAnnonce.PUBLIEE);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_event WHERE action = 'PARAMETRES_MODIFIES'",
+                Integer.class)).isEqualTo(1);
+        // Réservé à l'administrateur.
+        mvc.perform(get("/api/admin/parametres").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtProprietaire))
+                .andExpect(status().isForbidden());
     }
 
     @Test

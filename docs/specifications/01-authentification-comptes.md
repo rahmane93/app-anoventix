@@ -11,7 +11,7 @@ Hors périmètre (rien de tout cela n'est implémenté) :
 - connexion via un réseau social, connexion sans mot de passe (lien magique, code SMS), double authentification ;
 - vérification du téléphone, alors qu'il sert d'identifiant (ECART-53) ;
 - changement d'email par l'utilisateur (module 02, RG-02-01) ;
-- passage d'un compte particulier à professionnel, ou l'inverse, par l'utilisateur : seul un administrateur change un rôle (module 10, ECART-22) ;
+- passage d'un compte particulier à professionnel, ou l'inverse, par l'utilisateur : seul un administrateur change un rôle, avec des garde-fous (module 10, DEC-37) ;
 - liste des sessions ouvertes et déconnexion d'un appareil précis : le seul moyen est de changer de mot de passe, ce qui ferme toutes les sessions.
 
 Parcours de bout en bout concernés : SFG §5, P1 (inscription et activation), P2 (première connexion d'un agent) et P5 (réactivation).

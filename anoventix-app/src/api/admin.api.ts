@@ -129,6 +129,34 @@ export async function changePieceIdentiteStatut(
 
 // ─── Utilisateurs admin ───────────────────────────────────────────────────────
 
+/** Paramètres de la modération (RG-10-19), administrateur seulement. */
+export async function getParametres(): Promise<{ seuilMasquageAuto: number }> {
+  return (await apiClient.get<{ seuilMasquageAuto: number }>('/api/admin/parametres')).data;
+}
+
+export async function setParametres(body: { seuilMasquageAuto: number }): Promise<{ seuilMasquageAuto: number }> {
+  return (await apiClient.put<{ seuilMasquageAuto: number }>('/api/admin/parametres', body)).data;
+}
+
+export interface EvenementAudit {
+  id: number;
+  date: string;
+  acteurId: string | null;
+  acteurLibelle: string;
+  acteurRole: string | null;
+  action: string;
+  cibleType: string;
+  cibleId: string;
+  motif: string | null;
+  adresseIp: string | null;
+}
+
+/** Journal d'audit, du plus récent au plus ancien (administrateur, ECART-63). */
+export async function getJournalAudit(params: { page: number; size: number; cibleType?: string }) {
+  return (await apiClient.get<{ data: EvenementAudit[]; totalPages: number; totalItems: number }>(
+    '/api/admin/audit', { params })).data;
+}
+
 export interface StatsAvancees {
   evolutionAnnonces: { periode: string; count: number }[];
   annonceParRegion: { categorie: string; count: number }[];
@@ -166,12 +194,9 @@ export async function leverAvertissement(userId: string, avertissementId: number
   return res.data;
 }
 
-export async function octroiRole(userId: string, role: string): Promise<void> {
-  await apiClient.post(`/api/admin/utilisateurs/${userId}/roles/${role}`);
-}
-
-export async function revoquerRole(userId: string, role: string): Promise<void> {
-  await apiClient.delete(`/api/admin/utilisateurs/${userId}/roles/${role}`);
+/** Un compte a un seul rôle : le changer remplace l'ancien (ECART-22). */
+export async function changerRole(userId: string, role: string): Promise<void> {
+  await apiClient.put(`/api/admin/utilisateurs/${userId}/role`, { role });
 }
 
 /**

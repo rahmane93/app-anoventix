@@ -180,6 +180,8 @@ public class SessionService {
     }
 
     private String emettre(User user, UUID familleId) {
+        // Toute ouverture ou rotation de session compte comme une activité (comptes inactifs, SFG §11.2).
+        users.noterActivite(user.getId());
         UUID id = UUID.randomUUID();
         Instant expiration = Instant.now().plus(dureeSession(user));
         tokens.save(new RefreshToken(id, familleId, user.getId(),

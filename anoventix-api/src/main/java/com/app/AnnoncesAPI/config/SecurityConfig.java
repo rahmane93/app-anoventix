@@ -143,20 +143,17 @@ public class SecurityConfig {
                     .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers("/api/localisations/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo").permitAll()
-                    .requestMatchers("/api/biens-immo/public/**").permitAll()
                     .requestMatchers("/api/biens-immo/filter").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/nearby").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/zones-actives").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/user").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/user/signalements").authenticated()
-                    // Recherches publiques, comme /filter et /public/search (ne renvoient que du PUBLIEE).
-                    .requestMatchers(HttpMethod.GET, "/api/biens-immo/search").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/biens-immo/quartier/*").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/biens-immo/surface").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/{id}").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/*/similaires").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/entreprises/*/profil").permitAll()
                     .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                    // Version minimale de l'app (RG-12-21) : lue avant toute connexion.
+                    .requestMatchers(HttpMethod.GET, "/api/app/version").permitAll()
                     .requestMatchers("/actuator/**").authenticated()
                     .requestMatchers("/error").permitAll();
 

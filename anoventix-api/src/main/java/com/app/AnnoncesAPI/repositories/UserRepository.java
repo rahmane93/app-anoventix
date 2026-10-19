@@ -40,6 +40,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
            nativeQuery = true)
     void supprimerNotificationsEtAlertes(@org.springframework.data.repository.query.Param("id") java.util.UUID id);
 
+    /** Connexion ou session rafraîchie : dernière activité, et relance « compte inactif » annulée. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value = "UPDATE account SET derniere_connexion = NOW(), date_relance_inactivite = NULL WHERE id = :id",
+           nativeQuery = true)
+    void noterActivite(@org.springframework.data.repository.query.Param("id") java.util.UUID id);
+
     long countByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite);
     Page<User> findByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite, Pageable pageable);
 

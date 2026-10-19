@@ -79,11 +79,9 @@ public interface AdminService {
     /** Liste les utilisateurs dont la pièce d'identité est en attente de validation. */
     Page<UserDTO> getPiecesIdentiteEnAttente(Pageable pageable);
 
-    /** Octroie un rôle à un utilisateur. Un admin ne peut pas modifier son propre rôle. */
-    void octroierRole(UUID userId, TypeRole role, UUID adminId);
+    /** Change le rôle d'un compte (administrateur), avec les garde-fous d'ECART-22. */
+    void changerRole(UUID userId, TypeRole role, UUID adminId);
 
-    /** Révoque un rôle d'un utilisateur. */
-    void revoquerRole(UUID userId, TypeRole role, UUID adminId);
 
     // ─── Statistiques avancées ────────────────────────────────────────────
 

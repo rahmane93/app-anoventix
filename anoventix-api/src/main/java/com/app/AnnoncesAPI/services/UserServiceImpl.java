@@ -155,8 +155,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO uploadPieceIdentite(String username, MultipartFile file, MultipartFile selfie,
-                                       String typePieceIdentiteStr, String numeroPieceIdentite) {
+    public UserDTO uploadPieceIdentite(String username, MultipartFile file, MultipartFile verso, MultipartFile selfie,
+                                       String dateExpiration, String typePieceIdentiteStr, String numeroPieceIdentite) {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé."));
 
@@ -169,21 +169,37 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("La photo de la pièce et le selfie sont obligatoires.");
         }
         com.app.AnnoncesAPI.enums.TypePieceIdentite type = parserTypePiece(typePieceIdentiteStr);
+        // ECART-28 : deux faces pour la carte d'identité et le permis ; une pièce expirée n'est pas recevable.
+        boolean deuxFaces = type == com.app.AnnoncesAPI.enums.TypePieceIdentite.CARTE_IDENTITE
+                || type == com.app.AnnoncesAPI.enums.TypePieceIdentite.PERMIS_DE_CONDUIRE;
+        boolean versoFourni = verso != null && !verso.isEmpty();
+        if (deuxFaces && !versoFourni) {
+            throw new IllegalArgumentException("Le verso de la pièce est obligatoire pour une carte d'identité ou un permis.");
+        }
+        java.time.LocalDate expiration = parserDateExpiration(dateExpiration);
 
         // 1. Sauvegarder les nouveaux fichiers — si ça échoue, rien n'est perdu
         String pieceChemin = mediaService.savePieceIdentite(file, user.getId());
+        String versoChemin = null;
         String selfieChemin;
         try {
+            if (versoFourni) {
+                versoChemin = mediaService.savePieceIdentite(verso, user.getId());
+            }
             selfieChemin = mediaService.saveSelfie(selfie, user.getId());
         } catch (RuntimeException e) {
             mediaService.deletePieceIdentite(pieceChemin);
+            mediaService.deletePieceIdentite(versoChemin);
             throw e;
         }
 
         // 2. Mettre à jour la base
         String anciennePiece = user.getPieceIdentiteUrl();
         String ancienSelfie = user.getSelfieUrl();
+        String ancienVerso = user.getPieceIdentiteVersoUrl();
         user.setPieceIdentiteUrl(pieceChemin);
+        user.setPieceIdentiteVersoUrl(versoChemin);
+        user.setDateExpirationPiece(expiration);
         user.setSelfieUrl(selfieChemin);
         user.setStatutPieceIdentite(StatutPieceIdentite.EN_ATTENTE);
         user.setMotifRejetPieceIdentite(null);
@@ -202,6 +218,7 @@ public class UserServiceImpl implements UserService {
         //    Si la suppression échoue, la base est correcte — fuite disque mineure, pas de perte de données
         mediaService.deletePieceIdentite(anciennePiece);
         mediaService.deletePieceIdentite(ancienSelfie);
+        mediaService.deletePieceIdentite(ancienVerso);
         return result;
     }
 
@@ -221,6 +238,23 @@ public class UserServiceImpl implements UserService {
         user.setSelfieUrl(mediaService.saveSelfie(selfie, user.getId()));
         user.setDateEnvoiVerification(LocalDateTime.now());
         return toDTO(userRepository.save(user));
+    }
+
+    /** Date d'expiration obligatoire (AAAA-MM-JJ), postérieure à aujourd'hui (ECART-28). */
+    private static java.time.LocalDate parserDateExpiration(String valeur) {
+        if (valeur == null || valeur.isBlank()) {
+            throw new IllegalArgumentException("La date d'expiration de la pièce est obligatoire.");
+        }
+        java.time.LocalDate date;
+        try {
+            date = java.time.LocalDate.parse(valeur.trim());
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new IllegalArgumentException("Date d'expiration invalide (format attendu : AAAA-MM-JJ).");
+        }
+        if (!date.isAfter(java.time.LocalDate.now())) {
+            throw new IllegalArgumentException("Cette pièce est expirée : envoyez une pièce en cours de validité.");
+        }
+        return date;
     }
 
     private static com.app.AnnoncesAPI.enums.TypePieceIdentite parserTypePiece(String valeur) {
@@ -256,6 +290,25 @@ public class UserServiceImpl implements UserService {
             audit.enregistrer(ActionAudit.PIECE_IDENTITE_CONSULTEE, userId);
         }
         return piece;
+    }
+
+    @Override
+    @Transactional
+    public Resource servirVersoPieceIdentite(UUID userId, Authentication authentication) {
+        User target = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + userId));
+        if (target.getPieceIdentiteVersoUrl() == null || target.getPieceIdentiteVersoUrl().isBlank()) {
+            throw new ResourceNotFoundException("Aucun verso enregistré pour cet utilisateur.");
+        }
+        if (!isOwnerOrAdminMod(authentication, userId)) {
+            throw new AccessDeniedException(
+                    "Accès refusé : seul le propriétaire ou un ADMIN/MOD peut consulter cette pièce d'identité.");
+        }
+        Resource verso = mediaService.loadPieceIdentite(target.getPieceIdentiteVersoUrl());
+        if (!(authentication.getPrincipal() instanceof UserDetailsImpl lecteur && userId.equals(lecteur.getId()))) {
+            audit.enregistrer(ActionAudit.PIECE_IDENTITE_CONSULTEE, userId, "verso");
+        }
+        return verso;
     }
 
     @Override
@@ -317,6 +370,10 @@ public class UserServiceImpl implements UserService {
         if (request.getStatut() == StatutPieceIdentite.VALIDEE
                 && (target.getSelfieUrl() == null || target.getSelfieUrl().isBlank())) {
             throw new IllegalStateException("Le selfie de vérification est manquant.");
+        }
+        if (request.getStatut() == StatutPieceIdentite.VALIDEE && target.getDateExpirationPiece() != null
+                && !target.getDateExpirationPiece().isAfter(java.time.LocalDate.now())) {
+            throw new IllegalStateException("Cette pièce est expirée : elle ne peut pas être validée.");
         }
 
         target.setStatutPieceIdentite(request.getStatut());
@@ -463,6 +520,8 @@ public class UserServiceImpl implements UserService {
                 .statutPieceIdentite(user.getStatutPieceIdentite())
                 .motifRejetPieceIdentite(user.getMotifRejetPieceIdentite())
                 .selfieFourni(user.getSelfieUrl() != null && !user.getSelfieUrl().isBlank())
+                .versoFourni(user.getPieceIdentiteVersoUrl() != null && !user.getPieceIdentiteVersoUrl().isBlank())
+                .dateExpirationPiece(user.getDateExpirationPiece())
                 .notifMessages(user.isNotifMessages())
                 .notifAlertes(user.isNotifAlertes())
                 .dateEnvoiVerification(user.getDateEnvoiVerification())

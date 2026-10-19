@@ -152,6 +152,8 @@ public class ExportDonneesService {
         // présence est indiquée, et le titulaire peut le consulter dans l'application.
         m.put("pieceIdentiteFournie", user.getPieceIdentiteUrl() != null);
         m.put("selfieFourni", user.getSelfieUrl() != null);
+        m.put("versoFourni", user.getPieceIdentiteVersoUrl() != null);
+        m.put("dateExpirationPiece", user.getDateExpirationPiece() != null ? user.getDateExpirationPiece().toString() : null);
         m.put("dateEnvoiVerification", user.getDateEnvoiVerification());
         m.put("dateDecisionVerification", user.getDateDecisionVerification());
         m.put("annoncesMasqueesParLAdministrateur", user.isAnnoncesMasquees());

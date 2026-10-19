@@ -59,7 +59,7 @@ Hors périmètre (non implémenté) : vérification de l'entreprise (RCCM, exist
 | RG-07-11 | Liste des agents : réservée aux membres de l'entreprise et à la modération ; exclut le propriétaire et les agents retirés (INACTIF). | `EntrepriseServiceImpl.java:328-354` |
 | RG-07-12 | **Suspendre** (propriétaire, créateur ou modération) : seulement un agent ACTIF ou en attente ; statut SUSPENDU avec un motif propre à l'entreprise. | `EntrepriseServiceImpl.java:432-456` |
 | RG-07-13 | **Réactiver** : l'entreprise ne lève que ses propres suspensions ; une suspension posée par la modération, ou un agent retiré, ne se lève que par la modération (avec contrôle du quota pour un agent retiré). Un agent qui n'a pas encore changé son mot de passe revient EN_ATTENTE_ACTIVATION. | `EntrepriseServiceImpl.java:459-489` |
-| RG-07-14 | **Retirer** (propriétaire) : les annonces **actives** de l'agent sont transférées au propriétaire ; l'agent passe INACTIF. Ses annonces hors ligne et ses conversations restent rattachées à l'agent désactivé (ECART-16). | `EntrepriseServiceImpl.java:357-395` |
+| RG-07-14 | **Retirer** (propriétaire) : 🆕 (DEC-34) **toutes** les annonces de l'agent (en ligne ou non) et ses conversations passent au propriétaire ; l'agent passe INACTIF. | `EntrepriseServiceImpl.removeAgentFromEntreprise`, `TransfertAgentService` |
 | RG-07-15 | Un agent publie sous son propre nom ; ses annonces portent l'identifiant de l'entreprise et la fiche renvoie vers la page publique de l'agence. Les annonces gratuites et la licence sont celles du professionnel (module 08). | `AnnonceMapper`, `AnnonceurCard.tsx:38-40` |
 | RG-07-20 | Les acheteurs écrivent à l'**agent** propriétaire de l'annonce, jamais à l'entreprise (RG-06-03). Le professionnel ne voit pas les conversations de ses agents, ni avant ni après leur retrait (RG-06-17). | `MessagingServiceImpl.java:63` |
 | RG-07-21 | Droits du professionnel sur les annonces de ses agents : il peut les masquer, les réafficher et voir leurs vues, mais ni les modifier, ni les clôturer, ni les supprimer, ni voir leur historique (module 03 §2, ECART-13). 🆕 **Cible DEC-27** : tous les droits, y compris modifier, clôturer, supprimer et voir l'historique (module 03 §2). | `BienImmoServiceImpl.java:365-417` |
@@ -79,7 +79,7 @@ Synthèse des effets croisés, établie à partir des modules 01, 02, 03, 09 et 
 | Suppression du professionnel par un administrateur | Anonymisée (« Entreprise supprimée ») | Anonymisés | DESACTIVEE, photos supprimées | RG-10-04 |
 | Agent suspendu par son entreprise | — | SUSPENDU, levée possible par l'entreprise | **Restent en ligne** | RG-07-12, ECART-52 |
 | Agent suspendu par la modération | — | SUSPENDU, levée par la modération uniquement | **Restent en ligne** | RG-07-13, ECART-52 |
-| Agent retiré | — | INACTIF, sort du quota | En ligne : transférées au professionnel ; autres : restent à l'agent ; conversations : restent à l'agent | RG-07-14, ECART-16 |
+| Agent retiré | — | INACTIF, sort du quota | 🆕 Annonces et conversations : transférées au professionnel (DEC-34) | RG-07-14, ECART-16 |
 | Agent qui supprime son propre compte | — | INACTIF (30 j réactivable), sort du quota | Passées hors ligne | RG-02-17 |
 
 ### 4.3 Annonces de l'entreprise et page publique

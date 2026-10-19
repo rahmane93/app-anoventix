@@ -20,11 +20,17 @@ public class LocalisationServiceImpl implements LocalisationService {
 
     private final LocalisationRepository localisationRepository;
     private final AnnonceMapper annonceMapper;
+    private final AuditService audit;
 
     public LocalisationServiceImpl(LocalisationRepository localisationRepository,
-                                   AnnonceMapper annonceMapper) {
+                                   AnnonceMapper annonceMapper, AuditService audit) {
         this.localisationRepository = localisationRepository;
         this.annonceMapper = annonceMapper;
+        this.audit = audit;
+    }
+
+    private static String libelle(Localisation l) {
+        return l.getQuartier() + " (" + l.getCommune() + ", " + l.getPrefecture() + ")";
     }
 
     @Override
@@ -59,6 +65,7 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public LocalisationDTO create(LocalisationRequest request) {
         verifierCoordonnees(request);
         refuserDoublon(request, null);
@@ -71,10 +78,13 @@ public class LocalisationServiceImpl implements LocalisationService {
         localisation.setTypeCommune(request.getTypeCommune());
         localisation.setLatitude(request.getLatitude());
         localisation.setLongitude(request.getLongitude());
-        return annonceMapper.localisationToDTO(localisationRepository.save(localisation));
+        Localisation creee = localisationRepository.save(localisation);
+        audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.LOCALISATION_CREEE, creee.getId(), libelle(creee));
+        return annonceMapper.localisationToDTO(creee);
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public LocalisationDTO update(String id, LocalisationRequest request) {
         Localisation localisation = localisationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Localisation non trouvée avec l'ID: " + id));
@@ -87,7 +97,9 @@ public class LocalisationServiceImpl implements LocalisationService {
         localisation.setTypeCommune(request.getTypeCommune());
         localisation.setLatitude(request.getLatitude());
         localisation.setLongitude(request.getLongitude());
-        return annonceMapper.localisationToDTO(localisationRepository.save(localisation));
+        Localisation modifiee = localisationRepository.save(localisation);
+        audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.LOCALISATION_MODIFIEE, id, libelle(modifiee));
+        return annonceMapper.localisationToDTO(modifiee);
     }
 
     /** Un quartier n'existe qu'une fois par commune, aux accents et à la casse près (ECART-45). */
@@ -107,12 +119,15 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void delete(String id) {
-        if (!localisationRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Localisation non trouvée avec l'ID: " + id);
-        }
+        Localisation existante = localisationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Localisation non trouvée avec l'ID: " + id));
         try {
             localisationRepository.deleteById(id);
+            // Dans la transaction : la contrainte des annonces rattachées se vérifie ici, pas au commit.
+            localisationRepository.flush();
+            audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.LOCALISATION_SUPPRIMEE, id, libelle(existante));
         } catch (DataIntegrityViolationException e) {
             throw new IllegalStateException(
                 "Impossible de supprimer cette localisation : des annonces y sont encore rattachées.");

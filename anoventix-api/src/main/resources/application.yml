@@ -113,6 +113,10 @@ app:
   base-url: ${APP_BASE_URL}
   # Adresse à contacter en cas de connexion suspecte (email d'alerte du staff).
   support-email: ${SUPPORT_EMAIL:support@anoventix.com}
+  # Version minimale de l'app Android acceptée (RG-12-21) : en dessous, l'app demande la mise à jour.
+  mobile:
+    version-minimale: ${APP_VERSION_MINIMALE:1.0.0}
+    url-mise-a-jour: ${APP_URL_MISE_A_JOUR:https://www.anoventix.com/downloads/anoventix.apk}
   cgu:
     # Version des CGU en vigueur, enregistrée avec le consentement à l'inscription. À changer à chaque
     # mise à jour de landing/cgu.html (date de « Dernière mise à jour »).

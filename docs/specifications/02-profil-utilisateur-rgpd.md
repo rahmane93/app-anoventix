@@ -56,7 +56,7 @@ Hors périmètre : reconnaissance faciale ou détection de vivacité automatique
 
 | ID | Règle | Source |
 |---|---|---|
-| RG-02-05 | Envoi en multipart : fichier **image** obligatoire (≤ 50 Mpx), type (CARTE_IDENTITE, PASSEPORT, PERMIS_DE_CONDUIRE, AUTRE) et numéro. Un type inconnu est **ignoré sans erreur** (ECART-28). Un seul fichier (pas de recto / verso, pas de PDF). | `UserController.java:93-111`, `UserServiceImpl.java:156-192` |
+| RG-02-05 | Envoi en multipart : **recto** image obligatoire (≤ 50 Mpx), 🆕 **verso** obligatoire pour CARTE_IDENTITE et PERMIS_DE_CONDUIRE (facultatif sinon), type (CARTE_IDENTITE, PASSEPORT, PERMIS_DE_CONDUIRE, AUTRE), numéro et 🆕 **date d'expiration** (obligatoire, pièce en cours de validité). Un type inconnu est refusé (400). Une pièce expirée ne peut pas être validée par la modération (DEC-36). | `UserServiceImpl.uploadPieceIdentite` |
 | RG-02-06 | Le fichier est stocké dans `uploads/private/piece-identite/<userId>/`, jamais servi par nginx, et lisible uniquement via `GET /api/users/{id}/piece-identite` par le titulaire ou la modération. | `FileController.java`, `SecurityConfig` (`/uploads/private/** denyAll`) |
 | RG-02-07 | Chaque envoi remet le statut à EN_ATTENTE et efface le motif de rejet. Une pièce VALIDEE ne peut plus être remplacée. | `UserServiceImpl.java:161-172` |
 | RG-02-08 | Décision de la modération : VALIDEE ou REJETEE (EN_ATTENTE refusé). **Motif obligatoire en cas de rejet.** Un modérateur ne peut pas traiter la pièce d'un autre modérateur ; personne ne traite celle d'un administrateur. | `UserServiceImpl.java:229-266` |

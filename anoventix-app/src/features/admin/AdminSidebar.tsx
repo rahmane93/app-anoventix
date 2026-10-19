@@ -46,6 +46,8 @@ const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: 'Comptes pro',
     items: [
+      { path: 'journal', label: "Journal d'audit", icon: 'document-text-outline', adminOnly: true },
+      { path: 'parametres', label: 'Paramètres', icon: 'options-outline', adminOnly: true },
       { path: 'quotas', label: 'Quotas', icon: 'speedometer-outline', adminOnly: true },
       { path: 'licences', label: 'Licences', icon: 'key-outline', adminOnly: true },
     ],

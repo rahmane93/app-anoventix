@@ -351,9 +351,13 @@ public class AdminServiceImpl implements AdminService {
                 .map(this::toUserDTO);
     }
 
+    /** Motif du masquage posé à la promotion d'un modérateur : levé automatiquement s'il redevient annonceur. */
+    static final String MOTIF_MASQUAGE_MODERATEUR =
+            "Compte de modération : ses annonces ne sont pas proposées au public.";
+
     @Override
     @Transactional
-    public void octroierRole(UUID userId, TypeRole role, UUID adminId) {
+    public void changerRole(UUID userId, TypeRole role, UUID adminId) {
         if (userId.equals(adminId)) {
             throw new IllegalArgumentException("Vous ne pouvez pas modifier votre propre rôle.");
         }
@@ -362,10 +366,9 @@ public class AdminServiceImpl implements AdminService {
                 "L'attribution du rôle ADMINISTRATEUR n'est pas autorisée via cette API.");
         }
         if (role == TypeRole.AGENT_PROFESSIONNEL) {
-            // Un agent est forcément rattaché à une entreprise : il se crée via
-            // POST /api/entreprises/{id}/agents, pas par simple changement de rôle.
+            // Un agent est forcément rattaché à une entreprise : il est invité depuis son entreprise.
             throw new IllegalArgumentException(
-                "Le rôle AGENT_PROFESSIONNEL s'attribue en créant l'agent depuis son entreprise.");
+                "Le rôle d'agent s'attribue en invitant le compte depuis son entreprise.");
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userId));
@@ -373,39 +376,53 @@ public class AdminServiceImpl implements AdminService {
         com.app.AnnoncesAPI.entities.Role roleEntity = roleRepository.findByName(role)
                 .orElseThrow(() -> new ResourceNotFoundException("Rôle introuvable : " + role));
         if (roleEntity.equals(user.getRole())) {
-            throw new IllegalArgumentException("L'utilisateur possède déjà le rôle " + role);
+            throw new IllegalArgumentException("L'utilisateur possède déjà le rôle " + role + ".");
+        }
+        // ECART-22 : pas d'entreprise ni d'équipe orphelines. Les rôles professionnels changent par les parcours
+        // métier (création d'entreprise, invitation, retrait d'un agent).
+        if (user.isAnnonceurProfessionnel() && user.getEntreprise() != null) {
+            throw new IllegalStateException("Ce compte dirige l'entreprise « " + user.getEntreprise().getNom()
+                    + " » : son rôle ne peut pas changer tant qu'elle existe.");
+        }
+        if (user.isAgentProfessionnel() && user.getEntreprise() != null && user.getStatut() != StatutUtilisateur.INACTIF) {
+            throw new IllegalStateException("Cet agent est rattaché à l'entreprise « " + user.getEntreprise().getNom()
+                    + " » : son professionnel doit d'abord le retirer de l'équipe.");
         }
         String ancienRole = user.getRole() == null ? null : user.getRole().getName().name();
+        boolean etaitModerateur = user.isModerateur();
+        if (user.isAgentProfessionnel()) {
+            user.setEntreprise(null);
+            user.setParentUser(null);
+        }
         user.setRole(roleEntity);
+        // Un modérateur n'annonce pas : ses annonces quittent le public (sans être modifiées) ; elles reviennent
+        // s'il redevient annonceur.
+        if (role == TypeRole.MODERATEUR && !user.isAnnoncesMasquees()) {
+            user.setAnnoncesMasquees(true);
+            user.setMotifMasquageAnnonces(MOTIF_MASQUAGE_MODERATEUR);
+            user.setDateMasquageAnnonces(LocalDateTime.now());
+        } else if (etaitModerateur && MOTIF_MASQUAGE_MODERATEUR.equals(user.getMotifMasquageAnnonces())) {
+            user.setAnnoncesMasquees(false);
+            user.setMotifMasquageAnnonces(null);
+            user.setDateMasquageAnnonces(null);
+        }
         userRepository.save(user);
         // Sessions fermées : un compte promu modérateur passe à la double authentification dès sa
         // connexion suivante, un compte rétrogradé perd ses accès (RG-01-41).
         sessionService.fermerToutesLesSessions(userId);
         audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, ancienRole + " → " + role);
+        emailNotificationService.notifier(user, "Votre rôle a changé", "Votre rôle a changé",
+                "Un administrateur a modifié votre rôle : vous êtes désormais " + libelleRole(role) + ".\n"
+                        + "Reconnectez-vous pour retrouver vos accès.");
     }
 
-    @Override
-    @Transactional
-    public void revoquerRole(UUID userId, TypeRole role, UUID adminId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userId));
-        // Couvre aussi l'auto-révocation d'un admin.
-        refuserSiAdministrateur(user);
-        if (role == TypeRole.PARTICULIER) {
-            throw new IllegalArgumentException("PARTICULIER est le rôle de base : il ne peut pas être révoqué.");
-        }
-        com.app.AnnoncesAPI.entities.Role roleEntity = roleRepository.findByName(role)
-                .orElseThrow(() -> new ResourceNotFoundException("Rôle introuvable : " + role));
-        if (!roleEntity.equals(user.getRole())) {
-            throw new IllegalArgumentException("L'utilisateur ne possède pas le rôle " + role);
-        }
-        // Retour au rôle de base plutôt qu'à null : un compte sans rôle n'a aucune autorité
-        // et casse les écrans qui supposent un rôle.
-        user.setRole(roleRepository.findByName(TypeRole.PARTICULIER)
-                .orElseThrow(() -> new IllegalStateException("Rôle PARTICULIER introuvable en base.")));
-        userRepository.save(user);
-        sessionService.fermerToutesLesSessions(userId);
-        audit.enregistrer(ActionAudit.COMPTE_ROLE_MODIFIE, userId, role + " → " + TypeRole.PARTICULIER);
+    private static String libelleRole(TypeRole role) {
+        return switch (role) {
+            case PARTICULIER -> "particulier";
+            case PROFESSIONNEL -> "professionnel (vous pouvez créer votre entreprise)";
+            case MODERATEUR -> "modérateur (vos annonces ne sont plus proposées au public)";
+            default -> role.name().toLowerCase();
+        };
     }
 
     @Override
@@ -644,6 +661,8 @@ public class AdminServiceImpl implements AdminService {
                 .statutPieceIdentite(u.getStatutPieceIdentite())
                 .motifRejetPieceIdentite(u.getMotifRejetPieceIdentite())
                 .selfieFourni(u.getSelfieUrl() != null && !u.getSelfieUrl().isBlank())
+                .versoFourni(u.getPieceIdentiteVersoUrl() != null && !u.getPieceIdentiteVersoUrl().isBlank())
+                .dateExpirationPiece(u.getDateExpirationPiece())
                 .dateEnvoiVerification(u.getDateEnvoiVerification())
                 .dateDecisionVerification(u.getDateDecisionVerification())
                 .statut(u.getStatut())

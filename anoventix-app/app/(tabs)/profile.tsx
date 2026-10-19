@@ -100,6 +100,9 @@ export default function ProfileScreen() {
     pieceNumero,
     setPieceNumero,
     pieceFile,
+    versoFile,
+    pieceExpiration,
+    setPieceExpiration,
     selfieFile,
     selfieOuvert,
     setSelfieOuvert,
@@ -450,12 +453,31 @@ export default function ProfileScreen() {
                   autoCapitalize="characters"
                   autoCorrect={false}
                 />
-                <TouchableOpacity style={styles.filePicker} onPress={pickPieceFile} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Choisir une photo du document">
+                <Input
+                  label="Date d'expiration"
+                  placeholder="JJ/MM/AAAA"
+                  value={pieceExpiration}
+                  onChangeText={setPieceExpiration}
+                  keyboardType="numbers-and-punctuation"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity style={styles.filePicker} onPress={() => pickPieceFile('recto')} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Choisir une photo du recto du document">
                   <Ionicons name="image-outline" size={18} color={colors.textSecondary} />
                   <AppText style={styles.filePickerText} numberOfLines={1}>
-                    {pieceFile ? pieceFile.name : 'Choisir une photo du document…'}
+                    {pieceFile ? 'Recto ajouté' : 'Photo du recto…'}
                   </AppText>
                   {pieceFile && <Ionicons name="checkmark-circle" size={18} color={colors.success} />}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filePicker} onPress={() => pickPieceFile('verso')} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Choisir une photo du verso du document">
+                  <Ionicons name="image-outline" size={18} color={colors.textSecondary} />
+                  <AppText style={styles.filePickerText} numberOfLines={1}>
+                    {versoFile
+                      ? 'Verso ajouté'
+                      : pieceTypeSel === 'PASSEPORT' || pieceTypeSel === 'AUTRE'
+                        ? 'Photo du verso (facultatif)…'
+                        : 'Photo du verso…'}
+                  </AppText>
+                  {versoFile && <Ionicons name="checkmark-circle" size={18} color={colors.success} />}
                 </TouchableOpacity>
                 {/* Selfie : appareil photo uniquement, jamais la galerie (RG-02-24). */}
                 <TouchableOpacity
