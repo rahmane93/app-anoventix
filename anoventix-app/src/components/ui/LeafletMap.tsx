@@ -2,11 +2,11 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } fr
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { colors, radius } from '../../theme';
-import { buildLeafletHtml, DEFAULT_CENTER, type LeafletMapHandle, type LeafletMapProps } from './leaflet-html';
+import { buildMapHtml, DEFAULT_CENTER, type LeafletMapHandle, type LeafletMapProps } from './leaflet-html';
 
 export type { LatLng, LeafletMapHandle } from './leaflet-html';
 
-// Carte gratuite (OpenStreetMap + Leaflet) rendue dans une WebView — sans clé API.
+// Carte (Leaflet ou MapLibre, voir leaflet-html.ts) rendue dans une WebView — sans clé API.
 // Deux usages : sélection d'un point (interactive) ou affichage seul d'un marqueur.
 
 export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function LeafletMap(
@@ -20,7 +20,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function
 
   // HTML généré une seule fois au montage (les MAJ externes passent par injectJavaScript).
   const html = useMemo(
-    () => buildLeafletHtml(lat, lng, hasInit, interactive, zoom),
+    () => buildMapHtml(lat, lng, hasInit, interactive, zoom),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );

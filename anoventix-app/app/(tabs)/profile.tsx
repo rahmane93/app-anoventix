@@ -70,6 +70,40 @@ function PieceApercu({ uri, token }: { uri: string; token: string | null }) {
   );
 }
 
+type VueDocument = 'recto' | 'verso' | 'selfie';
+
+/**
+ * Justificatifs envoyés (recto, verso, selfie), un sélecteur pour passer de l'un à l'autre.
+ * Seules les images fournies sont proposées ; le recto est affiché en premier.
+ */
+function DocumentsApercu({
+  userId, numero, dateEnvoi, versoFourni, selfieFourni, token,
+}: {
+  userId: string; numero: string; dateEnvoi: string; versoFourni: boolean; selfieFourni: boolean; token: string | null;
+}) {
+  const [vue, setVue] = useState<VueDocument>('recto');
+  const base = `${API_BASE_URL}/api/users/${userId}`;
+  const vues: { value: VueDocument; label: string; uri: string }[] = [
+    { value: 'recto', label: 'Recto', uri: `${base}/piece-identite?v=${encodeURIComponent(numero)}` },
+    ...(versoFourni ? [{ value: 'verso' as const, label: 'Verso', uri: `${base}/piece-identite/verso?v=${encodeURIComponent(dateEnvoi)}` }] : []),
+    ...(selfieFourni ? [{ value: 'selfie' as const, label: 'Selfie', uri: `${base}/selfie?v=${encodeURIComponent(dateEnvoi)}` }] : []),
+  ];
+  const courante = vues.find((v) => v.value === vue) ?? vues[0];
+  return (
+    <>
+      {vues.length > 1 && (
+        <View style={styles.modalVues}>
+          {vues.map((v) => (
+            <Chip key={v.value} label={v.label} selected={v.value === courante.value} onPress={() => setVue(v.value)} />
+          ))}
+        </View>
+      )}
+      {/* key : nouvel aperçu (et état de chargement) à chaque changement d'image. */}
+      <PieceApercu key={courante.value} uri={courante.uri} token={token} />
+    </>
+  );
+}
+
 // ─── Écran principal ──────────────────────────────────────────────────────────
 // Logique extraite dans useProfile ; cet écran ne fait que rendre.
 
@@ -602,8 +636,12 @@ export default function ProfileScreen() {
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           {profile?.typePieceIdentite && viewingPiece ? (
-            <PieceApercu
-              uri={`${API_BASE_URL}/api/users/${profile.id}/piece-identite?v=${encodeURIComponent(profile.numeroPieceIdentite ?? '')}`}
+            <DocumentsApercu
+              userId={profile.id}
+              numero={profile.numeroPieceIdentite ?? ''}
+              dateEnvoi={profile.dateEnvoiVerification ?? ''}
+              versoFourni={Boolean(profile.versoFourni)}
+              selfieFourni={Boolean(profile.selfieFourni)}
               token={token}
             />
           ) : null}
@@ -966,6 +1004,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalVues: {
+    flexDirection: 'row' as const,
+    gap: spacing.sm,
+    alignSelf: 'stretch' as const,
+    justifyContent: 'center' as const,
+    marginBottom: spacing.md,
   },
   modalError: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl },
   modalErrorText: { fontSize: typography.sizes.sm, color: colors.textSecondary, textAlign: 'center' },
