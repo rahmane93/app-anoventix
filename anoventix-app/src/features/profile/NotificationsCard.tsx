@@ -71,9 +71,12 @@ function Ligne({ titre, detail, valeur, onChange }: { titre: string; detail: str
 }
 
 const st = StyleSheet.create({
+  // Même gabarit que les autres cartes du profil (menuCard de profile.tsx).
   card: {
-    backgroundColor: colors.white, borderRadius: radius.md, padding: spacing.md,
+    backgroundColor: colors.white, borderRadius: radius.xl, padding: spacing.md,
+    marginHorizontal: spacing.base, marginBottom: spacing.sm,
     borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   texte: { flex: 1, gap: 2 },

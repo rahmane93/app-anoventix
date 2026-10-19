@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useR
 import { StyleSheet, View } from 'react-native';
 import { colors, radius } from '../../theme';
 import {
-  buildLeafletHtml,
+  buildMapHtml,
   DEFAULT_CENTER,
   LEAFLET_MSG_SOURCE,
   type LeafletMapHandle,
@@ -29,7 +29,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function
 
   // HTML figé au montage : les mises à jour passent par __setMarker.
   const html = useMemo(
-    () => buildLeafletHtml(lat, lng, hasInit, interactive, zoom, channel),
+    () => buildMapHtml(lat, lng, hasInit, interactive, zoom, channel),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );

@@ -52,7 +52,7 @@ Modules qui utilisent le référentiel : 03 (localisation obligatoire d'une anno
 | ID | Règle | Source |
 |---|---|---|
 | RG-05-14 | La position GPS d'une annonce est facultative (latitude −90 à 90, longitude −180 à 180, 6 décimales). Elle est saisie sur une carte Leaflet (`MapPickerModal`), avec possibilité de se géolocaliser. Sans position, l'annonce n'apparaît pas dans la recherche de proximité. | `Annonce.java`, `components/ui/MapPickerModal.tsx` |
-| RG-05-15 | **Carte** : sans position enregistrée, la carte s'ouvre sur le point de référence du quartier choisi (zoom 15), sinon sur Conakry (9,6412 ; −13,5784) ; la géolocalisation recentre sur l'appareil. La bibliothèque Leaflet est chargée depuis `unpkg.com`, les tuiles depuis les serveurs d'OpenStreetMap. Le passage à un fournisseur de tuiles avec clé d'API (DEC-30) est à faire avant la mise en production ([98](98-evolutions.md)). | `components/ui/leaflet-html.ts` |
+| RG-05-15 | **Carte** : sans position enregistrée, la carte s'ouvre sur le point de référence du quartier choisi (zoom 15), sinon sur Conakry (9,6412 ; −13,5784) ; la géolocalisation recentre sur l'appareil. Par défaut, la bibliothèque Leaflet est chargée depuis `unpkg.com` et les tuiles depuis les serveurs d'OpenStreetMap. Avec `EXPO_PUBLIC_MAP_PROVIDER=lfmaps`, la carte utilise MapLibre GL (`unpkg.com`) et les tuiles vectorielles LFMaps (`data.lfmaps.fr`), sans clé d'API ; sans WebGL, elle affiche « Carte indisponible sur cet appareil. ». Le choix définitif du fournisseur (DEC-30) est à faire avant la mise en production ([98](98-evolutions.md)). | `components/ui/leaflet-html.ts` |
 
 ### 4.3 Quartier manquant (DEC-22)
 
