@@ -87,7 +87,7 @@ Ce qui suit **n'est pas fourni** par la version actuelle. Sauf mention contraire
 | Administrateur | `ADMINISTRATEUR` | Créé au premier démarrage (variables `ADMIN_*`) | Toutes les capacités du modérateur, plus : rôles, suppression de comptes, masquage des comptes, licences, quotas, localisations, entreprises. |
 | Système | — | — | Tâches planifiées : expiration des annonces (03:00), anonymisation (03:30), purges techniques toutes les 10 min. |
 
-> Un compte porte **un seul rôle** (`account.role_id`). L'API d'administration « octroyer / révoquer un rôle » remplace donc le rôle courant (voir ECART-22).
+> Un compte porte **un seul rôle** (`account.role_id`). 🆕 (DEC-37) L'administration le **change** (`PUT /api/admin/utilisateurs/{id}/role`), avec des garde-fous (ECART-22).
 
 ## 3. Cartographie des modules
 
@@ -362,7 +362,7 @@ Diagramme : [module 01 §8](01-authentification-comptes.md).
 | SUSPENDU | ❌ (jetons refusés dès la requête suivante) | **restent visibles du public** (ECART-52) | Modération : levée · Entreprise : levée de ses propres suspensions d'agent |
 | INACTIF, suppression demandée | ❌ (réactivation proposée) | passées hors ligne | Utilisateur : réactivation sous 30 j · Système : anonymisation après 30 j |
 | INACTIF, désactivé par la modération | ❌ | **restent visibles du public** (ECART-52) | Modération uniquement |
-| INACTIF, agent retiré par son entreprise | ❌ | annonces en ligne transférées au professionnel, les autres restent rattachées à l'agent (ECART-16) | Modération uniquement |
+| INACTIF, agent retiré par son entreprise | ❌ | 🆕 (DEC-34) toutes ses annonces et ses conversations passent au professionnel | Modération uniquement |
 | INACTIF anonymisé | ❌ | conservées hors ligne, photos non supprimées (ECART-15) | Aucune (définitif) |
 | *(superposé)* Annonces masquées par l'admin | ✅ | invisibles du public, publication et modification bloquées | Administrateur |
 | *(superposé)* Publication bloquée par la licence | ✅ | publication et modification bloquées | Utilisateur : activer une clé |
@@ -415,7 +415,7 @@ Les documents parlent de « RGPD », mais le service vise la Guinée. Le cadre a
 | Donnée | Aujourd'hui | 🆕 Durée cible (DEC-26, sous réserve du juriste) |
 |---|---|---|
 | Compte actif | Tant que le compte existe | Inchangé |
-| Compte inactif sans connexion | Sans limite | Relance après 2 ans sans connexion, anonymisation 3 mois plus tard |
+| Compte inactif sans connexion | Sans limite | ✅ Relance après 2 ans sans connexion (E23), anonymisation 3 mois plus tard ; une connexion ou un rafraîchissement de session annule la relance ; staff exclu (`InactiviteComptesService`, V40) |
 | Pièce d'identité (fichier) | Conservée tant que le compte existe ; supprimée à l'anonymisation | **Fichier supprimé 30 jours après la validation**, en ne gardant que le type, le numéro, le statut et la date de décision. Pièce rejetée : supprimée 30 jours après le rejet. |
 | 🆕 Selfie de vérification (EVO-01) | — (fonction à développer) | Même durée que le fichier de la pièce : supprimé 30 jours après la décision, ainsi qu'à l'anonymisation et à la suppression par un administrateur (RG-02-35) |
 | Photos d'une annonce supprimée, clôturée ou d'un compte anonymisé | Conservées (ECART-15) | Supprimées 12 mois après la clôture ou la suppression |
@@ -540,5 +540,9 @@ Arbitrages rendus par le responsable produit le **17/10/2026**. Ils fixent le co
 | DEC-31 | Emails envoyés par un **service transactionnel** (Brevo, Mailjet ou Amazon SES), avec SPF, DKIM et DMARC. | §15 Q4 | 00, 11 | Suivi des échecs ; base de la file d'envoi avec nouvel essai. |
 | DEC-32 | Les **cibles d'exploitation du §10** sont retenues (lectures < 500 ms, disponibilité ≥ 99 %, perte maximale 24 h, remise en service < 8 h, copie de sauvegarde hors serveur). | §15 Q6 | 00 | Copie hors serveur et test de restauration à mettre en place. |
 | DEC-33 | Avertissements **valables 6 mois** ; niveau proposé selon le rang mais **modifiable** par le modérateur ; **levée** d'un avertissement réservée à l'administrateur ; **email** au titulaire. | ECART-24 | 09, 11 | Colonne `account.nb_avertissements` supprimée (V35) ; le compteur affiché est celui des avertissements en vigueur. |
+| DEC-34 | Retrait d'un agent : **toutes** ses annonces (en ligne ou non) et ses **conversations** passent au professionnel ; un message informe l'acheteur du changement d'interlocuteur. | ECART-16 | 06, 07 | `TransfertAgentService`. |
+| DEC-35 | Documents disponibles en **liste fermée** côté API (choix multiple, codes), libellés acceptés et convertis ; pas de modération préalable (DEC-11). | ECART-35 | 03 | Migration V38 des valeurs existantes. |
+| DEC-36 | Pièce d'identité : **verso obligatoire** pour la carte d'identité et le permis, **date d'expiration** obligatoire, pièce expirée refusée à l'envoi et non validable. Images seulement (pas de PDF). | ECART-28 | 02 | Migration V39. |
+| DEC-37 | Changement de rôle **encadré** : un seul endpoint ; refusé vers ADMINISTRATEUR ou AGENT_PROFESSIONNEL, pour un professionnel qui dirige une entreprise et pour un agent encore rattaché ; un modérateur promu voit ses annonces retirées du public (rendues s'il redevient annonceur) ; email au titulaire. | ECART-22 | 01, 10 | `AdminServiceImpl.changerRole`. |
 
 **Restent ouvertes** : les questions secondaires de chaque module qui ne renvoient pas à une décision ci-dessus. Toutes les questions du §15 et du 99 §7 sont tranchées.

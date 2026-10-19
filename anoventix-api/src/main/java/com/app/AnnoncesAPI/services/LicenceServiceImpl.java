@@ -112,6 +112,9 @@ public class LicenceServiceImpl implements LicenceService {
     public void setModeActif(boolean actif) {
         boolean dejaActif = isModeActif();
         parametreRepository.save(new ParametrePlateforme(PARAM_MODE_ACTIF, String.valueOf(actif)));
+        if (actif != dejaActif) {
+            audit.enregistrer(ActionAudit.LICENCE_MODE_MODIFIE, "mode-licence", actif ? "activé (préavis de 30 jours)" : "désactivé");
+        }
         if (!actif) {
             // Désactiver reste immédiat (RG-08-27).
             ecrireParam(PARAM_DATE_EFFET, null);
@@ -180,6 +183,8 @@ public class LicenceServiceImpl implements LicenceService {
         ecrireParam(PARAM_PRIX_PROFESSIONNEL, reglages.getPrixProfessionnel());
         String tel = reglages.getContactTelephone();
         ecrireParam(PARAM_CONTACT_TELEPHONE, tel == null || tel.isBlank() ? null : tel.trim());
+        audit.enregistrer(ActionAudit.LICENCE_REGLAGES_MODIFIES, "licence",
+                "particulier " + reglages.getPrixParticulier() + ", professionnel " + reglages.getPrixProfessionnel());
         return getReglages();
     }
 

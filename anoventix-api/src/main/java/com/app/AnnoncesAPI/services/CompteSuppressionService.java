@@ -130,6 +130,14 @@ public class CompteSuppressionService {
         logger.info("Compte ID={} supprimé par un administrateur", user.getId());
     }
 
+    /** Compte resté sans connexion 3 mois après sa relance d'inactivité (SFG §11.2) : effacé comme à l'échéance RGPD. */
+    @Transactional
+    public void supprimerPourInactivite(java.util.UUID userId) {
+        // Chargé dans la transaction : l'effacement parcourt des collections paresseuses (favoris…).
+        userRepository.findById(userId).ifPresent(this::effacerCompteEtEntreprise);
+        logger.info("Compte ID={} anonymisé pour inactivité", userId);
+    }
+
     /**
      * Efface le compte et, pour un PROFESSIONNEL, son entreprise et tous ses agents : annonces
      * désactivées, photos et pièces d'identité supprimées du disque, données personnelles anonymisées.
@@ -223,6 +231,9 @@ public class CompteSuppressionService {
         if (user.getSelfieUrl() != null) {
             mediaService.deletePieceIdentite(user.getSelfieUrl());
         }
+        if (user.getPieceIdentiteVersoUrl() != null) {
+            mediaService.deletePieceIdentite(user.getPieceIdentiteVersoUrl());
+        }
 
         // ≤ 50 caractères (@Size sur User.email) et unique.
         user.setEmail("supprime-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20)
@@ -233,6 +244,8 @@ public class CompteSuppressionService {
         user.setPhotoProfil(null);
         user.setPieceIdentiteUrl(null);
         user.setSelfieUrl(null);
+        user.setPieceIdentiteVersoUrl(null);
+        user.setDateExpirationPiece(null);
         user.setDateEnvoiVerification(null);
         user.setDateDecisionVerification(null);
         user.setDecisionVerificationPar(null);

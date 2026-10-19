@@ -51,7 +51,7 @@ Hors périmètre (non implémenté) : vidéos, plans et visites virtuelles ; mis
 | RG-03-03b | **Sens du prix** : pour une VENTE, prix de vente ; pour une LOCATION ou un BAIL, **loyer mensuel** (libellé « Loyer mensuel (GNF) », suffixe « par mois » / « / mois » à l'affichage et dans les pages de partage). La périodicité n'est pas paramétrable (pas de loyer annuel ni de caution). Le **prix révisé**, s'il existe, devient le prix affiché avec un indicateur de baisse, mais l'assistant ne permet pas de le saisir et les filtres, le tri et les similaires utilisent le prix initial (ECART-42). | `src/lib/bien.ts:32-38`, `components/annonce/Prix.tsx:28-36`, `SharePageService.java` |
 | RG-03-04 | Compatibilités type d'annonce → type de bien → usage : voir la SFG §7.2. Une combinaison incompatible renvoie 400. L'app ne propose que les combinaisons valides. | `BienImmoServiceImpl.java:524-533`, `features/publier/constants.ts` |
 | RG-03-05 | Composition : remise à vide pour un bien non bâti (TERRAIN, DOMAINE). Pour un bien bâti, le nombre de chambres ne peut pas dépasser le nombre de pièces. | `BienImmoServiceImpl.java:540-555` |
-| RG-03-06 | Documents disponibles : l'app propose TITRE_FONCIER, DONATION, ACTE_DE_VENTE, CERTIFICAT_USAGE_FONCIER, AUTRE ; l'API stocke une chaîne libre sans contrôle (ECART-35). | `constants.ts`, `Annonce.java:114` |
+| RG-03-06 | 🆕 (DEC-35) Documents disponibles : **liste fermée** (TITRE_FONCIER, DONATION, ACTE_DE_VENTE, CERTIFICAT_USAGE_FONCIER, AUTRE), choix multiple, stockés en codes séparés par des virgules ; un libellé saisi est converti, une valeur inconnue est refusée (400). | `DocumentDisponible.normaliser` |
 | RG-03-07 | À la création : statut PUBLIEE, `actif = true` (publication **immédiate, sans modération préalable**), validité de **180 jours**, identifiant public aléatoire de 12 caractères hexadécimaux. | `BienImmoServiceImpl.java:136-139`, `Annonce.java:156-163` |
 | RG-03-08 | Référence : `<préfixe>-<aammjj>-<4 caractères aléatoires>` (VE, LO ou BA), unique parmi toutes les annonces (ECART-08 corrigé). Les références antérieures, sans l'année (`<MMjj>`), restent valides. | `BienImmoServiceImpl.java`, `Utility.generateUniqueReference` |
 
@@ -102,7 +102,7 @@ Synthèse des règles réparties dans les autres modules. Elle sert de référen
 | Masquage système du compte (admin) | Aucun changement d'état ; publication, modification et photos refusées ; relances d'expiration suspendues | ❌ | ❌ (annonce invisible) | RG-09-15 |
 | Publication bloquée par la licence | Modification et ajout de photos refusés ; clôture et suppression possibles | ✅ | ✅ | RG-08-04, RG-03-14 |
 | Entreprise désactivée | Publication bloquée pour le professionnel et ses agents | ✅ (ECART-14) ; 🆕 ❌ avec DEC-12 | ✅ ; 🆕 ❌ avec DEC-12 | RG-03-01 (5) |
-| Agent retiré par son entreprise | Annonces en ligne transférées au professionnel ; les autres restent rattachées à l'agent | ✅ pour les annonces transférées | ✅ | RG-07-14, ECART-16 |
+| Agent retiré par son entreprise | 🆕 Toutes ses annonces transférées au professionnel (DEC-34) | ✅ pour les annonces transférées | ✅ | RG-07-14, ECART-16 |
 | Suppression demandée par le titulaire | Annonces en ligne passées hors ligne ; pour un professionnel, aussi celles de ses agents | ❌ | ❌ | RG-02-17 |
 | Réactivation pendant le délai de grâce | Les annonces restent hors ligne ; le titulaire les réaffiche une par une | ❌ jusqu'au réaffichage | — | RG-01-27 |
 | Anonymisation automatique (J+30) | Annonces conservées hors ligne, photos conservées | ❌ | ❌ | RG-02-19, RG-02-20, ECART-15 |

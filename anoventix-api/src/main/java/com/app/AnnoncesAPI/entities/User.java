@@ -89,6 +89,14 @@ public class User {
     @Column(length = 500)
     private String pieceIdentiteUrl;
 
+    /** Verso de la pièce (ECART-28) : obligatoire pour la carte d'identité et le permis. */
+    @Column(name = "piece_identite_verso_url", length = 500)
+    private String pieceIdentiteVersoUrl;
+
+    /** Date d'expiration déclarée de la pièce, contrôlée par la modération. */
+    @Column(name = "date_expiration_piece")
+    private java.time.LocalDate dateExpirationPiece;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private StatutPieceIdentite statutPieceIdentite;
@@ -226,6 +234,10 @@ public class User {
     // --- Helpers ---
     public boolean isAnnonceurProfessionnel() {
         return role != null && role.getName() == TypeRole.PROFESSIONNEL;
+    }
+
+    public boolean isAgentProfessionnel() {
+        return role != null && role.getName() == TypeRole.AGENT_PROFESSIONNEL;
     }
 
     public boolean isParticulier() {

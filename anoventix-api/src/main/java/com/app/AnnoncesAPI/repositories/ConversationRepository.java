@@ -29,6 +29,10 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     Page<Conversation> findByParticipant(@Param("userId") UUID userId, Pageable pageable);
 
+    /** Toutes les conversations d'un compte, sans pagination (reprise par l'agence au retrait d'un agent). */
+    @Query("SELECT c FROM Conversation c WHERE c.participantOne.id = :userId OR c.participantTwo.id = :userId")
+    java.util.List<Conversation> findAllByParticipant(@Param("userId") UUID userId);
+
     /** Conversations d'un participant dans un état donné (sa boîte, ses archives) ; les supprimées n'y figurent jamais. */
     @Query("""
             SELECT c FROM Conversation c

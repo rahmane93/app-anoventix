@@ -499,7 +499,8 @@ public class AdminControllerTest {
                         .andReturn().getResponse().getContentAsString())
                 .get("id").asString();
 
-        mockMvc.perform(post("/api/admin/utilisateurs/{userId}/roles/{role}", targetId, "MODERATEUR")
+        mockMvc.perform(put("/api/admin/utilisateurs/{userId}/role", targetId)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"MODERATEUR\"}")
                 .header("Authorization", "Bearer " + adminJwt))
                 .andExpect(status().isOk());
     }
@@ -513,7 +514,8 @@ public class AdminControllerTest {
                         .andReturn().getResponse().getContentAsString())
                 .get("id").asString();
 
-        mockMvc.perform(post("/api/admin/utilisateurs/{userId}/roles/{role}", targetId, "MODERATEUR")
+        mockMvc.perform(put("/api/admin/utilisateurs/{userId}/role", targetId)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"MODERATEUR\"}")
                 .header("Authorization", "Bearer " + modJwt))
                 .andExpect(status().isForbidden());
     }

@@ -39,7 +39,8 @@ class AvertissementsTest {
 
     private static final String MOT_DE_PASSE = "Avertissement-2026";
     private static final List<String> TABLES = List.of("refresh_token", "verification_connexion", "code_secours",
-            "email_sortant", "audit_event", "avertissements");
+            "email_sortant", "audit_event", "message", "conversation", "signalements", "avertissements",
+            "historique_annonce", "medias", "account_favoris", "bien_immo", "annonce", "licence");
 
     @Autowired private WebApplicationContext context;
     @Autowired private UserRepository userRepository;
@@ -163,6 +164,8 @@ class AvertissementsTest {
         for (String table : TABLES) {
             jdbc.execute("DELETE FROM " + table);
         }
+        userRepository.findAll().forEach(u -> { u.setEntreprise(null); u.setParentUser(null); userRepository.save(u); });
+        jdbc.execute("DELETE FROM entreprises");
         userRepository.deleteAll();
     }
 

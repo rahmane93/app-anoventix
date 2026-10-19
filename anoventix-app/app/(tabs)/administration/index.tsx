@@ -126,6 +126,8 @@ export default function AdminDashboard() {
           // L'écriture du référentiel est réservée à l'administrateur (ECART-45).
           { key: 'localisations', icon: 'location-outline' as IoniconName, label: 'Localisations', value: null, href: '/(tabs)/administration/localisations' as any },
           { key: 'quartiers', icon: 'map-outline' as IoniconName, label: 'Quartiers demandés', value: stats?.quartiersDemandes ?? 0, href: '/(tabs)/administration/quartiers-demandes' as any },
+          { key: 'parametres', icon: 'options-outline' as IoniconName, label: 'Paramètres', value: null, href: '/(tabs)/administration/parametres' as any },
+          { key: 'journal', icon: 'document-text-outline' as IoniconName, label: "Journal d'audit", value: null, href: '/(tabs)/administration/journal' as any },
           { key: 'quotas', icon: 'speedometer-outline' as IoniconName, label: 'Quotas des comptes pro', value: null, href: '/(tabs)/administration/quotas' as any },
           { key: 'licences', icon: 'key-outline' as IoniconName, label: 'Licences', value: null, href: '/(tabs)/administration/licences' as any },
         ]

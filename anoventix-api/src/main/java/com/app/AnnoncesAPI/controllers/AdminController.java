@@ -65,10 +65,13 @@ public class AdminController {
     private final AdminService adminService;
     private final AuditService auditService;
     private final com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationEntreprises;
+    private final com.app.AnnoncesAPI.services.ModerationAnnonceService moderationAnnonceService;
 
     public AdminController(AdminService adminService, AuditService auditService,
-                           com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationEntreprises) {
+                           com.app.AnnoncesAPI.services.VerificationEntrepriseService verificationEntreprises,
+                           com.app.AnnoncesAPI.services.ModerationAnnonceService moderationAnnonceService) {
         this.adminService = adminService;
+        this.moderationAnnonceService = moderationAnnonceService;
         this.auditService = auditService;
         this.verificationEntreprises = verificationEntreprises;
     }
@@ -340,28 +343,19 @@ public class AdminController {
 
     // ─── Gestion des rôles ───────────────────────────────────────────────
 
-    @PostMapping("/utilisateurs/{userId}/roles/{role}")
+    @PutMapping("/utilisateurs/{userId}/role")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
-    @Operation(summary = "Octroyer un rôle à un utilisateur",
-               description = "Ajoute un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR. Un admin ne peut pas modifier son propre rôle.")
-    public ResponseEntity<MessageResponse> octroierRole(
+    @Operation(summary = "Changer le rôle d'un compte",
+               description = "Un compte a un seul rôle. Refusé pour soi-même, vers ADMINISTRATEUR ou AGENT_PROFESSIONNEL "
+                           + "(un agent s'invite depuis son entreprise), pour un professionnel qui dirige une entreprise et "
+                           + "pour un agent encore rattaché. Un modérateur promu voit ses annonces retirées du public. "
+                           + "Le titulaire est prévenu par email et ses sessions sont fermées.")
+    public ResponseEntity<MessageResponse> changerRole(
             @PathVariable UUID userId,
-            @PathVariable TypeRole role,
+            @Valid @RequestBody com.app.AnnoncesAPI.payload.request.ChangementRoleRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
-        adminService.octroierRole(userId, role, currentAdmin.getId());
-        return ResponseEntity.ok(new MessageResponse("Rôle " + role + " accordé avec succès."));
-    }
-
-    @DeleteMapping("/utilisateurs/{userId}/roles/{role}")
-    @PreAuthorize("hasRole('ADMINISTRATEUR')")
-    @Operation(summary = "Révoquer un rôle d'un utilisateur",
-               description = "Retire un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR.")
-    public ResponseEntity<MessageResponse> revoquerRole(
-            @PathVariable UUID userId,
-            @PathVariable TypeRole role,
-            @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
-        adminService.revoquerRole(userId, role, currentAdmin.getId());
-        return ResponseEntity.ok(new MessageResponse("Rôle " + role + " révoqué avec succès."));
+        adminService.changerRole(userId, request.getRole(), currentAdmin.getId());
+        return ResponseEntity.ok(new MessageResponse("Rôle modifié."));
     }
 
     // ─── Suppression de compte ───────────────────────────────────────────
@@ -379,6 +373,27 @@ public class AdminController {
             @AuthenticationPrincipal UserDetailsImpl currentAdmin) {
         adminService.supprimerCompte(userId, currentAdmin.getId());
         return ResponseEntity.ok(new MessageResponse("Compte supprimé."));
+    }
+
+    // ─── Paramètres ──────────────────────────────────────────────────────
+
+    @GetMapping("/parametres")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    @Operation(summary = "Paramètres de la modération",
+               description = "seuilMasquageAuto : nombre de signalements « arnaque / fraude » de signaleurs distincts qui "
+                           + "masquent une annonce en attendant la décision (0 = désactivé, DEC-11).")
+    public ResponseEntity<java.util.Map<String, Integer>> getParametres() {
+        return ResponseEntity.ok(java.util.Map.of("seuilMasquageAuto", moderationAnnonceService.getSeuilMasquageAuto()));
+    }
+
+    @PutMapping("/parametres")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    @Operation(summary = "Modifier les paramètres de la modération",
+               description = "seuilMasquageAuto entre 0 (désactivé) et 50. La modification est journalisée.")
+    public ResponseEntity<java.util.Map<String, Integer>> setParametres(
+            @Valid @RequestBody com.app.AnnoncesAPI.payload.request.ParametresModerationRequest request) {
+        return ResponseEntity.ok(java.util.Map.of("seuilMasquageAuto",
+                moderationAnnonceService.setSeuilMasquageAuto(request.getSeuilMasquageAuto())));
     }
 
     // ─── Journal d'audit ─────────────────────────────────────────────────

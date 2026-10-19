@@ -59,9 +59,8 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
      */
     Page<BienImmo> findByOwnerIdAndStatutModerationNot(UUID ownerId, StatutAnnonce statut, Pageable pageable);
 
-    /** Transfert : liste complète des annonces actives d'un propriétaire (sans pagination). */
-    @Query("SELECT b FROM BienImmo b WHERE b.owner.id = :ownerId AND b.actif = true")
-    List<BienImmo> findActiveByOwnerId(@Param("ownerId") UUID ownerId);
+    /** Retrait d'un agent : toutes ses annonces, en ligne ou non (ECART-16). */
+    List<BienImmo> findAllByOwnerId(UUID ownerId);
 
     /** Nombre maximal d'identifiants renvoyés pour combiner le texte aux autres filtres (borne la mémoire). */
     int PLEIN_TEXTE_MAX_COMBINE = 2000;

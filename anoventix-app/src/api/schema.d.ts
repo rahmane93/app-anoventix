@@ -260,6 +260,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/parametres": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Paramètres de la modération
+         * @description seuilMasquageAuto : nombre de signalements « arnaque / fraude » de signaleurs distincts qui masquent une annonce en attendant la décision (0 = désactivé, DEC-11).
+         */
+        get: operations["getParametres"];
+        /**
+         * Modifier les paramètres de la modération
+         * @description seuilMasquageAuto entre 0 (désactivé) et 50. La modification est journalisée.
+         */
+        put: operations["setParametres"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/pieces-identite/en-attente": {
         parameters: {
             query?: never;
@@ -642,7 +666,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/utilisateurs/{userId}/roles/{role}": {
+    "/api/admin/utilisateurs/{userId}/role": {
         parameters: {
             query?: never;
             header?: never;
@@ -650,17 +674,13 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
         /**
-         * Octroyer un rôle à un utilisateur
-         * @description Ajoute un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR. Un admin ne peut pas modifier son propre rôle.
+         * Changer le rôle d'un compte
+         * @description Un compte a un seul rôle. Refusé pour soi-même, vers ADMINISTRATEUR ou AGENT_PROFESSIONNEL (un agent s'invite depuis son entreprise), pour un professionnel qui dirige une entreprise et pour un agent encore rattaché. Un modérateur promu voit ses annonces retirées du public. Le titulaire est prévenu par email et ses sessions sont fermées.
          */
-        post: operations["octroierRole"];
-        /**
-         * Révoquer un rôle d'un utilisateur
-         * @description Retire un rôle à un utilisateur. Réservé exclusivement à l'ADMINISTRATEUR.
-         */
-        delete: operations["revoquerRole"];
+        put: operations["changerRole"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -719,6 +739,26 @@ export interface paths {
          * @description Évite la mise en pause automatique après 6 mois sans ouverture.
          */
         post: operations["ouvrirAlerte"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/app/version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Version minimale de l'app
+         * @description Public. versionMinimale (x.y.z) : une app plus ancienne doit être mise à jour depuis urlMiseAJour.
+         */
+        get: operations["version"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2240,7 +2280,7 @@ export interface paths {
         /**
          * Uploader sa pièce d'identité
          * @description Envoi en multipart/form-data du dossier de vérification.
-         *     Champs : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.
+         *     Champs : file (recto de la pièce, obligatoire), verso (obligatoire pour CARTE_IDENTITE et PERMIS_DE_CONDUIRE), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur le petit côté), dateExpiration (AAAA-MM-JJ, obligatoire, pièce en cours de validité), typePieceIdentite et numeroPieceIdentite.
          *     La pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE jusqu'à la décision de la modération.
          */
         post: operations["uploadPieceIdentite"];
@@ -2382,6 +2422,26 @@ export interface paths {
          *     Les pièces d'identité sont stockées dans /uploads/private/** et ne sont accessibles que via cet endpoint.
          */
         get: operations["getPieceIdentite"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{userId}/piece-identite/verso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Servir le verso de la pièce d'identité
+         * @description Image du verso (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement.
+         */
+        get: operations["getVersoPieceIdentite"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2677,11 +2737,11 @@ export interface components {
             acteurLibelle?: string;
             acteurRole?: string;
             /** @enum {string} */
-            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
+            action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE" | "ENTREPRISE_DESACTIVEE" | "ENTREPRISE_REACTIVEE" | "ENTREPRISE_QUOTAS_MODIFIES" | "LOCALISATION_CREEE" | "LOCALISATION_MODIFIEE" | "LOCALISATION_SUPPRIMEE" | "QUOTAS_GLOBAUX_MODIFIES" | "LICENCE_MODE_MODIFIE" | "LICENCE_REGLAGES_MODIFIES" | "PARAMETRES_MODIFIES";
             adresseIp?: string;
             cibleId?: string;
             /** @enum {string} */
-            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION";
+            cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION" | "REGLAGE";
             /** Format: date-time */
             date?: string;
             /** Format: int64 */
@@ -2748,6 +2808,10 @@ export interface components {
         ChangePasswordRequest: {
             newPassword: string;
             oldPassword: string;
+        };
+        ChangementRoleRequest: {
+            /** @enum {string} */
+            role: "PARTICULIER" | "PROFESSIONNEL" | "AGENT_PROFESSIONNEL" | "MODERATEUR" | "ADMINISTRATEUR";
         };
         CodesSecoursRequest: {
             password: string;
@@ -3248,6 +3312,10 @@ export interface components {
             /** Format: int32 */
             totalPages?: number;
         };
+        ParametresModerationRequest: {
+            /** Format: int32 */
+            seuilMasquageAuto: number;
+        };
         PortefeuilleStats: {
             /** Format: int64 */
             annoncesMasquees?: number;
@@ -3429,6 +3497,8 @@ export interface components {
             dateDecisionVerification?: string;
             /** Format: date-time */
             dateEnvoiVerification?: string;
+            /** Format: date */
+            dateExpirationPiece?: string;
             /** Format: date-time */
             dateMasquageAnnonces?: string;
             email?: string;
@@ -3461,6 +3531,7 @@ export interface components {
             telephone?: string;
             /** @enum {string} */
             typePieceIdentite?: "CARTE_IDENTITE" | "PASSEPORT" | "PERMIS_DE_CONDUIRE" | "AUTRE";
+            versoFourni?: boolean;
         };
         UtilisateurBloque: {
             /** Format: date-time */
@@ -3637,8 +3708,8 @@ export interface operations {
                 page?: number;
                 size?: number;
                 acteurId?: string;
-                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE";
-                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION";
+                action?: "ANNONCE_MASQUEE" | "ANNONCE_REJETEE" | "ANNONCE_REMISE_EN_LIGNE" | "ANNONCE_MASQUEE_AUTOMATIQUEMENT" | "ANNONCE_REEXAMEN_DEMANDE" | "ANNONCE_MASQUAGE_MAINTENU" | "SIGNALEMENT_TRAITE" | "SIGNALEMENT_SUPPRIME" | "MESSAGE_SUPPRIME" | "MESSAGE_SIGNALEMENT_IGNORE" | "CONVERSATION_CONSULTEE" | "COMPTE_STATUT_MODIFIE" | "COMPTE_AVERTI" | "COMPTE_SUSPENDU_AUTOMATIQUEMENT" | "AVERTISSEMENT_LEVE" | "COMPTE_ROLE_MODIFIE" | "COMPTE_SUPPRIME" | "COMPTE_ANNONCES_MASQUEES" | "COMPTE_ANNONCES_REAFFICHEES" | "PIECE_IDENTITE_VALIDEE" | "PIECE_IDENTITE_REJETEE" | "PIECE_IDENTITE_CONSULTEE" | "QUARTIER_AJOUTE" | "QUARTIER_RATTACHE" | "QUARTIER_REFUSE" | "LICENCE_VENDUE" | "LICENCE_ACHETEUR_AFFECTE" | "ENTREPRISE_VERIFIEE" | "ENTREPRISE_VERIFICATION_REFUSEE" | "ENTREPRISE_JUSTIFICATIF_CONSULTE" | "ENTREPRISE_DESACTIVEE" | "ENTREPRISE_REACTIVEE" | "ENTREPRISE_QUOTAS_MODIFIES" | "LOCALISATION_CREEE" | "LOCALISATION_MODIFIEE" | "LOCALISATION_SUPPRIMEE" | "QUOTAS_GLOBAUX_MODIFIES" | "LICENCE_MODE_MODIFIE" | "LICENCE_REGLAGES_MODIFIES" | "PARAMETRES_MODIFIES";
+                cibleType?: "ANNONCE" | "SIGNALEMENT" | "MESSAGE" | "CONVERSATION" | "COMPTE" | "ENTREPRISE" | "LICENCE" | "LOCALISATION" | "REGLAGE";
                 cibleId?: string;
             };
             header?: never;
@@ -3821,6 +3892,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MessageModerationResponse"];
+                };
+            };
+        };
+    };
+    getParametres: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: number;
+                    };
+                };
+            };
+        };
+    };
+    setParametres: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParametresModerationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: number;
+                    };
                 };
             };
         };
@@ -4321,40 +4440,20 @@ export interface operations {
             };
         };
     };
-    octroierRole: {
+    changerRole: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 userId: string;
-                role: "PARTICULIER" | "PROFESSIONNEL" | "AGENT_PROFESSIONNEL" | "MODERATEUR" | "ADMINISTRATEUR";
             };
             cookie?: never;
         };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MessageResponse"];
-                };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangementRoleRequest"];
             };
         };
-    };
-    revoquerRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-                role: "PARTICULIER" | "PROFESSIONNEL" | "AGENT_PROFESSIONNEL" | "MODERATEUR" | "ADMINISTRATEUR";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -4475,6 +4574,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AlerteResponse"];
+                };
+            };
+        };
+    };
+    version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
                 };
             };
         };
@@ -6818,6 +6939,7 @@ export interface operations {
     uploadPieceIdentite: {
         parameters: {
             query: {
+                dateExpiration?: string;
                 typePieceIdentite: string;
                 numeroPieceIdentite: string;
             };
@@ -6832,6 +6954,8 @@ export interface operations {
                     file?: string;
                     /** Format: binary */
                     selfie?: string;
+                    /** Format: binary */
+                    verso?: string;
                 };
             };
         };
@@ -6996,6 +7120,28 @@ export interface operations {
         };
     };
     getPieceIdentite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    getVersoPieceIdentite: {
         parameters: {
             query?: never;
             header?: never;

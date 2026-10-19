@@ -117,19 +117,24 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Uploader sa pièce d'identité",
                description = "Envoi en multipart/form-data du dossier de vérification.\n"
-                           + "Champs : file (photo de la pièce, obligatoire), selfie (obligatoire, pris en direct tenant la pièce, "
-                           + "720 px au moins sur le petit côté), typePieceIdentite et numeroPieceIdentite.\n"
+                           + "Champs : file (recto de la pièce, obligatoire), verso (obligatoire pour CARTE_IDENTITE et "
+                           + "PERMIS_DE_CONDUIRE), selfie (obligatoire, pris en direct tenant la pièce, 720 px au moins sur "
+                           + "le petit côté), dateExpiration (AAAA-MM-JJ, obligatoire, pièce en cours de validité), "
+                           + "typePieceIdentite et numeroPieceIdentite.\n"
                            + "La pièce et le selfie partent ensemble (400 s'il en manque un). Le statut passe à EN_ATTENTE "
                            + "jusqu'à la décision de la modération.")
     public ResponseEntity<UserDTO> uploadPieceIdentite(
             @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "verso", required = false) MultipartFile verso,
             @RequestParam(value = "selfie", required = false) MultipartFile selfie,
+            @RequestParam(value = "dateExpiration", required = false) String dateExpiration,
             @RequestParam String typePieceIdentite,
             @RequestParam String numeroPieceIdentite,
             Authentication authentication) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.uploadPieceIdentite(
-                        authentication.getName(), file, selfie, typePieceIdentite, numeroPieceIdentite));
+                        authentication.getName(), file, verso, selfie, dateExpiration, typePieceIdentite,
+                        numeroPieceIdentite));
     }
 
     @PostMapping(value = "/me/selfie", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -142,6 +147,18 @@ public class UserController {
             Authentication authentication) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.uploadSelfie(authentication.getName(), selfie));
+    }
+
+    @GetMapping("/{userId}/piece-identite/verso")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Servir le verso de la pièce d'identité",
+               description = "Image du verso (no-store). Titulaire ou ADMINISTRATEUR/MODERATEUR uniquement.")
+    public ResponseEntity<Resource> getVersoPieceIdentite(@PathVariable UUID userId, Authentication authentication) {
+        Resource resource = userService.servirVersoPieceIdentite(userId, authentication);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 
     @GetMapping("/{userId}/selfie")

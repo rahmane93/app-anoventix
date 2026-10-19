@@ -32,7 +32,8 @@ class QuotaEntrepriseServiceTest {
     private final BienImmoRepository biens = mock(BienImmoRepository.class);
     private final EntrepriseRepository entreprises = mock(EntrepriseRepository.class);
     private final EntrepriseMapper mapper = mock(EntrepriseMapper.class);
-    private final QuotaEntrepriseService service = new QuotaEntrepriseService(params, biens, entreprises, mapper);
+    private final QuotaEntrepriseService service = new QuotaEntrepriseService(params, biens, entreprises, mapper,
+            mock(com.app.AnnoncesAPI.services.AuditService.class));
 
     private Entreprise entreprise;
     private User proprietaire;

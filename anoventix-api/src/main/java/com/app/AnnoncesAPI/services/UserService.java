@@ -32,7 +32,8 @@ public interface UserService {
      * Uploade la pièce d'identité de l'utilisateur connecté.
      * Le statut passe automatiquement à EN_ATTENTE.
      */
-    UserDTO uploadPieceIdentite(String username, MultipartFile file, MultipartFile selfie,
+    UserDTO uploadPieceIdentite(String username, MultipartFile file, MultipartFile verso, MultipartFile selfie,
+                                String dateExpiration,
                                 String typePieceIdentite, String numeroPieceIdentite);
 
     /**
@@ -42,6 +43,8 @@ public interface UserService {
     UserDTO uploadSelfie(String username, MultipartFile selfie);
 
     /** Fichier du selfie : titulaire ou modération (RG-02-32). */
+    Resource servirVersoPieceIdentite(UUID userId, Authentication authentication);
+
     Resource servirSelfie(UUID userId, Authentication authentication);
 
     /**

@@ -39,7 +39,8 @@ class LocalisationAdministrationTest {
 
     private static final String MOT_DE_PASSE = "Localisation-2026";
     private static final List<String> TABLES = List.of("refresh_token", "verification_connexion", "code_secours",
-            "email_sortant", "audit_event");
+            "email_sortant", "audit_event", "message", "conversation", "signalements", "avertissements",
+            "historique_annonce", "medias", "account_favoris", "bien_immo", "annonce", "licence");
 
     @Autowired private WebApplicationContext context;
     @Autowired private UserRepository userRepository;
@@ -87,6 +88,11 @@ class LocalisationAdministrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.longitude").value(-13.6));
         mvc.perform(get("/api/localisations/{id}", id)).andExpect(jsonPath("$.latitude").value(9.6));
+
+        // Journal d'audit (ECART-63) : création et modification tracées avec leur auteur.
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForList(
+                "SELECT action FROM audit_event WHERE cible_id = ? AND acteur_libelle = 'admin@example.com' ORDER BY id",
+                String.class, id)).containsExactly("LOCALISATION_CREEE", "LOCALISATION_MODIFIEE");
     }
 
     @Test
@@ -119,6 +125,8 @@ class LocalisationAdministrationTest {
             jdbc.execute("DELETE FROM " + table);
         }
         jdbc.update("DELETE FROM localisation WHERE commune = 'Commune Test'");
+        userRepository.findAll().forEach(u -> { u.setEntreprise(null); u.setParentUser(null); userRepository.save(u); });
+        jdbc.execute("DELETE FROM entreprises");
         userRepository.deleteAll();
     }
 }

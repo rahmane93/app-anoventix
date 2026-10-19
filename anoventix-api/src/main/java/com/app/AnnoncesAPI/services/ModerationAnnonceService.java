@@ -42,7 +42,12 @@ public class ModerationAnnonceService {
     private final AnnonceExpirationService annonceExpirationService;
     private final EmailNotificationService emailNotificationService;
     private final AuditService audit;
-    private final int seuilMasquageAuto;
+    /** Valeur de configuration : seuil par défaut tant que l'administrateur n'en a pas fixé un (RG-10-19). */
+    private final int seuilMasquageAutoDefaut;
+    private final com.app.AnnoncesAPI.repositories.ParametrePlateformeRepository parametres;
+
+    /** Clé du réglage en base (table parametre_plateforme). */
+    public static final String PARAM_SEUIL_MASQUAGE = "moderation.seuil-masquage-auto";
 
     public ModerationAnnonceService(AnnonceRepository annonceRepository,
                                     SignalementRepository signalementRepository,
@@ -50,6 +55,7 @@ public class ModerationAnnonceService {
                                     AnnonceExpirationService annonceExpirationService,
                                     EmailNotificationService emailNotificationService,
                                     AuditService audit,
+                                    com.app.AnnoncesAPI.repositories.ParametrePlateformeRepository parametres,
                                     @Value("${moderation.seuil-masquage-auto:3}") int seuilMasquageAuto) {
         this.annonceRepository = annonceRepository;
         this.signalementRepository = signalementRepository;
@@ -57,7 +63,34 @@ public class ModerationAnnonceService {
         this.annonceExpirationService = annonceExpirationService;
         this.emailNotificationService = emailNotificationService;
         this.audit = audit;
-        this.seuilMasquageAuto = seuilMasquageAuto;
+        this.parametres = parametres;
+        this.seuilMasquageAutoDefaut = seuilMasquageAuto;
+    }
+
+    /** Seuil effectif : réglage de l'administrateur, sinon la configuration ; 0 désactive le masquage automatique. */
+    public int getSeuilMasquageAuto() {
+        return parametres.findById(PARAM_SEUIL_MASQUAGE)
+                .map(com.app.AnnoncesAPI.entities.ParametrePlateforme::getValeur)
+                .map(v -> {
+                    try {
+                        return Integer.parseInt(v.trim());
+                    } catch (NumberFormatException e) {
+                        return seuilMasquageAutoDefaut;
+                    }
+                })
+                .orElse(seuilMasquageAutoDefaut);
+    }
+
+    /** Écran Paramètres (RG-10-19), administrateur seulement. */
+    @Transactional
+    public int setSeuilMasquageAuto(int seuil) {
+        if (seuil < 0 || seuil > 50) {
+            throw new IllegalArgumentException("Le seuil doit être compris entre 0 (désactivé) et 50.");
+        }
+        int ancien = getSeuilMasquageAuto();
+        parametres.save(new com.app.AnnoncesAPI.entities.ParametrePlateforme(PARAM_SEUIL_MASQUAGE, String.valueOf(seuil)));
+        audit.enregistrer(ActionAudit.PARAMETRES_MODIFIES, PARAM_SEUIL_MASQUAGE, ancien + " → " + seuil);
+        return seuil;
     }
 
     /**
@@ -168,6 +201,7 @@ public class ModerationAnnonceService {
             return false;
         }
         // Seuil à 0 (ou moins) : masquage automatique désactivé.
+        int seuilMasquageAuto = getSeuilMasquageAuto();
         if (seuilMasquageAuto <= 0) {
             return false;
         }

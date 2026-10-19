@@ -24,6 +24,16 @@ import { useShallow } from 'zustand/react/shallow';
  * définis AVANT les `return` anticipés (auth / loading) — aucune
  * restructuration de garde nécessaire, comportement identique.
  */
+/** « JJ/MM/AAAA » saisi → « AAAA-MM-JJ », ou null si la date n'existe pas. */
+export function dateExpirationIso(saisie: string): string | null {
+  const m = /^\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})\s*$/.exec(saisie);
+  if (!m) return null;
+  const [j, mo, a] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const d = new Date(Date.UTC(a, mo - 1, j));
+  if (d.getUTCFullYear() !== a || d.getUTCMonth() !== mo - 1 || d.getUTCDate() !== j) return null;
+  return d.toISOString().slice(0, 10);
+}
+
 export function useProfile() {
   const { isAuthenticated, user, token, logout } = useAuthStore(useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user, token: s.token, logout: s.logout })));
   const { mesAnnonces, loadMesAnnonces } = useAnnonceStore(useShallow((s) => ({ mesAnnonces: s.mesAnnonces, loadMesAnnonces: s.loadMesAnnonces })));
@@ -67,6 +77,9 @@ export function useProfile() {
   const [pieceTypeSel, setPieceTypeSel] = useState<TypePieceIdentite | ''>('');
   const [pieceNumero, setPieceNumero] = useState('');
   const [pieceFile, setPieceFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+  // ECART-28 : verso (obligatoire pour la carte d'identité et le permis) et date d'expiration (JJ/MM/AAAA).
+  const [versoFile, setVersoFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [pieceExpiration, setPieceExpiration] = useState('');
   // Selfie de vérification (EVO-01) : pris en direct, jamais importé de la galerie.
   const [selfieFile, setSelfieFile] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [selfieOuvert, setSelfieOuvert] = useState(false);
@@ -110,7 +123,9 @@ export function useProfile() {
     }
   };
 
-  const pickPieceFile = async () => {
+  const pickPieceFile = (face: 'recto' | 'verso' = 'recto') => choisirFace(face);
+
+  const choisirFace = async (face: 'recto' | 'verso') => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -125,7 +140,9 @@ export function useProfile() {
     try {
       // JPEG garanti (photos iPhone en HEIC illisibles côté serveur) ; qualité
       // haute : le numéro du document doit rester lisible pour la modération.
-      setPieceFile(await toJpegUpload(asset, { quality: 0.9, baseName: 'piece' }));
+      const fichier = await toJpegUpload(asset, { quality: 0.9, baseName: face === 'verso' ? 'verso' : 'piece' });
+      if (face === 'verso') setVersoFile(fichier);
+      else setPieceFile(fichier);
     } catch {
       setPieceFeedback({ variant: 'error', message: "Impossible de préparer cette photo. Réessayez ou choisissez une autre image." });
     }
@@ -133,27 +150,38 @@ export function useProfile() {
 
   const handleSubmitPiece = async () => {
     // Bouton toujours actif : l'appui explique ce qui manque.
+    const deuxFaces = pieceTypeSel === 'CARTE_IDENTITE' || pieceTypeSel === 'PERMIS_DE_CONDUIRE';
+    const expiration = dateExpirationIso(pieceExpiration);
     const manquants = [
       !pieceTypeSel && 'le type de pièce',
       !pieceNumero.trim() && 'le numéro',
-      !pieceFile && 'la photo du document',
+      !expiration && "la date d'expiration (JJ/MM/AAAA)",
+      !pieceFile && 'la photo du recto',
+      deuxFaces && !versoFile && 'la photo du verso',
       !selfieFile && 'votre selfie',
     ].filter(Boolean);
     if (manquants.length > 0) {
       setPieceFeedback({ variant: 'error', message: `Complétez ${manquants.join(', ')}.` });
       return;
     }
+    if (expiration! <= new Date().toISOString().slice(0, 10)) {
+      setPieceFeedback({ variant: 'error', message: 'Cette pièce est expirée : envoyez une pièce en cours de validité.' });
+      return;
+    }
     clearError();
     setSuccessMsg(null);
     setPieceFeedback(null);
     try {
-      await uploadPieceIdentite(pieceFile!, selfieFile!, pieceTypeSel as TypePieceIdentite, pieceNumero.trim());
+      await uploadPieceIdentite(pieceFile!, versoFile, selfieFile!, pieceTypeSel as TypePieceIdentite,
+        pieceNumero.trim(), expiration!);
       setPieceFeedback({
         variant: 'success',
         message: "Dossier envoyé. La modération le vérifie en 72 h au plus, vous serez prévenu par email.",
       });
       setPieceFormOpen(false);
       setPieceFile(null);
+      setVersoFile(null);
+      setPieceExpiration('');
       setSelfieFile(null);
     } catch (err) {
       // Affichée près du formulaire plutôt qu'en haut de page.
@@ -293,6 +321,9 @@ export function useProfile() {
     pieceNumero,
     setPieceNumero,
     pieceFile,
+    versoFile,
+    pieceExpiration,
+    setPieceExpiration,
     selfieFile,
     selfieOuvert,
     setSelfieOuvert,

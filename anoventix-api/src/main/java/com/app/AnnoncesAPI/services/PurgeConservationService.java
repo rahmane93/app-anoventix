@@ -113,17 +113,19 @@ public class PurgeConservationService {
      */
     int purgerFichiersVerification(LocalDateTime limite) {
         List<java.util.Map<String, Object>> dossiers = jdbc.queryForList("""
-                SELECT id, piece_identite_url, selfie_url FROM account
+                SELECT id, piece_identite_url, piece_identite_verso_url, selfie_url FROM account
                 WHERE date_decision_verification < ?
-                  AND (piece_identite_url IS NOT NULL OR selfie_url IS NOT NULL)
+                  AND (piece_identite_url IS NOT NULL OR piece_identite_verso_url IS NOT NULL OR selfie_url IS NOT NULL)
                 ORDER BY date_decision_verification
                 LIMIT ?
                 """, limite, LOT_PHOTOS);
         for (java.util.Map<String, Object> d : dossiers) {
             // Fichiers d'abord : une fois les chemins effacés, ils seraient introuvables.
             mediaService.deletePieceIdentite((String) d.get("piece_identite_url"));
+            mediaService.deletePieceIdentite((String) d.get("piece_identite_verso_url"));
             mediaService.deletePieceIdentite((String) d.get("selfie_url"));
-            jdbc.update("UPDATE account SET piece_identite_url = NULL, selfie_url = NULL WHERE id = ?", d.get("id"));
+            jdbc.update("UPDATE account SET piece_identite_url = NULL, piece_identite_verso_url = NULL, selfie_url = NULL "
+                    + "WHERE id = ?", d.get("id"));
         }
         return dossiers.size();
     }

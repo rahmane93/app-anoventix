@@ -60,12 +60,11 @@ const COMPTE_ANONYMISE = 'Compte anonymisé (RGPD)';
 const ASSIGNABLE_ROLES: { key: string; label: string; description: string }[] = [
   { key: 'MODERATEUR', label: 'Modérateur', description: 'Accès à l’administration' },
   { key: 'PROFESSIONNEL', label: 'Professionnel', description: 'Crée une entreprise et invite des agents' },
-  { key: 'AGENT_PROFESSIONNEL', label: 'Agent professionnel', description: 'Publie au nom d’une entreprise' },
 ];
 
 // Ce qu'implique l'attribution d'un rôle (affiché avant confirmation).
 const ROLE_CONSEQUENCES: Record<string, string> = {
-  MODERATEUR: "aura accès à l'administration : modération des annonces, signalements, pièces d'identité et comptes utilisateurs.",
+  MODERATEUR: "aura accès à l'administration (annonces, signalements, pièces d'identité, comptes) ; ses annonces ne seront plus proposées au public.",
   PROFESSIONNEL: 'pourra créer une entreprise, inviter des agents et publier au nom de celle-ci.',
 };
 
@@ -468,7 +467,7 @@ export default function AdminUserDetail() {
     currentUser, isLoadingUser, usersError, loadUserById,
     changeUserStatut, changePieceIdentiteStatut,
     avertissements, isLoadingAvertissements, avertissementsError, loadAvertissements, emettrAvertissement, leverAvertissement,
-    octroiRole, revoquerRole, supprimerCompte,
+    changerRole, supprimerCompte,
   } = useAdminStore(
     useShallow((s) => ({
       currentUser: s.currentUser,
@@ -483,8 +482,7 @@ export default function AdminUserDetail() {
       loadAvertissements: s.loadAvertissements,
       emettrAvertissement: s.emettrAvertissement,
       leverAvertissement: s.leverAvertissement,
-      octroiRole: s.octroiRole,
-      revoquerRole: s.revoquerRole,
+      changerRole: s.changerRole,
       supprimerCompte: s.supprimerCompte,
     })),
   );
@@ -694,7 +692,7 @@ export default function AdminUserDetail() {
     appAlert(
       hasRole ? `Retirer le rôle ${libelle} ?` : `Attribuer le rôle ${libelle} ?`,
       hasRole
-        ? `${nom} perdra les droits associés à ce rôle.`
+        ? `${nom} redeviendra particulier et sera prévenu par email.`
         : `${nom}${consequence ? ` ${consequence}` : ' recevra les droits associés à ce rôle.'}`,
       [
         { text: 'Annuler', style: 'cancel' },
@@ -704,11 +702,8 @@ export default function AdminUserDetail() {
           onPress: async () => {
             setRoleLoading(roleKey);
             try {
-              if (hasRole) {
-                await revoquerRole(currentUser.id, roleKey);
-              } else {
-                await octroiRole(currentUser.id, roleKey);
-              }
+              // Un seul rôle par compte : retirer un rôle ramène au rôle de particulier.
+              await changerRole(currentUser.id, hasRole ? 'PARTICULIER' : roleKey);
             } catch (e) {
               appAlert("Rôle non modifié", getErrorMessage(e, "Le rôle n'a pas été modifié."));
             } finally {
@@ -740,6 +735,8 @@ export default function AdminUserDetail() {
   const pieceUri = `${API_BASE_URL}/api/users/${u.id}/piece-identite?v=${encodeURIComponent(u.numeroPieceIdentite ?? '')}`;
   const selfieUri = `${API_BASE_URL}/api/users/${u.id}/selfie?v=${encodeURIComponent(u.dateEnvoiVerification ?? '')}`;
   const selfieFourni = Boolean(u.selfieFourni);
+  const versoUri = `${API_BASE_URL}/api/users/${u.id}/piece-identite/verso?v=${encodeURIComponent(u.dateEnvoiVerification ?? '')}`;
+  const pieceExpiree = !!u.dateExpirationPiece && u.dateExpirationPiece <= new Date().toISOString().slice(0, 10);
   const dossierComplet = selfieFourni;
   const pieceSection = u.typePieceIdentite ? (
     <Section title="Pièce d'identité">
@@ -753,6 +750,14 @@ export default function AdminUserDetail() {
         last={!u.motifRejetPieceIdentite}
       />
       <FieldRow label="Motif du rejet" value={u.motifRejetPieceIdentite} last />
+      {u.dateExpirationPiece ? (
+        <FieldRow
+          label="Expire le"
+          value={pieceExpiree
+            ? <StatusBadge label={`Expirée (${new Date(u.dateExpirationPiece).toLocaleDateString('fr-FR')})`} tone="danger" icon="alert-circle" />
+            : new Date(u.dateExpirationPiece).toLocaleDateString('fr-FR')}
+        />
+      ) : null}
       {u.dateEnvoiVerification ? (
         <FieldRow label="Envoyé le" value={new Date(u.dateEnvoiVerification).toLocaleString('fr-FR')} />
       ) : null}
@@ -801,6 +806,17 @@ export default function AdminUserDetail() {
             </TouchableOpacity>
           ) : null}
         </View>
+        {u.versoFourni ? (
+          <View>
+            <AppText style={s.pieceLegende}>Verso</AppText>
+            <Image
+              source={{ uri: versoUri, headers: { Authorization: `Bearer ${token}` } }}
+              style={s.pieceImage}
+              contentFit="contain"
+              accessibilityLabel="Verso de la pièce d'identité"
+            />
+          </View>
+        ) : null}
         {canActOnUser && pieceEnAttente ? (
           <View style={s.controles}>
             <AppText style={s.controlesTitre}>À vérifier avant de valider</AppText>

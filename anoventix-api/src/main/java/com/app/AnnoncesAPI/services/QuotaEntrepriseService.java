@@ -37,6 +37,7 @@ public class QuotaEntrepriseService {
     private final BienImmoRepository bienImmoRepository;
     private final EntrepriseRepository entrepriseRepository;
     private final EntrepriseMapper entrepriseMapper;
+    private final AuditService audit;
 
     // ─── Valeurs globales ───────────────────────────────────────────────
 
@@ -49,6 +50,8 @@ public class QuotaEntrepriseService {
     public QuotasDTO setDefauts(QuotasDTO quotas) {
         parametreRepository.save(new ParametrePlateforme(PARAM_QUOTA_AGENTS, String.valueOf(quotas.getQuotaAgents())));
         parametreRepository.save(new ParametrePlateforme(PARAM_QUOTA_ANNONCES, String.valueOf(quotas.getQuotaAnnonces())));
+        audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.QUOTAS_GLOBAUX_MODIFIES, "quotas",
+                "agents " + quotas.getQuotaAgents() + ", annonces " + quotas.getQuotaAnnonces());
         return getDefauts();
     }
 
@@ -110,6 +113,9 @@ public class QuotaEntrepriseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Entreprise non trouvée avec l'ID: " + entrepriseId));
         entreprise.setQuotaAgents(quotas.getQuotaAgents());
         entreprise.setQuotaAnnonces(quotas.getQuotaAnnonces());
+        audit.enregistrer(com.app.AnnoncesAPI.enums.ActionAudit.ENTREPRISE_QUOTAS_MODIFIES, entrepriseId,
+                "agents " + (quotas.getQuotaAgents() == null ? "global" : quotas.getQuotaAgents())
+                        + ", annonces " + (quotas.getQuotaAnnonces() == null ? "global" : quotas.getQuotaAnnonces()));
         return toDTO(entrepriseRepository.save(entreprise));
     }
 

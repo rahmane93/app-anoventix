@@ -3,6 +3,7 @@ import { AppDownloadPrompt } from '@/src/components/web/AppDownloadPrompt';
 import { WebPageHeader } from '@/src/components/web/WebPageHeader';
 import { WebTopBar } from '@/src/components/web/WebTopBar';
 import { useLicenceGate } from '@/src/features/licence/useLicenceGate';
+import { MiseAJourRequise } from '@/src/features/version/MiseAJourRequise';
 import { consumeReturnTo } from '@/src/lib/auth-redirect';
 import { useBreakpoint, type ContainerSize } from '@/src/lib/responsive';
 import { ecouterOuvertures, enregistrerSiAutorise, installerGestionnaire, ouvrirDerniereNotification } from '@/src/lib/push';
@@ -161,6 +162,7 @@ export default function RootLayout() {
         <Stack.Screen name="conversation/[conversationId]" options={{ ...stackHeader(), title: 'Conversation' }} />
       </Stack>
       <OverlayHost />
+      <MiseAJourRequise />
       <StatusBar style="dark" />
     </View>
   );

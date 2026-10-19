@@ -24,6 +24,9 @@ export interface UserProfile {
   motifRejetPieceIdentite: string | null;
   /** Selfie de vérification enregistré (EVO-01). Faux pour un dossier d'avant la mise en service du selfie. */
   selfieFourni?: boolean;
+  /** Verso et date d'expiration de la pièce (ECART-28). */
+  versoFourni?: boolean;
+  dateExpirationPiece?: string | null;
   dateEnvoiVerification?: string | null;
   dateDecisionVerification?: string | null;
   statut: StatutCompte;

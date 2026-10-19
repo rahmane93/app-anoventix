@@ -142,8 +142,7 @@ interface AdminStore {
   loadAvertissements: (userId: string) => Promise<void>;
   emettrAvertissement: (userId: string, body: EmettrAvertissementRequest) => Promise<void>;
   leverAvertissement: (userId: string, avertissementId: number, motif: string) => Promise<void>;
-  octroiRole: (userId: string, role: string) => Promise<void>;
-  revoquerRole: (userId: string, role: string) => Promise<void>;
+  changerRole: (userId: string, role: string) => Promise<void>;
   supprimerCompte: (userId: string) => Promise<void>;
   loadAnnonces: (page?: number, filtre?: AdminAnnoncesFiltre) => Promise<void>;
   loadMoreAnnonces: () => Promise<void>;
@@ -481,14 +480,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   // ── Rôles ──────────────────────────────────────────────────────────────────
-  octroiRole: async (userId, role) => {
-    await adminApi.octroiRole(userId, role);
-    const fresh = await adminApi.getUserById(userId);
-    if (fresh) set({ currentUser: fresh });
-  },
-
-  revoquerRole: async (userId, role) => {
-    await adminApi.revoquerRole(userId, role);
+  changerRole: async (userId, role) => {
+    await adminApi.changerRole(userId, role);
     const fresh = await adminApi.getUserById(userId);
     if (fresh) set({ currentUser: fresh });
   },
