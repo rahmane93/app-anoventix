@@ -77,9 +77,10 @@ public class SharePageService {
     private final BienImmoRepository bienImmoRepository;
     private final String webUrl;
     private final String mediaBaseUrl;
-    private final Path templatePath;
+    private final Path webRoot;
 
-    private volatile CachedTemplate cachedTemplate;
+    private final java.util.concurrent.ConcurrentHashMap<String, CachedTemplate> gabarits =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     private record CachedTemplate(Path realPath, FileTime modifiedAt, String html) {}
 
@@ -90,7 +91,7 @@ public class SharePageService {
         this.bienImmoRepository = bienImmoRepository;
         this.webUrl = stripTrailingSlash(webUrl);
         this.mediaBaseUrl = stripTrailingSlash(mediaBaseUrl);
-        this.templatePath = Path.of(webRoot).resolve(TEMPLATE_RELATIVE_PATH);
+        this.webRoot = Path.of(webRoot);
     }
 
     /**
@@ -124,24 +125,31 @@ public class SharePageService {
     }
 
     private String injectMeta(String html, BienImmo annonce, String canonicalUrl) {
-        String title = annonce.getTitre() + " | AnoventiX";
-        String description = description(annonce);
+        return injecterMeta(html, new MetaPartage(annonce.getTitre(), annonce.getTitre() + " | AnoventiX",
+                description(annonce), canonicalUrl, firstImageUrl(annonce)));
+    }
 
+    /** Ce qu'un robot d'aperçu doit lire sur une page : titre, description, URL canonique, image. */
+    public record MetaPartage(String titrePartage, String titrePage, String description, String urlCanonique,
+                              Optional<String> image) {}
+
+    /** Injecte titre, description, lien canonique et balises Open Graph dans le gabarit de la page. */
+    public String injecterMeta(String html, MetaPartage m) {
         StringBuilder meta = new StringBuilder();
-        meta.append("<title>").append(Utility.escapeHtml(title)).append("</title>");
-        appendMeta(meta, "name", "description", description);
-        meta.append("<link rel=\"canonical\" href=\"").append(Utility.escapeHtml(canonicalUrl)).append("\"/>");
+        meta.append("<title>").append(Utility.escapeHtml(m.titrePage())).append("</title>");
+        appendMeta(meta, "name", "description", m.description());
+        meta.append("<link rel=\"canonical\" href=\"").append(Utility.escapeHtml(m.urlCanonique())).append("\"/>");
         appendMeta(meta, "property", "og:type", "website");
         appendMeta(meta, "property", "og:site_name", "AnoventiX");
         appendMeta(meta, "property", "og:locale", "fr_FR");
-        appendMeta(meta, "property", "og:url", canonicalUrl);
-        appendMeta(meta, "property", "og:title", annonce.getTitre());
-        appendMeta(meta, "property", "og:description", description);
-        appendMeta(meta, "name", "twitter:title", annonce.getTitre());
-        appendMeta(meta, "name", "twitter:description", description);
-        firstImageUrl(annonce).ifPresentOrElse(image -> {
+        appendMeta(meta, "property", "og:url", m.urlCanonique());
+        appendMeta(meta, "property", "og:title", m.titrePartage());
+        appendMeta(meta, "property", "og:description", m.description());
+        appendMeta(meta, "name", "twitter:title", m.titrePartage());
+        appendMeta(meta, "name", "twitter:description", m.description());
+        m.image().ifPresentOrElse(image -> {
             appendMeta(meta, "property", "og:image", image);
-            appendMeta(meta, "property", "og:image:alt", annonce.getTitre());
+            appendMeta(meta, "property", "og:image:alt", m.titrePartage());
             appendMeta(meta, "name", "twitter:card", "summary_large_image");
             appendMeta(meta, "name", "twitter:image", image);
         }, () -> appendMeta(meta, "name", "twitter:card", "summary"));
@@ -154,6 +162,21 @@ public class SharePageService {
         return cleaned.substring(0, head.end()) + meta + cleaned.substring(head.end());
     }
 
+    /** URL absolue d'un média (le chemin enregistré est relatif au domaine des médias). */
+    public String urlMedia(String url) {
+        return url.startsWith("http") ? url : mediaBaseUrl + url;
+    }
+
+    /** URL du site (sans barre finale). */
+    public String urlSite() {
+        return webUrl;
+    }
+
+    /** Segment canonique d'une annonce : « slug-publicId ». */
+    public static String segmentCanonique(BienImmo annonce) {
+        return canonicalSegment(annonce);
+    }
+
     /** « À vendre · Terrain · 150 000 000 GNF · 600 m² · Kaloum, Conakry — début de la description… » */
     private static String description(BienImmo annonce) {
         List<String> facts = new ArrayList<>();
@@ -163,6 +186,15 @@ public class SharePageService {
         if (prix != null && prix.signum() > 0) {
             String suffix = annonce.getTypeAnnonce() == TypeAnnonce.VENTE ? "" : " / mois";
             facts.add(NumberFormat.getIntegerInstance(Locale.FRANCE).format(prix) + " GNF" + suffix);
+        }
+        // Location / bail : « Caution 2 mois · Avance 3 mois » ; un champ vide n'est pas affiché (RG-03-35).
+        if (annonce.getTypeAnnonce() != TypeAnnonce.VENTE) {
+            if (annonce.getCautionMois() != null && annonce.getCautionMois() > 0) {
+                facts.add("Caution " + annonce.getCautionMois() + " mois");
+            }
+            if (annonce.getAvanceMois() != null && annonce.getAvanceMois() > 0) {
+                facts.add("Avance " + annonce.getAvanceMois() + " mois");
+            }
         }
         if (annonce.getSurfaceTotal() != null && annonce.getSurfaceTotal() > 0) {
             facts.add(NumberFormat.getIntegerInstance(Locale.FRANCE).format(annonce.getSurfaceTotal()) + " m²");
@@ -178,7 +210,8 @@ public class SharePageService {
 
     private static String lieu(Localisation localisation) {
         if (localisation == null) return "";
-        return String.join(", ", Stream.of(localisation.getQuartier(), localisation.getCommune(), localisation.getPrefecture())
+        return String.join(", ", Stream.of(localisation.isTechnique() ? null : localisation.getQuartier(),
+                        localisation.getCommune(), localisation.getPrefecture())
                 .filter(s -> s != null && !s.isBlank())
                 .distinct()
                 .toList());
@@ -190,7 +223,7 @@ public class SharePageService {
                 .filter(m -> m.getUrl() != null && (m.getTypeMime() == null || m.getTypeMime().startsWith("image/")))
                 .min(Comparator.comparing(Media::getOrdre, Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(Media::getUrl)
-                .map(url -> url.startsWith("http") ? url : mediaBaseUrl + url);
+                .map(this::urlMedia);
     }
 
     private static void appendMeta(StringBuilder sb, String attribute, String key, String content) {
@@ -203,19 +236,25 @@ public class SharePageService {
      * un lien basculé à chaque version, d'où la comparaison du chemin réel et de la date.
      */
     private String template() {
+        return gabarit(TEMPLATE_RELATIVE_PATH);
+    }
+
+    /** Gabarit d'une page de l'export web (chemin relatif à la racine du site), mis en cache par fichier. */
+    public String gabarit(String cheminRelatif) {
+        Path chemin = webRoot.resolve(cheminRelatif);
         try {
-            Path realPath = templatePath.toRealPath();
+            Path realPath = chemin.toRealPath();
             FileTime modifiedAt = Files.getLastModifiedTime(realPath);
-            CachedTemplate cached = cachedTemplate;
+            CachedTemplate cached = gabarits.get(cheminRelatif);
             if (cached != null && cached.realPath().equals(realPath) && cached.modifiedAt().equals(modifiedAt)) {
                 return cached.html();
             }
             String html = Files.readString(realPath, StandardCharsets.UTF_8);
-            cachedTemplate = new CachedTemplate(realPath, modifiedAt, html);
+            gabarits.put(cheminRelatif, new CachedTemplate(realPath, modifiedAt, html));
             return html;
         } catch (IOException e) {
-            log.warn("Gabarit web introuvable ({}) : page minimale servie", templatePath);
-            return Objects.requireNonNullElse(cachedTemplate, FALLBACK).html();
+            log.warn("Gabarit web introuvable ({}) : page minimale servie", chemin);
+            return Objects.requireNonNullElse(gabarits.get(cheminRelatif), FALLBACK).html();
         }
     }
 

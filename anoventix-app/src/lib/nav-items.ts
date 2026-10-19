@@ -55,7 +55,7 @@ export function useNavState() {
   const items: NavItem[] = [
     { key: 'explore', href: '/(tabs)/explore', label: 'Accueil', icon: 'home-outline', iconActive: 'home', match: '/explore', visible: true },
     { key: 'messagerie', href: '/(tabs)/messagerie', label: 'Messagerie', icon: 'chatbubbles-outline', iconActive: 'chatbubbles', match: '/messagerie', visible: hasMessagerie },
-    { key: 'favoris', href: '/(tabs)/favoris', label: 'Favoris', icon: 'heart-outline', iconActive: 'heart', match: '/favoris', visible: isAuthenticated && isParticulier },
+    { key: 'favoris', href: '/(tabs)/favoris', label: 'Favoris', icon: 'heart-outline', iconActive: 'heart', match: '/favoris', visible: isAuthenticated },
     { key: 'mes-annonces', href: '/(tabs)/mes-annonces', label: 'Mes annonces', icon: 'document-text-outline', iconActive: 'document-text', match: '/mes-annonces', visible: isAuthenticated && isAgentProfessionnel },
     { key: 'entreprise', href: '/(tabs)/entreprise', label: 'Entreprise', icon: 'business-outline', iconActive: 'business', match: '/entreprise', visible: isAuthenticated && isProfessionnel },
     { key: 'dashboard', href: '/(tabs)/dashboard', label: 'Statistiques', icon: 'bar-chart-outline', iconActive: 'bar-chart', match: '/dashboard', visible: hasProDashboard },

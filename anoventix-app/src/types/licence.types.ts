@@ -1,4 +1,4 @@
-export type StatutLicence = 'ACTIVE' | 'EXPIREE' | 'AUCUNE';
+export type StatutLicence = 'ACTIVE' | 'EN_ATTENTE' | 'EXPIREE' | 'AUCUNE';
 
 export type TypeLicence = 'PARTICULIER' | 'PROFESSIONNEL';
 
@@ -9,6 +9,7 @@ export const TYPE_LICENCE_LABELS: Record<TypeLicence, string> = {
 
 export const STATUT_LICENCE_LABELS: Record<StatutLicence, string> = {
   ACTIVE: 'Active',
+  EN_ATTENTE: 'En attente de démarrage',
   EXPIREE: 'Expirée',
   AUCUNE: 'Non activée',
 };
@@ -16,6 +17,10 @@ export const STATUT_LICENCE_LABELS: Record<StatutLicence, string> = {
 export interface Licence {
   /** Mode licence activé par l'administrateur. Faux : publication libre. */
   modeActif: boolean;
+  /** Date à laquelle le mode licence s'applique (préavis de 30 jours, DEC-18). */
+  dateEffet?: string | null;
+  /** Mode activé mais pas encore en vigueur : la publication reste libre jusqu'à la date d'effet. */
+  enPreavis?: boolean;
   statut: StatutLicence;
   type: TypeLicence | null;
   dateDebut: string | null;
@@ -43,10 +48,29 @@ export interface ReglagesLicence {
   contactTelephone: string | null;
 }
 
-export type StatutCleLicence = 'LIBRE' | 'ACTIVE' | 'EXPIREE';
+export type StatutCleLicence = 'LIBRE' | 'EN_ATTENTE' | 'ACTIVE' | 'EXPIREE';
+
+export type MoyenPaiement = 'ORANGE_MONEY' | 'MTN_MOMO' | 'ESPECES' | 'VIREMENT' | 'AUTRE';
+
+export const MOYEN_PAIEMENT_LABELS: Record<MoyenPaiement, string> = {
+  ORANGE_MONEY: 'Orange Money',
+  MTN_MOMO: 'MTN MoMo',
+  ESPECES: 'Espèces',
+  VIREMENT: 'Virement',
+  AUTRE: 'Autre',
+};
+
+/** Vente d'une clé nominative (DEC-17) : la référence est obligatoire sauf en espèces. */
+export interface VenteLicence {
+  acheteur: string;
+  montant: number;
+  moyenPaiement: MoyenPaiement;
+  referencePaiement?: string;
+}
 
 export const STATUT_CLE_LABELS: Record<StatutCleLicence, string> = {
   LIBRE: 'Libre',
+  EN_ATTENTE: 'En attente',
   ACTIVE: 'Active',
   EXPIREE: 'Expirée',
 };
@@ -58,6 +82,13 @@ export interface LicenceAdmin {
   type: TypeLicence;
   statut: StatutCleLicence;
   ownerEmail: string | null;
+  /** Acheteur désigné ; nul pour une clé au porteur d'avant la mise en service. */
+  acheteurEmail?: string | null;
+  montant?: number | null;
+  moyenPaiement?: MoyenPaiement | null;
+  referencePaiement?: string | null;
+  generePar?: string | null;
+  dateVente?: string | null;
   dateDebut: string | null;
   dateFin: string | null;
   createdAt: string;

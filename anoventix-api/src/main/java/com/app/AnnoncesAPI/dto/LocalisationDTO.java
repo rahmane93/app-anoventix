@@ -14,4 +14,6 @@ public class LocalisationDTO {
     private String commune;
     private String quartier;
     private String typeCommune;
+    /** Entrée « Autre quartier » : le quartier est masqué, l'annonce s'affiche avec sa commune seule. */
+    private boolean technique;
 }

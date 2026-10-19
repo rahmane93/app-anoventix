@@ -154,6 +154,39 @@ public class BienImmoControllerTest {
                 .andExpect(jsonPath("$.titre").value("Maison avec jardin à Ratoma"));
     }
 
+    private org.springframework.test.web.servlet.ResultActions creerAvecCautionAvance(
+            String jwt, String type, String caution, String avance) throws Exception {
+        var requete = multipart("/api/biens-immo")
+                .file(TestPhotos.photo())
+                .param("titre", "Appartement meublé à Kipé")
+                .param("description", "Appartement meublé de trois pièces dans un quartier calme et résidentiel")
+                .param("prix", "3500000")
+                .param("localisationId", LOC_ID)
+                .param("typeAnnonce", type)
+                .param("typeBien", "APPARTEMENT")
+                .param("documentsDisponibles", "Titre foncier")
+                .param("typeUsage", "HABITATION")
+                .header("Authorization", "Bearer " + jwt);
+        if (caution != null) requete.param("cautionMois", caution);
+        if (avance != null) requete.param("avanceMois", avance);
+        return mockMvc.perform(requete);
+    }
+
+    @Test
+    void testCautionEtAvance_locationLesConserve_venteLesIgnore_bornesRespectees() throws Exception {
+        String jwt = signupActivateAndGetJWT("caution1", "caution1@test.com", "Test123!");
+
+        creerAvecCautionAvance(jwt, "LOCATION", "2", "3").andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cautionMois").value(2)).andExpect(jsonPath("$.avanceMois").value(3));
+        creerAvecCautionAvance(jwt, "VENTE", "2", "3").andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cautionMois").doesNotExist()).andExpect(jsonPath("$.avanceMois").doesNotExist());
+        creerAvecCautionAvance(jwt, "LOCATION", null, null).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cautionMois").doesNotExist());
+        creerAvecCautionAvance(jwt, "LOCATION", "13", null).andExpect(status().isBadRequest());
+        creerAvecCautionAvance(jwt, "LOCATION", null, "25").andExpect(status().isBadRequest());
+        creerAvecCautionAvance(jwt, "LOCATION", "-1", null).andExpect(status().isBadRequest());
+    }
+
     @Test
     void testCreateBienImmo_sansPhoto_refuse() throws Exception {
         String jwt = signupActivateAndGetJWT("bien3", "bien3@test.com", "Test123!");

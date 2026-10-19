@@ -29,7 +29,7 @@ public class LocalisationServiceImpl implements LocalisationService {
 
     @Override
     public Page<LocalisationDTO> getAllLocalisations(Pageable pageable) {
-        return localisationRepository.findAll(pageable).map(annonceMapper::localisationToDTO);
+        return localisationRepository.findByTechniqueFalse(pageable).map(annonceMapper::localisationToDTO);
     }
 
     @Override
@@ -40,17 +40,17 @@ public class LocalisationServiceImpl implements LocalisationService {
 
     @Override
     public Page<LocalisationDTO> getLocalisationsByCommune(String communeName, Pageable pageable) {
-        return localisationRepository.findByCommune(communeName, pageable).map(annonceMapper::localisationToDTO);
+        return localisationRepository.findByCommuneAndTechniqueFalse(communeName, pageable).map(annonceMapper::localisationToDTO);
     }
 
     @Override
     public Page<LocalisationDTO> getLocalisationsByPrefecture(String prefectureName, Pageable pageable) {
-        return localisationRepository.findByPrefecture(prefectureName, pageable).map(annonceMapper::localisationToDTO);
+        return localisationRepository.findByPrefectureAndTechniqueFalse(prefectureName, pageable).map(annonceMapper::localisationToDTO);
     }
 
     @Override
     public Page<LocalisationDTO> getLocalisationsByRegion(String regionName, Pageable pageable) {
-        return localisationRepository.findByRegion(regionName, pageable).map(annonceMapper::localisationToDTO);
+        return localisationRepository.findByRegionAndTechniqueFalse(regionName, pageable).map(annonceMapper::localisationToDTO);
     }
 
     @Override

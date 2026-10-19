@@ -108,6 +108,14 @@ public abstract class Annonce {
     @Column(nullable = false)
     private BigDecimal fraisHonoraire = BigDecimal.ZERO;
 
+    /** Location / bail : caution demandée, en mois de loyer (0 à 12). Nul pour une vente (DEC-23). */
+    @Column(name = "caution_mois")
+    private Integer cautionMois;
+
+    /** Location / bail : avance demandée, en mois de loyer (0 à 24). Nul pour une vente (DEC-23). */
+    @Column(name = "avance_mois")
+    private Integer avanceMois;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private TypeBien typeBien;
@@ -137,6 +145,11 @@ public abstract class Annonce {
     @Setter(AccessLevel.NONE)
     @Column(name = "visible_public", nullable = false, insertable = false, updatable = false)
     private boolean visiblePublic;
+
+    /** Date à laquelle l'annonce est devenue visible du public (posée par la base, alertes de recherche). */
+    @Setter(AccessLevel.NONE)
+    @Column(name = "visible_depuis", insertable = false, updatable = false)
+    private LocalDateTime visibleDepuis;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)

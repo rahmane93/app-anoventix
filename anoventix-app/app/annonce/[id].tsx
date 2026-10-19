@@ -1,3 +1,4 @@
+import { libelleCautionAvance } from '@/src/lib/bien';
 import { annonceHref } from '@/src/lib/annonce-url';
 import { goBackOr } from '@/src/lib/navigation';
 import { MOTIF_LABELS, type MotifSignalement } from '@/src/api/annonce.api';
@@ -254,6 +255,7 @@ export default function AnnonceDetailScreen() {
     const priceCard = (
       <View style={s.dPriceCard}>
         <Prix prix={a.prix} prixRevise={a.prixRevise} mensuel={isLocation} variant="detail" />
+        {libelleCautionAvance(a) ? <AppText style={s.frais}>{libelleCautionAvance(a)}</AppText> : null}
         {a.fraisHonoraire != null && (
           <AppText style={s.frais}>+ {formatPrix(a.fraisHonoraire)} de frais d'honoraires</AppText>
         )}
@@ -397,6 +399,7 @@ export default function AnnonceDetailScreen() {
           <AppText style={[s.titre, isDesktop && s.titreDesktop]} accessibilityRole="header">{a.titre}</AppText>
 
           {!isDesktop && <Prix prix={a.prix} prixRevise={a.prixRevise} mensuel={isLocation} variant="detail" />}
+          {!isDesktop && libelleCautionAvance(a) ? <AppText style={s.frais}>{libelleCautionAvance(a)}</AppText> : null}
 
           {!isDesktop && a.fraisHonoraire != null && (
             <AppText style={s.frais}>+ {formatPrix(a.fraisHonoraire)} de frais d'honoraires</AppText>
@@ -641,7 +644,7 @@ export default function AnnonceDetailScreen() {
           onBack={() => goBackOr()}
           onShare={handleShare}
           isFav={!isOwnAnnonce && isAuthenticated && favorisIds.includes(a.id)}
-          onFav={isOwnAnnonce || isStaff ? undefined : handleToggleFavoris}
+          onFav={isOwnAnnonce ? undefined : handleToggleFavoris}
           onImagePress={(i) => { setLightboxIndex(i); setLightboxVisible(true); }}
         />
 
@@ -705,6 +708,7 @@ export default function AnnonceDetailScreen() {
           <AppText style={[s.titre, isDesktop && s.titreDesktop]} accessibilityRole="header">{a.titre}</AppText>
 
           {!isDesktop && <Prix prix={a.prix} prixRevise={a.prixRevise} mensuel={isLocation} variant="detail" />}
+          {!isDesktop && libelleCautionAvance(a) ? <AppText style={s.frais}>{libelleCautionAvance(a)}</AppText> : null}
 
           {!isDesktop && a.fraisHonoraire != null && (
             <AppText style={s.frais}>+ {formatPrix(a.fraisHonoraire)} de frais d'honoraires</AppText>

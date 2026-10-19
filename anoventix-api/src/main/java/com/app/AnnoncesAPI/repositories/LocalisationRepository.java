@@ -10,9 +10,21 @@ import com.app.AnnoncesAPI.entities.Localisation;
 @Repository
 public interface LocalisationRepository extends JpaRepository<Localisation, String> {
 
-    Page<Localisation> findByCommune(String communeName, Pageable pageable);
+    // Les entrées techniques « Autre quartier » sont exclues des listes publiques et de l'administration.
+    Page<Localisation> findByTechniqueFalse(Pageable pageable);
 
-    Page<Localisation> findByPrefecture(String prefectureName, Pageable pageable);
+    Page<Localisation> findByCommuneAndTechniqueFalse(String communeName, Pageable pageable);
 
-    Page<Localisation> findByRegion(String regionName, Pageable pageable);
+    Page<Localisation> findByPrefectureAndTechniqueFalse(String prefectureName, Pageable pageable);
+
+    Page<Localisation> findByRegionAndTechniqueFalse(String regionName, Pageable pageable);
+
+    java.util.Optional<Localisation> findFirstByRegionAndPrefectureAndCommuneAndTechniqueTrue(
+            String region, String prefecture, String commune);
+
+    java.util.Optional<Localisation> findFirstByRegionAndPrefectureAndCommuneAndTechniqueFalse(
+            String region, String prefecture, String commune);
+
+    java.util.List<Localisation> findByRegionAndPrefectureAndCommuneAndTechniqueFalse(
+            String region, String prefecture, String commune);
 }

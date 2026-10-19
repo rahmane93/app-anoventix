@@ -65,6 +65,7 @@ public interface AnnonceMapper {
     }
 
     // Convertir une entité Localisation en DTO
+    @Mapping(target = "quartier", expression = "java(localisation.isTechnique() ? null : localisation.getQuartier())")
     LocalisationDTO localisationToDTO(Localisation localisation);
 
     // Convertir un MediaDTO en Media

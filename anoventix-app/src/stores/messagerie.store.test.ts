@@ -4,6 +4,7 @@ jest.mock('../api/messagerie.api', () => ({
   getConversationById: jest.fn(async () => ({ id: 1 })),
 }));
 jest.mock('../api/user.api', () => ({ getUserPresence: jest.fn() }));
+jest.mock('../lib/push', () => ({ demanderPermissionEtEnregistrer: jest.fn() }));
 
 import * as messagerieApi from '../api/messagerie.api';
 import { useMessagerieStore } from './messagerie.store';

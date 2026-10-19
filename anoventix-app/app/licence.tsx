@@ -55,7 +55,12 @@ export default function LicenceScreen() {
       const l = await activerLicence(cle.trim());
       setLicence(l);
       setCle('');
-      setFeedback({ variant: 'success', message: `Licence activée jusqu'au ${formatDate(l.dateFin!)}.` });
+      setFeedback({
+        variant: 'success',
+        message: l.dateFin
+          ? `Licence activée jusqu'au ${formatDate(l.dateFin)}.`
+          : "Clé enregistrée. Votre licence démarrera à l'ouverture du mode licence.",
+      });
     } catch (err) {
       setFeedback({ variant: 'error', message: getErrorMessage(err, "Impossible d'activer cette clé.") });
     } finally {
@@ -81,6 +86,8 @@ export default function LicenceScreen() {
   }
 
   const active = licence.statut === 'ACTIVE';
+  const enAttente = licence.statut === 'EN_ATTENTE';
+  const effet = licence.dateEffet ? formatDate(licence.dateEffet) : null;
   // Type acheté = type du compte (aucune licence courante avant le premier achat).
   const typeLabel = TYPE_LICENCE_LABELS[isProfessionnel ? 'PROFESSIONNEL' : 'PARTICULIER'].toLowerCase();
   const contact = licence.contactTelephone;
@@ -122,6 +129,20 @@ export default function LicenceScreen() {
 
       {loadError && <AlertBanner message={loadError} variant="error" />}
 
+      {/* Préavis de 30 jours (DEC-18) : rien n'est encore limité. */}
+      {licence.enPreavis && effet && (
+        <AlertBanner
+          message={`Le mode licence s'appliquera le ${effet}. D'ici là, la publication reste libre.`}
+          variant="warning"
+        />
+      )}
+      {!licence.modeActif && (
+        <AlertBanner
+          message="Les licences ne sont pas encore exigées. Si vous avez acheté une clé, vous pouvez l'enregistrer : elle démarrera à l'ouverture du mode licence."
+          variant="info"
+        />
+      )}
+
       {/* Statut */}
       <View style={s.card}>
         <View style={s.statutRow}>
@@ -135,6 +156,11 @@ export default function LicenceScreen() {
             )}
           </View>
         </View>
+        {enAttente && (
+          <AppText style={s.meta}>
+            Votre licence démarrera à l’ouverture du mode licence{effet ? ` (le ${effet})` : ''}.
+          </AppText>
+        )}
         {licence.dateFin && (
           <AppText style={s.meta}>
             {active ? 'Valable jusqu’au ' : 'Expirée depuis le '}
@@ -161,7 +187,7 @@ export default function LicenceScreen() {
           )}
           <AppText style={s.meta}>
             Contactez AnoventiX pour régler votre licence (Orange Money, MTN MoMo…). Vous recevrez
-            une clé à saisir ci-dessous.
+            un reçu par email avec une clé nominative, que vous seul pouvez activer ci-dessous.
           </AppText>
           {contact ? (
             <View style={s.contactRow}>

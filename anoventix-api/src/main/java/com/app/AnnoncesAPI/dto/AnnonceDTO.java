@@ -35,6 +35,9 @@ public class AnnonceDTO {
     private TypeAnnonce typeAnnonce;
     private TypeBien typeBien;
     private BigDecimal fraisHonoraire;
+    /** Location / bail : caution et avance en mois de loyer ; nuls si non demandées ou pour une vente. */
+    private Integer cautionMois;
+    private Integer avanceMois;
     private String documentsDisponibles;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;

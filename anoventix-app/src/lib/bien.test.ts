@@ -3,6 +3,7 @@ import {
   formatComposition,
   isBienBati,
   isLoyerMensuel,
+  libelleCautionAvance,
   prixLabel,
   surfaceLabel,
 } from './bien';
@@ -44,5 +45,17 @@ describe('règles par type de bien', () => {
       .toBe('4 pièces · 3 ch. · 2 sdb');
     expect(formatComposition({ typeBien: 'TERRAIN', nbPieces: 4 })).toBe('');
     expect(formatComposition({ typeBien: 'APPARTEMENT', nbPieces: 1 })).toBe('1 pièce');
+  });
+});
+
+describe('libelleCautionAvance (DEC-23)', () => {
+  it('affiche caution et avance d\'une location, sans champ vide', () => {
+    expect(libelleCautionAvance({ typeAnnonce: 'LOCATION', cautionMois: 2, avanceMois: 3 })).toBe('Caution 2 mois · Avance 3 mois');
+    expect(libelleCautionAvance({ typeAnnonce: 'BAIL', cautionMois: 2, avanceMois: null })).toBe('Caution 2 mois');
+    expect(libelleCautionAvance({ typeAnnonce: 'LOCATION', cautionMois: 0, avanceMois: 0 })).toBe('');
+  });
+
+  it('n\'affiche rien pour une vente', () => {
+    expect(libelleCautionAvance({ typeAnnonce: 'VENTE', cautionMois: 2, avanceMois: 3 })).toBe('');
   });
 });

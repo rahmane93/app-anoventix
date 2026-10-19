@@ -16,4 +16,7 @@ public class Localisation {
     private String quartier;
     private String typeCommune;
 
+    /** Entrée « Autre quartier » d'une commune : jamais proposée dans les listes (DEC-22, RG-05-18). */
+    private boolean technique;
+
 }

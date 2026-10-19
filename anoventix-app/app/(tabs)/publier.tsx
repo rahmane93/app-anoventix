@@ -104,6 +104,11 @@ export default function PublierScreen() {
     handlePrefectureChange,
     handleCommuneChange,
     handleQuartierChange,
+    quartierAbsent,
+    quartierSaisi,
+    setQuartierSaisi,
+    choisirQuartierAbsent,
+    chargementAutreQuartier,
     latitude,
     longitude,
     setLatitude,
@@ -115,6 +120,10 @@ export default function PublierScreen() {
     prix,
     setPrix,
     fraisHonoraire,
+    cautionMois,
+    setCautionMois,
+    avanceMois,
+    setAvanceMois,
     setFraisHonoraire,
     surfaceTotal,
     setSurfaceTotal,
@@ -751,7 +760,32 @@ export default function PublierScreen() {
                       onPress={() => handleQuartierChange(loc)}
                     />
                   ))}
+                  {/* Quartier absent de la liste (DEC-22) : publié sur la commune, ajouté ensuite par l'équipe. */}
+                  <Chip
+                    label={chargementAutreQuartier ? "Chargement…" : "Mon quartier n'est pas dans la liste"}
+                    selected={quartierAbsent}
+                    onPress={choisirQuartierAbsent}
+                  />
                 </View>
+                {quartierAbsent && (
+                  <>
+                    <Input
+                      label="Nom de votre quartier"
+                      placeholder="Ex : Kipé Centre"
+                      value={quartierSaisi}
+                      onChangeText={(v) => {
+                        clearFieldError("quartierSaisi");
+                        setQuartierSaisi(v.slice(0, 100));
+                      }}
+                      maxLength={100}
+                      error={fieldErrors.quartierSaisi}
+                    />
+                    <AppText style={s.gpsHint}>
+                      Votre annonce sera publiée sur la commune de {commune}. Nous ajouterons votre quartier à la liste et il
+                      s’affichera ensuite sur votre annonce.
+                    </AppText>
+                  </>
+                )}
                 {!!fieldErrors.localisationId && (
                   <AppText style={s.errorText}>
                     {fieldErrors.localisationId}
@@ -765,7 +799,7 @@ export default function PublierScreen() {
               <View style={s.locSummary}>
                 <Ionicons name="location" size={14} color={colors.primary} />
                 <AppText style={s.locSummaryText}>
-                  {quartier}, {commune}, {prefecture}
+                  {quartierAbsent ? `${commune}, ${prefecture}` : `${quartier}, ${commune}, ${prefecture}`}
                 </AppText>
               </View>
             ) : null}
@@ -908,6 +942,33 @@ export default function PublierScreen() {
               keyboardType="numeric"
               error={fieldErrors.fraisHonoraire}
             />
+            )}
+
+            {isLoyerMensuel(typeAnnonce) && (
+              <>
+                <Input
+                  label="Caution (mois de loyer)"
+                  placeholder="Optionnel, de 0 à 12"
+                  value={cautionMois}
+                  onChangeText={(v) => {
+                    clearFieldError("cautionMois");
+                    setCautionMois(v.replace(/[^0-9]/g, "").slice(0, 2));
+                  }}
+                  keyboardType="numeric"
+                  error={fieldErrors.cautionMois}
+                />
+                <Input
+                  label="Avance (mois de loyer)"
+                  placeholder="Optionnel, de 0 à 24"
+                  value={avanceMois}
+                  onChangeText={(v) => {
+                    clearFieldError("avanceMois");
+                    setAvanceMois(v.replace(/[^0-9]/g, "").slice(0, 2));
+                  }}
+                  keyboardType="numeric"
+                  error={fieldErrors.avanceMois}
+                />
+              </>
             )}
 
             <AppText style={s.subsectionTitle}>Caractéristiques</AppText>

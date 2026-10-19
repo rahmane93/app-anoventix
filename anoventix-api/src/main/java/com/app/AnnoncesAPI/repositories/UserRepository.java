@@ -34,6 +34,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     long countByDateSuppressionDefinitiveIsNull();
     Page<User> findByDateSuppressionDefinitiveIsNull(Pageable pageable);
     long countByEntrepriseIdAndStatut(UUID entrepriseId, StatutUtilisateur statut);
+    /** Appareils de notification et alertes de recherche d'un compte (anonymisation). */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value = "WITH a AS (DELETE FROM appareil_push WHERE user_id = :id) DELETE FROM alerte_recherche WHERE user_id = :id",
+           nativeQuery = true)
+    void supprimerNotificationsEtAlertes(@org.springframework.data.repository.query.Param("id") java.util.UUID id);
+
     long countByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite);
     Page<User> findByStatutPieceIdentite(StatutPieceIdentite statutPieceIdentite, Pageable pageable);
 

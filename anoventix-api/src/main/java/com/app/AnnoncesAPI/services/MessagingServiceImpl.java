@@ -38,12 +38,15 @@ public class MessagingServiceImpl implements MessagingService {
     private final MessageRepository messageRepository;
     private final AnnonceRepository annonceRepository;
     private final UserRepository userRepository;
+    private final PushService push;
 
     public MessagingServiceImpl(
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             AnnonceRepository annonceRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            PushService push) {
+        this.push = push;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.annonceRepository = annonceRepository;
@@ -139,7 +142,24 @@ public class MessagingServiceImpl implements MessagingService {
 
         logger.info("Message {} envoyé dans la conversation {} par {}",
                 saved.getId(), conversationId, currentUser.getEmail());
+        notifierDestinataire(conversation, currentUser);
         return toMessageDTO(saved, currentUser.getId());
+    }
+
+    /**
+     * Notification push au destinataire (RG-06-22) : prénom de l'expéditeur et titre de l'annonce, jamais le
+     * contenu du message. Coupée par l'interrupteur « Nouveaux messages » du profil.
+     */
+    private void notifierDestinataire(Conversation conversation, User expediteur) {
+        User destinataire = getOtherParticipant(conversation, expediteur.getId());
+        if (destinataire == null || !destinataire.isNotifMessages()
+                || destinataire.getStatut() != com.app.AnnoncesAPI.enums.StatutUtilisateur.ACTIF) {
+            return;
+        }
+        String prenom = expediteur.getPrenom() == null || expediteur.getPrenom().isBlank() ? "un utilisateur" : expediteur.getPrenom();
+        push.notifier(destinataire.getId(), "Nouveau message",
+                "Nouveau message de " + prenom + " à propos de « " + conversation.getAnnonce().getTitre() + " »",
+                java.util.Map.of("type", "message", "conversationId", conversation.getId()));
     }
 
     @Override

@@ -9,7 +9,6 @@ import { AdminPage, BlockGap, EmptyState, ErrorBanner, ItemBlock, LoadingState }
 import { useAuthStore } from '@/src/stores/auth.store';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';

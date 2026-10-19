@@ -31,7 +31,7 @@ export function useExploreAnnonces() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const loadFavoris = useFavorisStore((s) => s.loadFavoris);
   const { loadConversations } = useMessagerieStore(useShallow((s) => ({ loadConversations: s.loadConversations })));
-  const { q: initialQ } = useLocalSearchParams<{ q?: string }>();
+  const { q: initialQ, criteres: criteresRecus } = useLocalSearchParams<{ q?: string; criteres?: string }>();
 
   // ── Recherche texte ───────────────────────────────────────────────────────────
   const [inputValue, setInputValue] = useState(initialQ?.trim() ? initialQ : '');
@@ -60,6 +60,19 @@ export function useExploreAnnonces() {
   // ── Filtres ───────────────────────────────────────────────────────────────────
   const [filterVisible, setFilterVisible] = useState(false);
   const [filters, setFilters] = useState<AnnonceFilterParams>({});
+  // Ouverture depuis une alerte de recherche : ses critères deviennent les filtres de la liste (RG-04-21).
+  const [criteresAppliques, setCriteresAppliques] = useState<string | undefined>(undefined);
+  if (criteresRecus && criteresRecus !== criteresAppliques) {
+    setCriteresAppliques(criteresRecus);
+    try {
+      const { q: texte, ...reste } = JSON.parse(criteresRecus) as AnnonceFilterParams;
+      setFilters(Object.fromEntries(Object.entries(reste).filter(([, v]) => v != null && v !== '')) as AnnonceFilterParams);
+      setInputValue(texte ?? '');
+      setQuery(texte ?? '');
+    } catch {
+      // Paramètre illisible : la liste reste celle par défaut.
+    }
+  }
   const [filterDraft, setFilterDraft] = useState<AnnonceFilterParams>({});
 
   // ── Résultats (recherche + filtres) ───────────────────────────────────────────

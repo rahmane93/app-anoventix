@@ -1,10 +1,11 @@
+import { getAutreQuartier } from "@/src/api/localisation.api";
 import { toJpegUploads, type UploadFile } from "@/src/lib/images";
 import {
   addBienImmoMedias,
   deleteBienImmoMedia,
   getAnnonceById,
 } from "@/src/api/annonce.api";
-import { champsComposition, type ChampComposition } from "@/src/lib/bien";
+import { champsComposition, isLoyerMensuel, type ChampComposition } from "@/src/lib/bien";
 import { getRoleFlags } from "@/src/lib/roles";
 import { REGIONS_GUINEE, useAnnonceStore } from "@/src/stores/annonce.store";
 import { useAuthStore } from "@/src/stores/auth.store";
@@ -213,6 +214,10 @@ export function usePublierForm() {
   const [prefecture, setPrefecture] = useState("");
   const [commune, setCommune] = useState("");
   const [quartier, setQuartier] = useState("");
+  // Quartier absent de la liste (DEC-22) : l'annonce est publiée sur la commune, le nom saisi devient une demande d'ajout.
+  const [quartierAbsent, setQuartierAbsent] = useState(false);
+  const [quartierSaisi, setQuartierSaisi] = useState("");
+  const [chargementAutreQuartier, setChargementAutreQuartier] = useState(false);
   const [localisationId, setLocalisationId] = useState("");
   // Coordonnées GPS optionnelles (carte / position du téléphone).
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -223,6 +228,9 @@ export function usePublierForm() {
   const [description, setDescription] = useState("");
   const [prix, setPrix] = useState("");
   const [fraisHonoraire, setFraisHonoraire] = useState("");
+  // Location / bail : caution (0 à 12 mois) et avance (0 à 24 mois), facultatives (DEC-23).
+  const [cautionMois, setCautionMois] = useState("");
+  const [avanceMois, setAvanceMois] = useState("");
   const [surfaceTotal, setSurfaceTotal] = useState("");
   // Composition (biens bâtis uniquement) — chaînes de saisie.
   const [composition, setComposition] =
@@ -290,7 +298,7 @@ export function usePublierForm() {
   const brouillon = {
     typeAnnonce, typeBien, typeUsage,
     region, prefecture, commune, quartier, localisationId, latitude, longitude, complementAdresse,
-    titre, description, prix, fraisHonoraire, surfaceTotal, composition, documents,
+    titre, description, prix, fraisHonoraire, cautionMois, avanceMois, surfaceTotal, composition, documents,
   };
   const brouillonJson = JSON.stringify(brouillon);
   const aDuContenu = !!(typeAnnonce || region || titre || description || prix);
@@ -311,6 +319,8 @@ export function usePublierForm() {
     setDescription(d.description);
     setPrix(d.prix);
     setFraisHonoraire(d.fraisHonoraire);
+    setCautionMois(d.cautionMois ?? "");
+    setAvanceMois(d.avanceMois ?? "");
     setSurfaceTotal(d.surfaceTotal);
     setComposition({ ...EMPTY_COMPOSITION, ...d.composition });
     setDocuments(d.documents);
@@ -403,13 +413,33 @@ export function usePublierForm() {
     clearFieldErrors();
     setCommune(c);
     setQuartier("");
+    setQuartierAbsent(false);
+    setQuartierSaisi("");
     setLocalisationId("");
   };
 
   const handleQuartierChange = (loc: Localisation) => {
     clearFieldErrors();
+    setQuartierAbsent(false);
+    setQuartierSaisi("");
     setQuartier(loc.quartier);
     setLocalisationId(loc.id);
+  };
+
+  /** « Mon quartier n'est pas dans la liste » : rattache l'annonce à l'entrée « Autre quartier » de la commune. */
+  const choisirQuartierAbsent = async () => {
+    clearFieldErrors();
+    setChargementAutreQuartier(true);
+    try {
+      const technique = await getAutreQuartier(region, prefecture, commune);
+      setQuartier("");
+      setQuartierAbsent(true);
+      setLocalisationId(technique.id);
+    } catch (err) {
+      setFieldErrors({ localisationId: getErrorMessage(err, "Impossible de continuer sans quartier. Réessayez.") });
+    } finally {
+      setChargementAutreQuartier(false);
+    }
   };
 
   // ── Pré-remplissage en mode édition ─
@@ -439,6 +469,8 @@ export function usePublierForm() {
             ? formatNumericInput(String(a.fraisHonoraire))
             : "",
         );
+        setCautionMois(a.cautionMois != null ? String(a.cautionMois) : "");
+        setAvanceMois(a.avanceMois != null ? String(a.avanceMois) : "");
         setSurfaceTotal(a.surfaceTotal != null ? String(a.surfaceTotal) : "");
         setComposition({
           nbPieces: a.nbPieces != null ? String(a.nbPieces) : "",
@@ -460,6 +492,7 @@ export function usePublierForm() {
           setPrefecture(a.localisation.prefecture ?? "");
           setCommune(a.localisation.commune ?? "");
           setQuartier(a.localisation.quartier ?? "");
+          setQuartierAbsent(Boolean(a.localisation.technique));
         }
         // Le détail d'annonce embarque la localisation mais pas toujours un
         // `localisationId` racine : on retombe sur l'id du quartier embarqué
@@ -667,6 +700,10 @@ export function usePublierForm() {
       if (!commune) nextErrors.commune = "Veuillez sélectionner une commune.";
       if (!localisationId)
         nextErrors.localisationId = "Le quartier est obligatoire";
+      if (quartierAbsent && !isEditMode && !quartierSaisi.trim())
+        nextErrors.quartierSaisi = "Indiquez le nom de votre quartier";
+      if (quartierSaisi.length > 100)
+        nextErrors.quartierSaisi = "Le nom du quartier ne peut pas dépasser 100 caractères";
     }
 
     if (stepIndex === STEP.DETAILS) {
@@ -687,6 +724,17 @@ export function usePublierForm() {
       if (prixNumber === null) nextErrors.prix = "Le prix est obligatoire";
       else if (prixNumber <= 0)
         nextErrors.prix = "Le prix doit être supérieur à 0";
+
+      if (isLoyerMensuel(typeAnnonce)) {
+        const caution = cautionMois.trim() === "" ? null : Number(cautionMois);
+        if (caution !== null && (!Number.isInteger(caution) || caution < 0 || caution > 12)) {
+          nextErrors.cautionMois = "La caution va de 0 à 12 mois";
+        }
+        const avance = avanceMois.trim() === "" ? null : Number(avanceMois);
+        if (avance !== null && (!Number.isInteger(avance) || avance < 0 || avance > 24)) {
+          nextErrors.avanceMois = "L'avance va de 0 à 24 mois";
+        }
+      }
 
       const fraisNumber = parseOptionalNumber(fraisHonoraire);
       if (
@@ -779,9 +827,13 @@ export function usePublierForm() {
         typeAnnonce: typeAnnonce as TypeAnnonce,
         typeBien: typeBien as TypeBien,
         localisationId,
+        quartierSaisi: quartierAbsent && quartierSaisi.trim() ? quartierSaisi.trim() : undefined,
         typeUsage: typeUsage || undefined,
         documentsDisponibles: documents.trim() || undefined,
         fraisHonoraire: fraisHonoraire ? (fraisNumber ?? undefined) : undefined,
+        // Sans objet pour une vente : l'API les ignore.
+        cautionMois: isLoyerMensuel(typeAnnonce) && cautionMois.trim() !== "" ? Number(cautionMois) : undefined,
+        avanceMois: isLoyerMensuel(typeAnnonce) && avanceMois.trim() !== "" ? Number(avanceMois) : undefined,
         surfaceTotal: surfaceTotal ? Number(surfaceTotal) : undefined,
         // Seuls les champs pertinents pour le type de bien sont envoyés
         // (rien pour un terrain ou un domaine vendu/loué en l'état).
@@ -885,6 +937,11 @@ export function usePublierForm() {
     handlePrefectureChange,
     handleCommuneChange,
     handleQuartierChange,
+    quartierAbsent,
+    quartierSaisi,
+    setQuartierSaisi,
+    choisirQuartierAbsent,
+    chargementAutreQuartier,
     latitude,
     longitude,
     setLatitude,
@@ -897,6 +954,10 @@ export function usePublierForm() {
     prix,
     setPrix,
     fraisHonoraire,
+    cautionMois,
+    setCautionMois,
+    avanceMois,
+    setAvanceMois,
     setFraisHonoraire,
     surfaceTotal,
     setSurfaceTotal,

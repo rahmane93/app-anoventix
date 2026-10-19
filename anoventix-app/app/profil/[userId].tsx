@@ -2,13 +2,12 @@ import { annonceHref } from '@/src/lib/annonce-url';
 import { goBackOr } from '@/src/lib/navigation';
 import { webColumnStyle } from '@/src/lib/responsive';
 import { LIST_PERF_PROPS } from '@/src/constants/list';
-import { buildMediaUrl , filterAnnonces } from '@/src/api/annonce.api';
+import { buildMediaUrl } from '@/src/api/annonce.api';
 
-import { getUserById } from '@/src/api/user.api';
+import { getProfilPublic, type ProfilPublic } from '@/src/api/user.api';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { BienImmo } from '@/src/types/annonce.types';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS } from '@/src/types/annonce.types';
-import type { UserProfile } from '@/src/types/user.types';
 import { formatPrix } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -60,7 +59,7 @@ function AnnonceItem({ item }: { item: BienImmo }) {
 export default function ProfilPublicScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
-  const [profil, setProfil] = useState<UserProfile | null>(null);
+  const [profil, setProfil] = useState<ProfilPublic | null>(null);
   const [annonces, setAnnonces] = useState<BienImmo[]>([]);
   // Chargement dérivé de l'id déjà chargé (pas de setState synchrone dans l'effet).
   const [chargePour, setChargePour] = useState<string | null>(null);
@@ -69,16 +68,15 @@ export default function ProfilPublicScreen() {
 
   useEffect(() => {
     if (!userId) return;
-    Promise.all([
-      getUserById(userId),
-      filterAnnonces({ userId, size: 50, sort: 'dateCreation', direction: 'desc' }),
-    ])
-      .then(([p, page]) => {
+    getProfilPublic(userId)
+      .then((p) => {
         setError(null);
         setProfil(p);
-        setAnnonces(page.data);
+        setAnnonces(p.annonces.data);
+        // Professionnel ou agent : la page de l'agence remplace le profil (RG-02-39).
+        if (p.entrepriseId) router.replace({ pathname: '/entreprise-publique/[entrepriseId]', params: { entrepriseId: p.entrepriseId } });
       })
-      .catch(() => setError('Impossible de charger ce profil.'))
+      .catch(() => setError('Ce profil n’est pas disponible.'))
       .finally(() => setChargePour(userId));
   }, [userId]);
 
@@ -108,7 +106,7 @@ export default function ProfilPublicScreen() {
     );
   }
 
-  const displayName = [profil.prenom, profil.nom].filter(Boolean).join(' ') || profil.email;
+  const displayName = [profil.prenom, profil.initialeNom].filter(Boolean).join(' ') || 'Utilisateur';
   const avatarUri = profil.photoProfil ? buildMediaUrl(profil.photoProfil) : null;
   const initiales = displayName
     .split(' ')
@@ -116,10 +114,9 @@ export default function ProfilPublicScreen() {
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('');
 
-  const memberSince = new Date(profil.createdAt).toLocaleDateString('fr-FR', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const memberSince = profil.membreDepuis
+    ? new Date(profil.membreDepuis).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    : null;
 
   return (
     <FlatList
@@ -153,13 +150,17 @@ export default function ProfilPublicScreen() {
                 <Ionicons name="person-outline" size={12} color={colors.primary} />
                 <AppText style={s.badgeText}>Particulier</AppText>
               </View>
-              <AppText style={s.dot}>·</AppText>
-              <AppText style={s.since}>Membre depuis {memberSince}</AppText>
+              {memberSince ? (
+                <>
+                  <AppText style={s.dot}>·</AppText>
+                  <AppText style={s.since}>Membre depuis {memberSince}</AppText>
+                </>
+              ) : null}
             </View>
-            {profil.telephone ? (
-              <View style={s.phoneRow}>
-                <Ionicons name="call-outline" size={14} color={colors.textMuted} />
-                <AppText style={s.phone}>{profil.telephone}</AppText>
+            {profil.identiteVerifiee ? (
+              <View style={s.phoneRow} accessibilityLabel="Identité vérifiée">
+                <Ionicons name="shield-checkmark" size={14} color={colors.successText} />
+                <AppText style={[s.phone, { color: colors.successText, fontWeight: '700' }]}>Identité vérifiée</AppText>
               </View>
             ) : null}
           </View>

@@ -38,6 +38,13 @@ export const getAllLocalisations = async (): Promise<Localisation[]> =>
 export const getLocalisationsByRegion = async (region: string): Promise<Localisation[]> =>
   fetchAllPages(`/api/localisations/region/${encodeURIComponent(region)}`);
 
+/**
+ * Entrée « Autre quartier » d'une commune, à utiliser comme localisation quand le quartier de l'annonceur
+ * n'est pas dans la liste (avec `quartierSaisi`).
+ */
+export const getAutreQuartier = async (region: string, prefecture: string, commune: string): Promise<Localisation> =>
+  (await apiClient.get<Localisation>('/api/localisations/autre-quartier', { params: { region, prefecture, commune } })).data;
+
 // ─── Admin CRUD ───────────────────────────────────────────────────────────────
 
 export type LocalisationPayload = Omit<Localisation, 'id'>;

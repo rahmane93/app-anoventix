@@ -28,7 +28,11 @@ import com.app.AnnoncesAPI.enums.TypeLicence;
 import com.app.AnnoncesAPI.enums.TypeRole;
 import com.app.AnnoncesAPI.exceptions.LicenceRequiseException;
 import com.app.AnnoncesAPI.payload.response.LicenceResponse;
+import com.app.AnnoncesAPI.enums.MoyenPaiement;
+import com.app.AnnoncesAPI.enums.StatutUtilisateur;
+import com.app.AnnoncesAPI.payload.request.VenteLicenceRequest;
 import com.app.AnnoncesAPI.repositories.BienImmoRepository;
+import com.app.AnnoncesAPI.repositories.EntrepriseRepository;
 import com.app.AnnoncesAPI.repositories.LicenceRepository;
 import com.app.AnnoncesAPI.repositories.ParametrePlateformeRepository;
 import com.app.AnnoncesAPI.repositories.UserRepository;
@@ -40,13 +44,16 @@ class LicenceServiceImplTest {
     private final ParametrePlateformeRepository paramRepo = mock(ParametrePlateformeRepository.class);
     private final BienImmoRepository bienRepo = mock(BienImmoRepository.class);
     private final UserRepository userRepo = mock(UserRepository.class);
+    private final EmailNotificationService emails = mock(EmailNotificationService.class);
+    private final AuditService audit = mock(AuditService.class);
     private LicenceServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new LicenceServiceImpl(licenceRepo, paramRepo, bienRepo, userRepo);
+        service = new LicenceServiceImpl(licenceRepo, paramRepo, bienRepo, userRepo,
+                mock(EntrepriseRepository.class), emails, audit);
         ReflectionTestUtils.setField(service, "annoncesGratuites", 5);
-        when(licenceRepo.findFirstByOwnerIdOrderByDateFinDesc(any())).thenReturn(Optional.empty());
+        when(licenceRepo.findFirstByOwnerIdAndDateFinIsNotNullOrderByDateFinDesc(any())).thenReturn(Optional.empty());
     }
 
     private static User compte(TypeRole role) {
@@ -70,7 +77,7 @@ class LicenceServiceImplTest {
         l.setType(TypeLicence.PARTICULIER);
         l.setDateDebut(fin.minusYears(1).plusDays(1));
         l.setDateFin(fin);
-        when(licenceRepo.findFirstByOwnerIdOrderByDateFinDesc(owner.getId())).thenReturn(Optional.of(l));
+        when(licenceRepo.findFirstByOwnerIdAndDateFinIsNotNullOrderByDateFinDesc(owner.getId())).thenReturn(Optional.of(l));
     }
 
     private Licence cleLibre(String cle, TypeLicence type) {
@@ -226,13 +233,100 @@ class LicenceServiceImplTest {
 
     // ─── Activation ───────────────────────────────────────────────────────────
 
+    /** Mode activé, mais la date d'effet est dans le futur : préavis de 30 jours (DEC-18). */
+    private void modeEnPreavis(LocalDate effet) {
+        modeActif(true);
+        when(paramRepo.findById(LicenceServiceImpl.PARAM_DATE_EFFET))
+                .thenReturn(Optional.of(new ParametrePlateforme(LicenceServiceImpl.PARAM_DATE_EFFET, effet.toString())));
+    }
+
     @Test
-    void activation_refuseeTantQueModeCoupe() {
+    void activation_modeCoupe_cleEnAttenteDeDemarrage() {
         modeActif(false);
         User u = compte(TypeRole.PARTICULIER);
+        when(userRepo.findById(u.getId())).thenReturn(Optional.of(u));
+        Licence l = cleLibre("ANX-AAAA-BBBB-CCCC", TypeLicence.PARTICULIER);
 
-        assertThrows(IllegalStateException.class, () -> service.activer(u.getId(), "ANX-AAAA-BBBB-CCCC"));
+        service.activer(u.getId(), "ANX-AAAA-BBBB-CCCC");
+
+        assertEquals(u, l.getOwner());
+        assertEquals(null, l.getDateDebut());
+        assertEquals(null, l.getDateFin());
+        verify(licenceRepo).save(l);
+    }
+
+    @Test
+    void activation_pendantLePreavis_cleEnAttenteEtPublicationLibre() {
+        modeEnPreavis(LocalDate.now().plusDays(10));
+        User u = compte(TypeRole.PARTICULIER);
+        when(userRepo.findById(u.getId())).thenReturn(Optional.of(u));
+        when(bienRepo.countByOwnerIdAndActifTrue(u.getId())).thenReturn(50L);
+        Licence l = cleLibre("ANX-AAAA-BBBB-CCCC", TypeLicence.PARTICULIER);
+
+        service.activer(u.getId(), "ANX-AAAA-BBBB-CCCC");
+
+        assertEquals(null, l.getDateFin());
+        // Préavis : aucune limite avant la date d'effet, aucun blocage.
+        assertDoesNotThrow(() -> service.verifierPublication(u));
+        assertFalse(service.estBloque(u));
+    }
+
+    @Test
+    void lesClesEnAttenteDemarrentLeJourDeLEffetEtSEnchainent() {
+        modeEnPreavis(LocalDate.now());
+        User u = compte(TypeRole.PARTICULIER);
+        Licence premiere = new Licence();
+        premiere.setOwner(u);
+        premiere.setType(TypeLicence.PARTICULIER);
+        Licence seconde = new Licence();
+        seconde.setOwner(u);
+        seconde.setType(TypeLicence.PARTICULIER);
+        when(licenceRepo.findByOwnerIsNotNullAndDateFinIsNullOrderByDateActivationAsc())
+                .thenReturn(java.util.List.of(premiere, seconde));
+
+        assertEquals(2, service.demarrerLicencesEnAttente());
+
+        assertEquals(LocalDate.now(), premiere.getDateDebut());
+        assertEquals(LocalDate.now().plusYears(1).minusDays(1), premiere.getDateFin());
+        assertEquals(premiere.getDateFin().plusDays(1), seconde.getDateDebut());
+    }
+
+    @Test
+    void lesClesEnAttenteNeDemarrentPasAvantLaDateDEffet() {
+        modeEnPreavis(LocalDate.now().plusDays(3));
+        Licence l = new Licence();
+        l.setOwner(compte(TypeRole.PARTICULIER));
+        when(licenceRepo.findByOwnerIsNotNullAndDateFinIsNullOrderByDateActivationAsc()).thenReturn(java.util.List.of(l));
+
+        assertEquals(0, service.demarrerLicencesEnAttente());
+        assertEquals(null, l.getDateFin());
+    }
+
+    @Test
+    void activation_cleNominative_refuseeAUnAutreCompte() {
+        modeActif(true);
+        User acheteur = compte(TypeRole.PARTICULIER);
+        User autre = compte(TypeRole.PARTICULIER);
+        when(userRepo.findById(autre.getId())).thenReturn(Optional.of(autre));
+        cleLibre("ANX-AAAA-BBBB-CCCC", TypeLicence.PARTICULIER).setAcheteur(acheteur);
+
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> service.activer(autre.getId(), "ANX-AAAA-BBBB-CCCC"));
+        assertEquals("Cette clé est réservée à un autre compte.", e.getMessage());
         verify(licenceRepo, never()).save(any());
+    }
+
+    @Test
+    void activation_cleNominative_accepteePourLAcheteur() {
+        modeActif(true);
+        User acheteur = compte(TypeRole.PARTICULIER);
+        when(userRepo.findById(acheteur.getId())).thenReturn(Optional.of(acheteur));
+        Licence l = cleLibre("ANX-AAAA-BBBB-CCCC", TypeLicence.PARTICULIER);
+        l.setAcheteur(acheteur);
+
+        service.activer(acheteur.getId(), "ANX-AAAA-BBBB-CCCC");
+
+        assertEquals(acheteur, l.getOwner());
     }
 
     @Test
@@ -305,12 +399,97 @@ class LicenceServiceImplTest {
         assertTrue(r.isPartage());
     }
 
+    private VenteLicenceRequest vente(String acheteur, MoyenPaiement moyen, String reference) {
+        VenteLicenceRequest v = new VenteLicenceRequest();
+        v.setAcheteur(acheteur);
+        v.setMontant(150_000L);
+        v.setMoyenPaiement(moyen);
+        v.setReferencePaiement(reference);
+        return v;
+    }
+
+    private User acheteurActif(TypeRole role) {
+        User u = compte(role);
+        u.setStatut(StatutUtilisateur.ACTIF);
+        when(userRepo.findByEmail(u.getEmail())).thenReturn(Optional.of(u));
+        return u;
+    }
+
     @Test
-    void cleGeneree_auBonFormat() {
+    void vente_cleNominativeAuBonFormat_traceEtRecu() {
         when(licenceRepo.findByCle(any())).thenReturn(Optional.empty());
+        when(licenceRepo.save(any(Licence.class))).thenAnswer(i -> i.getArgument(0));
+        User pro = acheteurActif(TypeRole.PROFESSIONNEL);
 
-        String cle = service.genererCle(TypeLicence.PROFESSIONNEL);
+        var reponse = service.vendre("admin@anoventix.test", vente(pro.getEmail(), MoyenPaiement.ORANGE_MONEY, "OM-123"));
 
-        assertTrue(cle.matches("ANX-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}"), cle);
+        assertTrue(reponse.getCle().matches("ANX-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}"), reponse.getCle());
+        // Le type découle du rôle de l'acheteur ; la vente est tracée.
+        assertEquals(TypeLicence.PROFESSIONNEL, reponse.getType());
+        assertEquals(pro.getEmail(), reponse.getAcheteurEmail());
+        assertEquals("admin@anoventix.test", reponse.getGenerePar());
+        assertEquals(150_000L, reponse.getMontant());
+        assertEquals("OM-123", reponse.getReferencePaiement());
+        // Reçu : la clé est un secret.
+        verify(emails).notifierSensible(org.mockito.ArgumentMatchers.eq(pro), any(), any(),
+                org.mockito.ArgumentMatchers.contains(reponse.getCle()));
+    }
+
+    @Test
+    void vente_referenceObligatoireSaufEspeces() {
+        when(licenceRepo.findByCle(any())).thenReturn(Optional.empty());
+        when(licenceRepo.save(any(Licence.class))).thenAnswer(i -> i.getArgument(0));
+        User u = acheteurActif(TypeRole.PARTICULIER);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.vendre("admin", vente(u.getEmail(), MoyenPaiement.MTN_MOMO, "  ")));
+        assertDoesNotThrow(() -> service.vendre("admin", vente(u.getEmail(), MoyenPaiement.ESPECES, null)));
+    }
+
+    @Test
+    void vente_refuseePourUnCompteQuiNePeutPasAcheter() {
+        User modo = acheteurActif(TypeRole.MODERATEUR);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.vendre("admin", vente(modo.getEmail(), MoyenPaiement.ESPECES, null)));
+    }
+
+    @Test
+    void affecterAcheteur_surUneCleAuPorteurSeulement() {
+        User u = acheteurActif(TypeRole.PARTICULIER);
+        Licence libre = new Licence();
+        libre.setType(TypeLicence.PARTICULIER);
+        libre.setCle("ANX-AAAA-BBBB-CCCC");
+        when(licenceRepo.findById(1L)).thenReturn(Optional.of(libre));
+        when(licenceRepo.save(any(Licence.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.affecterAcheteur("admin", 1L, vente(u.getEmail(), MoyenPaiement.ESPECES, null));
+
+        assertEquals(u, libre.getAcheteur());
+        assertThrows(IllegalStateException.class,
+                () -> service.affecterAcheteur("admin", 1L, vente(u.getEmail(), MoyenPaiement.ESPECES, null)));
+    }
+
+    @Test
+    void activerLeModeFixeUnPreavisDe30JoursEtPrevientLesComptesAuDela() {
+        when(paramRepo.findById(LicenceServiceImpl.PARAM_MODE_ACTIF)).thenReturn(Optional.empty());
+        User u = acheteurActif(TypeRole.PARTICULIER);
+        when(bienRepo.proprietairesAuDela(5L)).thenReturn(java.util.List.<Object[]>of(new Object[] { u.getId(), 7L }));
+        when(userRepo.findById(u.getId())).thenReturn(Optional.of(u));
+
+        service.setModeActif(true);
+
+        verify(paramRepo).save(new ParametrePlateforme(LicenceServiceImpl.PARAM_DATE_EFFET,
+                LocalDate.now().plusDays(30).toString()));
+        verify(emails).notifier(org.mockito.ArgumentMatchers.eq(u), any(),  any(),
+                org.mockito.ArgumentMatchers.contains(LocalDate.now().plusDays(30)
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+    }
+
+    @Test
+    void desactiverLeModeEstImmediatEtEffaceLaDateDEffet() {
+        service.setModeActif(false);
+
+        verify(paramRepo).deleteById(LicenceServiceImpl.PARAM_DATE_EFFET);
     }
 }

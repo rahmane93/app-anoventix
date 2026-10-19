@@ -11,6 +11,7 @@ import {
     PIECES,
 } from '@/src/features/profile/constants';
 import { MenuRow, PieceStatusBadge, secStyles } from '@/src/features/profile/MenuRow';
+import { NotificationsCard } from '@/src/features/profile/NotificationsCard';
 import { SelfieCapture } from '@/src/features/profile/SelfieCapture';
 import { OwnerAnnonceMiniCard } from '@/src/features/profile/OwnerAnnonceMiniCard';
 import { SecurityCard } from '@/src/features/profile/SecurityCard';
@@ -322,13 +323,18 @@ export default function ProfileScreen() {
             onPress={() => router.push('/mes-signalements')}
           />
         )}
-        {/* Visible seulement une fois le mode licence activé par l'administrateur. */}
-        {licence?.modeActif && (isParticulier || isProfessionnel) && (
+        <MenuRow
+          iconName="notifications-outline"
+          label="Mes alertes de recherche"
+          onPress={() => router.push('/alertes')}
+        />
+        {/* Toujours proposée : une clé achetée peut être enregistrée avant l'ouverture du mode (DEC-28). */}
+        {(isParticulier || isProfessionnel) && (
           <MenuRow
             iconName="key-outline"
             label="Ma licence"
             onPress={() => router.push('/licence')}
-            trailing={
+            trailing={licence ? (
               <AppText
                 style={[
                   styles.menuTrailingText,
@@ -341,7 +347,7 @@ export default function ProfileScreen() {
               >
                 {licence.bloque ? 'Compte limité' : STATUT_LICENCE_LABELS[licence.statut]}
               </AppText>
-            }
+            ) : undefined}
           />
         )}
       </View>
@@ -484,6 +490,10 @@ export default function ProfileScreen() {
           )}
         </>
       )}
+
+      {/* ── Notifications push ───────────────────────────────────────── */}
+      <AppText style={secStyles.sectionLabel}>Notifications</AppText>
+      <NotificationsCard />
 
       {/* ── Aide & informations ───────────────────────────────────────── */}
       <AppText style={secStyles.sectionLabel}>Aide et informations</AppText>

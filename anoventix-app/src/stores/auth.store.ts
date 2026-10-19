@@ -4,6 +4,7 @@ import { getRefreshToken, getToken, removeRefreshToken, removeToken, saveRefresh
 
 import * as userApi from '../api/user.api';
 import { effacerBrouillons } from '../features/publier/brouillon';
+import { desenregistrer } from '../lib/push';
 import { useUserStore } from './user.store';
 import type {
     AuthUser,
@@ -186,6 +187,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
    * Déconnexion : supprime le token et réinitialise l'état.
    */
   logout: async () => {
+    await desenregistrer();
     await authApi.logout(await getRefreshToken());
     await removeToken();
     await removeRefreshToken();

@@ -1,6 +1,7 @@
 import { AlertBanner } from '@/src/components/ui/alert-banner';
 import { Button } from '@/src/components/ui/button';
 import * as messagerieApi from '@/src/api/messagerie.api';
+import { definirConversationOuverte } from '@/src/lib/push';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { useMessagerieStore } from '@/src/stores/messagerie.store';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
@@ -169,6 +170,14 @@ export default function ConversationScreen() {
 
   // Polling uniquement quand l'écran a le focus et que l'app est au premier plan :
   // les onglets restent montés, un simple useEffect continuerait en arrière-plan.
+  // Conversation à l'écran : ses notifications ne s'affichent pas par-dessus (RG-06-22).
+  useFocusEffect(
+    useCallback(() => {
+      definirConversationOuverte(conversationId ?? null);
+      return () => definirConversationOuverte(null);
+    }, [conversationId]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (!conversationId) return;

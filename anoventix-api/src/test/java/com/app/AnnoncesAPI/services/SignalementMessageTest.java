@@ -36,7 +36,7 @@ class SignalementMessageTest {
     private final MessageRepository messageRepo = mock(MessageRepository.class);
     private final UserRepository userRepo = mock(UserRepository.class);
     private final MessagingServiceImpl service = new MessagingServiceImpl(
-            conversationRepo, messageRepo, mock(AnnonceRepository.class), userRepo);
+            conversationRepo, messageRepo, mock(AnnonceRepository.class), userRepo, mock(PushService.class));
 
     private User signaleur;
     private User expediteur;

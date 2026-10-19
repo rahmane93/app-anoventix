@@ -211,6 +211,8 @@ public class CompteSuppressionService {
     /** Efface irréversiblement les données personnelles du compte. */
     void anonymiser(User user) {
         sessionService.fermerToutesLesSessions(user.getId());
+        // Appareils de notification et alertes de recherche : supprimés avec le compte (RG-06-23, RG-04-22).
+        userRepository.supprimerNotificationsEtAlertes(user.getId());
         // Fichiers d'abord : une fois les chemins effacés en base, ils seraient introuvables.
         if (user.getPhotoProfil() != null) {
             mediaService.deleteMediaFromDisk(user.getPhotoProfil());

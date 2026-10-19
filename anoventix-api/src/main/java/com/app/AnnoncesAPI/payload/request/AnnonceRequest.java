@@ -50,6 +50,16 @@ public class AnnonceRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Les frais honoraire doit être supérieur ou egal à 0")
     private BigDecimal fraisHonoraire;
 
+    /** Location / bail seulement : caution en mois de loyer (0 à 12). Ignorée pour une vente. */
+    @jakarta.validation.constraints.Min(value = 0, message = "La caution ne peut pas être négative")
+    @jakarta.validation.constraints.Max(value = 12, message = "La caution ne peut pas dépasser 12 mois")
+    private Integer cautionMois;
+
+    /** Location / bail seulement : avance en mois de loyer (0 à 24). Ignorée pour une vente. */
+    @jakarta.validation.constraints.Min(value = 0, message = "L'avance ne peut pas être négative")
+    @jakarta.validation.constraints.Max(value = 24, message = "L'avance ne peut pas dépasser 24 mois")
+    private Integer avanceMois;
+
     @NotNull(message = "Le type de bien est obligatoire")
     private TypeBien typeBien;
 

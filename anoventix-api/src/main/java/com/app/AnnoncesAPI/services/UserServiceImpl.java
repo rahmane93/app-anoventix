@@ -469,6 +469,8 @@ public class UserServiceImpl implements UserService {
                 .statutPieceIdentite(user.getStatutPieceIdentite())
                 .motifRejetPieceIdentite(user.getMotifRejetPieceIdentite())
                 .selfieFourni(user.getSelfieUrl() != null && !user.getSelfieUrl().isBlank())
+                .notifMessages(user.isNotifMessages())
+                .notifAlertes(user.isNotifAlertes())
                 .dateEnvoiVerification(user.getDateEnvoiVerification())
                 .dateDecisionVerification(user.getDateDecisionVerification())
                 .createdAt(user.getCreatedAt())

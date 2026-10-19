@@ -49,10 +49,13 @@ export const createBienImmo = async (
   formData.append('typeAnnonce', req.typeAnnonce);
   formData.append('typeBien', req.typeBien);
   formData.append('localisationId', req.localisationId);
+  if (req.quartierSaisi) formData.append('quartierSaisi', req.quartierSaisi);
 
   if (req.typeUsage) formData.append('typeUsage', req.typeUsage);
   if (req.documentsDisponibles) formData.append('documentsDisponibles', req.documentsDisponibles);
   if (req.fraisHonoraire != null) formData.append('fraisHonoraire', String(req.fraisHonoraire));
+  if (req.cautionMois != null) formData.append('cautionMois', String(req.cautionMois));
+  if (req.avanceMois != null) formData.append('avanceMois', String(req.avanceMois));
   if (req.surfaceTotal != null) formData.append('surfaceTotal', String(req.surfaceTotal));
   if (req.nbPieces != null) formData.append('nbPieces', String(req.nbPieces));
   if (req.nbChambres != null) formData.append('nbChambres', String(req.nbChambres));

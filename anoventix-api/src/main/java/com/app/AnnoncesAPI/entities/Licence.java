@@ -50,6 +50,33 @@ public class Licence {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    /** Acheteur désigné à la vente : seul compte autorisé à activer la clé (DEC-17). Nul = clé au porteur. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "acheteur_id")
+    private User acheteur;
+
+    /** Montant payé en GNF. */
+    private Long montant;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moyen_paiement", length = 20)
+    private com.app.AnnoncesAPI.enums.MoyenPaiement moyenPaiement;
+
+    @Column(name = "reference_paiement", length = 100)
+    private String referencePaiement;
+
+    /** Administrateur qui a généré la clé. */
+    @Column(name = "genere_par", length = 100)
+    private String generePar;
+
+    @Column(name = "date_vente")
+    private LocalDateTime dateVente;
+
+    /** Ordre d'activation : enchaîne les clés « en attente de démarrage » (DEC-28). */
+    @Column(name = "date_activation")
+    private LocalDateTime dateActivation;
+
+    /** Nul tant que la licence est « en attente de démarrage » (activée avant l'ouverture du mode, DEC-28). */
     @Column(name = "date_debut")
     private LocalDate dateDebut;
 

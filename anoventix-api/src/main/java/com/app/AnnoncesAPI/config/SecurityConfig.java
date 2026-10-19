@@ -132,7 +132,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/activate").permitAll()
                     // Pages web des annonces avec aperçu réseaux sociaux (ShareController).
+                    .requestMatchers(HttpMethod.GET, "/api/users/*/profil-public").permitAll()
                     .requestMatchers(HttpMethod.GET, "/share/annonce/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/share/agence/*", "/share/sitemap.xml", "/share/robots.txt").permitAll()
                     // P0.3 — ORDRE INTENTIONNEL : denyAll sur /uploads/private/** DOIT précéder le
                     // permitAll sur /uploads/**. Spring Security évalue ces règles dans l'ordre de
                     // déclaration ; inverser ces deux lignes exposerait les pièces d'identité.

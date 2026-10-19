@@ -99,6 +99,13 @@ public class User {
     @Column(length = 500)
     private String selfieUrl;
 
+    /** Notifications push : nouveaux messages et alertes de recherche (RG-11-09). */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean notifMessages = true;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean notifAlertes = true;
+
     /** Relance d'activation (E19) envoyée à J+5 : une seule par compte (DEC-06). */
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean relanceActivationEnvoyee = false;
