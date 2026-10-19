@@ -1,6 +1,7 @@
 import { LIST_PERF_PROPS } from '@/src/constants/list';
 import AppText from '@/src/components/AppText';
 import AppTextInput from '@/src/components/AppTextInput';
+import { getErrorMessage } from '@/src/utils/format';
 import { Sheet } from '@/src/components/ui/sheet';
 import { useAdminStore } from '@/src/stores/admin.store';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
@@ -19,7 +20,10 @@ import {
 import { IconButton } from '@/src/components/ui/icon-button';
 import type { Localisation } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { Redirect, useFocusEffect } from 'expo-router';
+import { getRoleFlags } from '@/src/lib/roles';
+import { useAuthStore } from '@/src/stores/auth.store';
+import { useUserStore } from '@/src/stores/user.store';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
     FlatList,
@@ -155,8 +159,17 @@ function PickerField({
 
 // ─── Formulaire ajout/modification ───────────────────────────────────────────
 
-type FormState = { region: string; prefecture: string; commune: string; quartier: string; typeCommune: TypeCommune | '' };
-const EMPTY: FormState = { region: '', prefecture: '', commune: '', quartier: '', typeCommune: '' };
+type FormState = {
+  region: string; prefecture: string; commune: string; quartier: string; typeCommune: TypeCommune | '';
+  /** Point de référence (facultatif), saisi en degrés décimaux. */
+  latitude: string; longitude: string;
+};
+const EMPTY: FormState = { region: '', prefecture: '', commune: '', quartier: '', typeCommune: '', latitude: '', longitude: '' };
+
+const lireCoordonnee = (v: string): number | null => {
+  const n = Number(v.replace(',', '.').trim());
+  return v.trim() === '' || Number.isNaN(n) ? null : n;
+};
 
 function LocalisationForm({
   visible,
@@ -174,7 +187,12 @@ function LocalisationForm({
   // initial vient directement de la localisation éditée, sans effet de remise à zéro.
   const [form, setForm] = useState<FormState>(() =>
     editing
-      ? { region: editing.region, prefecture: editing.prefecture, commune: editing.commune, quartier: editing.quartier, typeCommune: (editing.typeCommune as TypeCommune) ?? '' }
+      ? {
+          region: editing.region, prefecture: editing.prefecture, commune: editing.commune, quartier: editing.quartier,
+          typeCommune: (editing.typeCommune as TypeCommune) ?? '',
+          latitude: editing.latitude != null ? String(editing.latitude) : '',
+          longitude: editing.longitude != null ? String(editing.longitude) : '',
+        }
       : EMPTY,
   );
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -204,6 +222,11 @@ function LocalisationForm({
     if (!form.commune) e.commune = 'Requis';
     if (!form.quartier.trim()) e.quartier = 'Requis';
     if (!form.typeCommune) e.typeCommune = 'Requis';
+    const lat = lireCoordonnee(form.latitude);
+    const lng = lireCoordonnee(form.longitude);
+    if (form.latitude.trim() && (lat == null || lat < -90 || lat > 90)) e.latitude = 'Latitude entre -90 et 90';
+    if (form.longitude.trim() && (lng == null || lng < -180 || lng > 180)) e.longitude = 'Longitude entre -180 et 180';
+    if ((lat == null) !== (lng == null) && !e.latitude && !e.longitude) e.longitude = 'Indiquez les deux, ou aucune';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -212,12 +235,17 @@ function LocalisationForm({
     if (!validate()) return;
     try {
       await saveLocalisation(
-        { region: form.region, prefecture: form.prefecture, commune: form.commune, quartier: form.quartier.trim(), typeCommune: form.typeCommune || undefined },
+        {
+          region: form.region, prefecture: form.prefecture, commune: form.commune, quartier: form.quartier.trim(),
+          typeCommune: form.typeCommune || undefined,
+          latitude: lireCoordonnee(form.latitude), longitude: lireCoordonnee(form.longitude),
+        },
         editing?.id,
       );
       onClose();
-    } catch {
-      appAlert("Localisation non enregistrée", 'Impossible de sauvegarder la localisation.');
+    } catch (e) {
+      // Doublon refusé par l'API : son message nomme le quartier existant.
+      appAlert("Localisation non enregistrée", getErrorMessage(e, 'Impossible de sauvegarder la localisation.'));
     }
   };
 
@@ -243,6 +271,32 @@ function LocalisationForm({
               autoCapitalize="words"
             />
             {errors.quartier ? <AppText style={pf.error}>{errors.quartier}</AppText> : null}
+          </View>
+
+          <View style={pf.wrap}>
+            <AppText style={pf.label}>Point de référence (facultatif)</AppText>
+            <AppText style={ff.hint}>Centre la carte quand un annonceur choisit ce quartier. Degrés décimaux, ex. 9.6412 / -13.5784.</AppText>
+            <View style={ff.typeRow}>
+              <AppTextInput
+                style={[pf.btn, errors.latitude && pf.btnError, { flex: 1, paddingVertical: 12 }]}
+                value={form.latitude}
+                onChangeText={set('latitude')}
+                placeholder="Latitude"
+                placeholderTextColor={colors.placeholder}
+                keyboardType="numbers-and-punctuation"
+              />
+              <AppTextInput
+                style={[pf.btn, errors.longitude && pf.btnError, { flex: 1, paddingVertical: 12 }]}
+                value={form.longitude}
+                onChangeText={set('longitude')}
+                placeholder="Longitude"
+                placeholderTextColor={colors.placeholder}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+            {errors.latitude || errors.longitude ? (
+              <AppText style={pf.error}>{errors.latitude ?? errors.longitude}</AppText>
+            ) : null}
           </View>
 
           <View style={pf.wrap}>
@@ -293,7 +347,16 @@ function LocalisationForm({
 
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
+// Le référentiel ne s'écrit que par un administrateur (ECART-45) : le modérateur n'a pas cet écran.
 export default function LocalisationsScreen() {
+  const user = useAuthStore((st) => st.user);
+  const profile = useUserStore((st) => st.profile);
+  const { isAdministrateur } = getRoleFlags(profile?.roles ?? profile?.role ?? user?.roles);
+  if (!isAdministrateur) return <Redirect href="/(tabs)/administration" />;
+  return <LocalisationsContenu />;
+}
+
+function LocalisationsContenu() {
   const {
     localisations,
     localisationsTotalItems,
@@ -561,6 +624,7 @@ const pf = StyleSheet.create({
 
 // Form (Sheet)
 const ff = StyleSheet.create({
+  hint: { fontSize: typography.sizes.xs, color: colors.textMuted, marginBottom: 6 },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.base, paddingBottom: spacing['4xl'], maxHeight: '92%' },
   handle: { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginTop: spacing.md, marginBottom: spacing.lg },
   title: { fontSize: typography.sizes.lg, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.lg },

@@ -382,7 +382,7 @@ class ModerationAnnonceTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Matam");
-            loc.setQuartier("Taouyah");
+            loc.setQuartier("Taouyah (ModerationAnnonceTest)");
             return localisationRepository.save(loc);
         });
     }

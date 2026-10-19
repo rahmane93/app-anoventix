@@ -115,7 +115,12 @@ function buildATraiter(stats: ProStats, isProfessionnel: boolean): ATraiterItem[
         tone: 'error',
         action: { label: 'Voir ma licence', onPress: () => router.push('/licence') },
       }
-      : { key: 'quota', icon: 'ban-outline', text: "Quota d'annonces atteint : publication impossible", tone: 'error' });
+      : {
+        key: 'quota',
+        icon: 'ban-outline',
+        text: conformite.motifPublicationImpossible ?? "Publication impossible pour le moment",
+        tone: 'error',
+      });
   }
   if (conformite.statutPieceIdentite === 'REJETEE' || !conformite.statutPieceIdentite) {
     const refusee = conformite.statutPieceIdentite === 'REJETEE';
@@ -560,7 +565,9 @@ export default function DashboardPro() {
           <View style={isWide ? s.gridWide : undefined}>
             {col(
               <>
-                <SectionTitle>Portefeuille d'annonces</SectionTitle>
+                <SectionTitle periode={stats.perimetre === 'ENTREPRISE' ? "Toute l'entreprise" : undefined}>
+                  Portefeuille d'annonces
+                </SectionTitle>
                 <BlocPortefeuille data={stats.portefeuille} />
 
                 <SectionTitle periode="Depuis le début">Leads & Messagerie</SectionTitle>

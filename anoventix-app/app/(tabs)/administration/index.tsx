@@ -119,10 +119,12 @@ export default function AdminDashboard() {
   const gestion: Entree[] = [
     { key: 'users', icon: 'people-outline', label: 'Utilisateurs', value: stats?.totalUtilisateurs ?? 0, href: '/(tabs)/administration/users' as any },
     { key: 'entreprises', icon: 'business-outline', label: 'Entreprises', value: stats?.totalEntreprises ?? 0, href: '/(tabs)/administration/entreprises' as any },
+    { key: 'statistiques', icon: 'stats-chart-outline', label: 'Statistiques', value: null, href: '/(tabs)/administration/statistiques' as any },
     { key: 'annonces', icon: 'home-outline', label: 'Annonces actives', value: stats?.totalAnnoncesActives ?? 0, href: '/(tabs)/administration/annonces' as any },
-    { key: 'localisations', icon: 'location-outline', label: 'Localisations', value: null, href: '/(tabs)/administration/localisations' as any },
     ...(isAdmin
       ? [
+          // L'écriture du référentiel est réservée à l'administrateur (ECART-45).
+          { key: 'localisations', icon: 'location-outline' as IoniconName, label: 'Localisations', value: null, href: '/(tabs)/administration/localisations' as any },
           { key: 'quartiers', icon: 'map-outline' as IoniconName, label: 'Quartiers demandés', value: stats?.quartiersDemandes ?? 0, href: '/(tabs)/administration/quartiers-demandes' as any },
           { key: 'quotas', icon: 'speedometer-outline' as IoniconName, label: 'Quotas des comptes pro', value: null, href: '/(tabs)/administration/quotas' as any },
           { key: 'licences', icon: 'key-outline' as IoniconName, label: 'Licences', value: null, href: '/(tabs)/administration/licences' as any },

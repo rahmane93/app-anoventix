@@ -15,6 +15,8 @@ export interface LeafletMapProps {
   /** Coordonnées initiales (centre + marqueur). Absent = pas de marqueur tant qu'on n'a pas cliqué. */
   latitude?: number | null;
   longitude?: number | null;
+  /** Centre de la carte quand aucune coordonnée n'est donnée (ex. point de référence du quartier), sans marqueur. */
+  centre?: LatLng | null;
   /** true = l'utilisateur peut placer/déplacer le marqueur ; false = lecture seule. */
   interactive?: boolean;
   /** Notifié quand l'utilisateur choisit un point (mode interactif). */

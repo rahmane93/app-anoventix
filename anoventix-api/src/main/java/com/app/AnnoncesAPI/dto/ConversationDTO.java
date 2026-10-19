@@ -28,4 +28,11 @@ public class ConversationDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastMessageAt;
+    /** État pour l'utilisateur connecté : ACTIVE, ARCHIVEE (SUPPRIMEE n'est jamais renvoyée). */
+    private com.app.AnnoncesAPI.enums.EtatConversation etat;
+    /** L'utilisateur connecté a bloqué son interlocuteur. */
+    private Boolean bloqueParMoi;
+    /** Écrire est possible ; sinon `ecritureImpossibleMotif` dit pourquoi. */
+    private Boolean ecriturePossible;
+    private String ecritureImpossibleMotif;
 }

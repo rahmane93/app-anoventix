@@ -22,4 +22,11 @@ public class AvertissementResponse {
     private NiveauAvertissement niveau;
     private Boolean suspenduAutomatiquement;
     private LocalDateTime date;
+    /** Compte encore pour le niveau et la suspension automatique (ni levé, ni expiré). */
+    private Boolean enVigueur;
+    /** Date à laquelle il cesse de compter (date + 6 mois). */
+    private LocalDateTime dateExpiration;
+    private LocalDateTime dateLevee;
+    private String levePar;
+    private String motifLevee;
 }

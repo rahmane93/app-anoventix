@@ -277,15 +277,6 @@ public class UserControllerTest {
     }
 
     @Test
-    void testGetAllUsers_asAdmin() throws Exception {
-        String adminJwt = createAdminAndGetJWT("adminuser1");
-
-        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + adminJwt))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
-    }
-
-    @Test
     void testCompteSupprimeDefinitivement_nonListeNiCompte() throws Exception {
         String adminJwt = createAdminAndGetJWT("adminuser9");
         signupActivateAndGetJWT("parti", "parti@test.com", "Test123!");
@@ -298,23 +289,12 @@ public class UserControllerTest {
         supprime.setDateSuppressionDefinitive(java.time.LocalDateTime.now());
         userRepository.save(supprime);
 
-        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + adminJwt))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[?(@.email == 'parti@test.com')]").isEmpty());
         mockMvc.perform(get("/api/admin/utilisateurs").param("search", "parti")
                         .header("Authorization", "Bearer " + adminJwt))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isEmpty());
         mockMvc.perform(get("/api/admin/stats").header("Authorization", "Bearer " + adminJwt))
                 .andExpect(jsonPath("$.totalUtilisateurs").value(totalAvant - 1));
-    }
-
-    @Test
-    void testGetAllUsers_asRegularUser() throws Exception {
-        String jwt = signupActivateAndGetJWT("user10", "user10@test.com", "Test123!");
-
-        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + jwt))
-                .andExpect(status().isForbidden());
     }
 
     @Test

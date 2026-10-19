@@ -83,7 +83,7 @@ public class LicenceControllerTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Ratoma");
-            loc.setQuartier("Kipé");
+            loc.setQuartier("Kipé (LicenceControllerTest)");
             localisationRepository.save(loc);
         }
     }

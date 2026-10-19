@@ -21,7 +21,13 @@ interface MessagerieStore {
   peerOnline: boolean | null;
   messagesCurrentPage: number;
   messagesTotalPages: number;
+  etatListe: 'ACTIVE' | 'ARCHIVEE';
+  setEtatListe: (etat: 'ACTIVE' | 'ARCHIVEE') => void;
   loadConversations: () => Promise<void>;
+  /** Archive, restaure ou supprime (pour soi) une conversation, puis la retire de la liste affichée. */
+  changerEtatConversation: (id: string | number, action: 'archiver' | 'restaurer' | 'supprimer') => Promise<void>;
+  /** Bloque ou débloque l'interlocuteur de la conversation courante. */
+  basculerBlocage: (conversationId: string | number, userId: string, bloquer: boolean) => Promise<void>;
   loadConversation: (conversationId: string | number) => Promise<void>;
   loadMoreMessages: (conversationId: string | number) => Promise<void>;
   openOrCreateConversation: (data: CreateConversationRequest) => Promise<ConversationDTO>;
@@ -57,10 +63,37 @@ export const useMessagerieStore = create<MessagerieStore>((set, get) => ({
   messagesCurrentPage: 0,
   messagesTotalPages: 0,
 
+  etatListe: 'ACTIVE',
+  setEtatListe: (etatListe) => set({ etatListe, conversations: [] }),
+
+  changerEtatConversation: async (id, action) => {
+    try {
+      if (action === 'archiver') await messagerieApi.archiverConversation(id);
+      else if (action === 'restaurer') await messagerieApi.restaurerConversation(id);
+      else await messagerieApi.supprimerConversation(id);
+      set((s) => ({ conversations: s.conversations.filter((c) => String(c.id) !== String(id)) }));
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err, 'Action impossible pour le moment.') });
+      throw err;
+    }
+  },
+
+  basculerBlocage: async (conversationId, userId, bloquer) => {
+    try {
+      if (bloquer) await messagerieApi.bloquerUtilisateur(userId);
+      else await messagerieApi.debloquerUtilisateur(userId);
+      const conversation = await messagerieApi.getConversationById(conversationId);
+      set({ currentConversation: conversation });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err, 'Action impossible pour le moment.') });
+      throw err;
+    }
+  },
+
   loadConversations: async () => {
     set({ isLoadingConversations: true, error: null });
     try {
-      const response = await messagerieApi.getConversations();
+      const response = await messagerieApi.getConversations({ etat: get().etatListe });
       const conversations = Array.isArray(response.data) ? response.data : [];
       set({ conversations, isLoadingConversations: false });
     } catch (err: unknown) {

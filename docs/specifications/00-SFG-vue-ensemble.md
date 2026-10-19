@@ -271,7 +271,7 @@ ParametrePlateforme (clé / valeur : mode licence, tarifs, quotas globaux)
 | `HistoriqueAnnonce` | `historique_annonce` | Traçabilité | Un enregistrement par champ modifié (titre, prix, description, statut, motif) |
 | `Signalement` | `signalements` | Signalement d'annonce | Un seul par couple (annonce, signaleur), retrait possible, statut, modérateur et note interne |
 | `Conversation` / `Message` | `conversation` / `message` | Messagerie | Unique par (annonce, participants), messages ≤ 4000 caractères, lecture. Le **signalement d'un message** n'est pas une entité : ce sont des colonnes du message (`signale`, motif, date, signaleur), donc un seul signalement par message. Suppression par la modération (contenu conservé) |
-| `Avertissement` | `avertissements` | Sanction graduée | Niveau calculé selon le rang (LÉGER, MODÉRÉ, GRAVE), émetteur, suspension automatique |
+| `Avertissement` | `avertissements` | Sanction graduée | Niveau proposé selon le rang des avertissements en vigueur (6 mois), modifiable ; émetteur, suspension automatique, levée (DEC-33) |
 | `Licence` | `licence` | Clé annuelle | Type PARTICULIER / PROFESSIONNEL, titulaire, dates de début et de fin |
 | `Localisation` | `localisation` | Référentiel géographique | Région, préfecture, commune, quartier, type de commune (urbaine / rurale) ; 743 quartiers fournis (34 préfectures, 369 communes) |
 | `ParametrePlateforme` | `parametre_plateforme` | Réglages | `licence.mode-actif`, `licence.prix-*`, `licence.contact-telephone`, `quota.agents.defaut`, `quota.annonces.defaut` |
@@ -539,5 +539,6 @@ Arbitrages rendus par le responsable produit le **17/10/2026**. Ils fixent le co
 | DEC-30 | Tuiles de carte servies par un **fournisseur de tuiles OpenStreetMap** (MapTiler, Stadia ou équivalent). | §15 Q4 | 00, 05 | Clé d'API à configurer ; Leaflet conservé ; attribution à afficher. |
 | DEC-31 | Emails envoyés par un **service transactionnel** (Brevo, Mailjet ou Amazon SES), avec SPF, DKIM et DMARC. | §15 Q4 | 00, 11 | Suivi des échecs ; base de la file d'envoi avec nouvel essai. |
 | DEC-32 | Les **cibles d'exploitation du §10** sont retenues (lectures < 500 ms, disponibilité ≥ 99 %, perte maximale 24 h, remise en service < 8 h, copie de sauvegarde hors serveur). | §15 Q6 | 00 | Copie hors serveur et test de restauration à mettre en place. |
+| DEC-33 | Avertissements **valables 6 mois** ; niveau proposé selon le rang mais **modifiable** par le modérateur ; **levée** d'un avertissement réservée à l'administrateur ; **email** au titulaire. | ECART-24 | 09, 11 | Colonne `account.nb_avertissements` supprimée (V35) ; le compteur affiché est celui des avertissements en vigueur. |
 
 **Restent ouvertes** : les questions secondaires de chaque module qui ne renvoient pas à une décision ci-dessus. Toutes les questions du §15 et du 99 §7 sont tranchées.

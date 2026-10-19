@@ -80,7 +80,7 @@ public class BienImmoControllerTest {
             loc.setRegion("Conakry");
             loc.setPrefecture("Conakry");
             loc.setCommune("Matam");
-            loc.setQuartier("Taouyah");
+            loc.setQuartier("Taouyah (BienImmoControllerTest)");
             localisationRepository.save(loc);
         }
     }
@@ -335,13 +335,6 @@ public class BienImmoControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @Test
-    void testSearchBiens_public() throws Exception {
-        // Recherche publique, comme /filter et /public/search.
-        mockMvc.perform(get("/api/biens-immo/search").param("keyword", "appartement"))
-                .andExpect(status().isOk());
-    }
-
     // DEC-14 : le téléphone de l'annonceur n'est fourni qu'aux utilisateurs connectés.
     @Test
     void testTelephoneAnnonceur_reserveAuxUtilisateursConnectes() throws Exception {
@@ -377,7 +370,7 @@ public class BienImmoControllerTest {
         kipe.setRegion("Conakry");
         kipe.setPrefecture("Conakry");
         kipe.setCommune("Ratoma");
-        kipe.setQuartier("Kipé");
+        kipe.setQuartier("Kipé (BienImmoControllerTest)");
         localisationRepository.save(kipe);
         String jwt = signupActivateAndGetJWT("recherche1", "recherche1@test.com", "Test123!");
 
@@ -543,6 +536,69 @@ public class BienImmoControllerTest {
                 .param("lat", "9.5")
                 .param("lng", "-13.7"))
                 .andExpect(status().isOk());
+    }
+
+    private Long creerAvecPosition(String jwt, String type, String titre, String lat, String lng) throws Exception {
+        return objectMapper.readTree(mockMvc.perform(multipart("/api/biens-immo")
+                .file(TestPhotos.photo())
+                .param("titre", titre)
+                .param("description", "Bel appartement de trois pièces dans un quartier calme et résidentiel")
+                .param("prix", "250000000")
+                .param("localisationId", LOC_ID)
+                .param("typeAnnonce", type)
+                .param("typeBien", "APPARTEMENT")
+                .param("documentsDisponibles", "Titre foncier")
+                .param("typeUsage", "HABITATION")
+                .param("latitude", lat).param("longitude", lng)
+                .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).get("id").asLong();
+    }
+
+    // ECART-33 et ECART-46 : filtres et pagination appliqués par la base, avant la page.
+    @Test
+    void testNearby_filtreEtPaginationSql() throws Exception {
+        String jwt = signupActivateAndGetJWT("proche1", "proche1@test.com", "Test123!");
+        creerAvecPosition(jwt, "VENTE", "Appartement à vendre proche", "9.5000", "-13.7000");
+        creerAvecPosition(jwt, "LOCATION", "Appartement à louer proche", "9.5001", "-13.7001");
+        creerAvecPosition(jwt, "VENTE", "Autre appartement à vendre", "9.5002", "-13.7002");
+        creerAvecPosition(jwt, "VENTE", "Appartement trop loin", "10.9000", "-12.0000");
+
+        // Le filtre porte sur toute la zone, pas sur la page chargée.
+        mockMvc.perform(get("/api/biens-immo/nearby").param("lat", "9.5").param("lng", "-13.7")
+                .param("rayon", "5").param("typeAnnonce", "LOCATION").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].typeAnnonce").value("LOCATION"));
+
+        // Sans filtre : trois annonces dans le rayon, deux pages d'une annonce... trois pages de 1.
+        mockMvc.perform(get("/api/biens-immo/nearby").param("lat", "9.5").param("lng", "-13.7")
+                .param("rayon", "5").param("size", "1").param("page", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(3))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.data.length()").value(1));
+        // Triées par distance : la plus proche en premier.
+        mockMvc.perform(get("/api/biens-immo/nearby").param("lat", "9.5").param("lng", "-13.7")
+                .param("rayon", "5").param("size", "1"))
+                .andExpect(jsonPath("$.data[0].titre").value("Appartement à vendre proche"));
+    }
+
+    @Test
+    void testRechercheTexte_pagination() throws Exception {
+        String jwt = signupActivateAndGetJWT("texte1", "texte1@test.com", "Test123!");
+        for (int i = 1; i <= 3; i++) {
+            creerAvecPosition(jwt, "VENTE", "Villa lumineuse numéro " + i, "9.5", "-13.7");
+        }
+
+        mockMvc.perform(get("/api/biens-immo/filter").param("q", "villa lumineuse").param("size", "2").param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(3))
+                .andExpect(jsonPath("$.data.length()").value(1));
+        mockMvc.perform(get("/api/biens-immo/filter").param("q", "introuvablemot"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalItems").value(0));
     }
 
     @Test

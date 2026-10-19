@@ -42,6 +42,18 @@ export interface ConversationDTO {
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string | null;
+  etat?: 'ACTIVE' | 'ARCHIVEE';
+  bloqueParMoi?: boolean;
+  /** Faux si l'interlocuteur est bloqué (ou nous a bloqué) : le composer est désactivé. */
+  ecriturePossible?: boolean;
+  ecritureImpossibleMotif?: string | null;
+}
+
+export interface UtilisateurBloque {
+  id: string;
+  nomComplet: string;
+  photoProfil: string | null;
+  dateBlocage: string;
 }
 
 export interface CreateConversationRequest {

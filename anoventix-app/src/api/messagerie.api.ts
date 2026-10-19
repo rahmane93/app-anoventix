@@ -1,4 +1,5 @@
 import type {
+    UtilisateurBloque,
     ConversationDTO,
     ConversationListResponse,
     CreateConversationRequest,
@@ -21,6 +22,7 @@ export const getConversations = async (params?: {
   size?: number;
   sort?: string;
   direction?: 'asc' | 'desc';
+  etat?: 'ACTIVE' | 'ARCHIVEE';
 }): Promise<ConversationListResponse> => {
   const response = await apiClient.get<ConversationListResponse>('/api/messagerie/conversations', {
     params: {
@@ -28,6 +30,7 @@ export const getConversations = async (params?: {
       size: params?.size ?? 10,
       sort: params?.sort ?? 'lastMessageAt',
       direction: params?.direction ?? 'desc',
+      etat: params?.etat ?? 'ACTIVE',
     },
   });
   return response.data;
@@ -78,4 +81,30 @@ export const signalerMessage = async (
   motif: MotifSignalementMessage,
 ): Promise<void> => {
   await apiClient.post(`/api/messagerie/messages/${messageId}/signaler`, { motif });
+};
+
+export const archiverConversation = async (id: string | number): Promise<void> => {
+  await apiClient.put(`/api/messagerie/conversations/${id}/archiver`);
+};
+
+export const restaurerConversation = async (id: string | number): Promise<void> => {
+  await apiClient.put(`/api/messagerie/conversations/${id}/restaurer`);
+};
+
+/** Supprime la conversation pour soi seulement. */
+export const supprimerConversation = async (id: string | number): Promise<void> => {
+  await apiClient.delete(`/api/messagerie/conversations/${id}`);
+};
+
+export const bloquerUtilisateur = async (userId: string): Promise<void> => {
+  await apiClient.post(`/api/messagerie/blocages/${userId}`);
+};
+
+export const debloquerUtilisateur = async (userId: string): Promise<void> => {
+  await apiClient.delete(`/api/messagerie/blocages/${userId}`);
+};
+
+export const getBlocages = async (): Promise<UtilisateurBloque[]> => {
+  const response = await apiClient.get<UtilisateurBloque[]>('/api/messagerie/blocages');
+  return response.data;
 };

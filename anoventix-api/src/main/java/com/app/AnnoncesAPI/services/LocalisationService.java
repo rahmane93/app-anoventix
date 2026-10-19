@@ -12,6 +12,9 @@ public interface LocalisationService {
 
     Page<LocalisationDTO> getAllLocalisations(Pageable pageable);
 
+    /** Régions du référentiel, triées. */
+    java.util.List<String> getRegions();
+
     Optional<LocalisationDTO> getLocalisationById(String id);
 
     Page<LocalisationDTO> getLocalisationsByCommune(String communeName, Pageable pageable);

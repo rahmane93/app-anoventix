@@ -37,7 +37,7 @@ Hors périmètre (non implémenté) : vidéos, plans et visites virtuelles ; mis
 | US-03-05 | En tant qu'annonceur, je suis prévenu 7 jours avant l'expiration de mon annonce et je la prolonge gratuitement après son expiration. |
 | US-03-06 | En tant qu'annonceur, je supprime une annonce dont je n'ai plus besoin. |
 | US-03-07 | En tant qu'annonceur, je vois dans « Mes annonces » l'état de chacune : en ligne, masquée, clôturée, expirée, masquée ou rejetée par la modération (avec le motif), date d'expiration. |
-| US-03-08 | En tant que propriétaire ou modérateur, je consulte l'historique des modifications (pas d'écran aujourd'hui : ECART-30). |
+| US-03-08 | En tant que propriétaire ou modérateur, je consulte l'historique des modifications (écran « Historique » depuis « Mes annonces » et la liste des annonces de l'administration, ECART-30). |
 
 ## 4. Règles de gestion
 
@@ -61,7 +61,7 @@ Hors périmètre (non implémenté) : vidéos, plans et visites virtuelles ; mis
 |---|---|---|
 | RG-03-09 | 1 à **10 photos** par annonce. Création : au moins une. Ajout ultérieur : total ≤ 10. Suppression : impossible s'il ne reste qu'une photo. | `MediaService.java:55, 272-313` |
 | RG-03-10 | Formats : images uniquement (type MIME `image/*`, format lisible), ≤ 50 mégapixels, ≤ 10 Mo par fichier et ≤ 100 Mo par requête. Les images sont réencodées en JPEG (qualité 0,80, 1920 px de large), ce qui supprime leurs métadonnées. **Aucune miniature n'est produite** : le catalogue et les vignettes chargent l'image en 1920 px (ECART-55). | `MediaService.java:96-136, 322-342`, `application.yml` |
-| RG-03-11 | L'ordre des photos n'est pas modifiable ; la première photo sert de vignette et d'image de partage (ECART-49). | `Media.java` (`ordre` inutilisé) |
+| RG-03-11 | 🆕 (ECART-49) Les photos sont numérotées 1..n dans l'ordre d'envoi ; le propriétaire (ou la modération) peut les **réordonner** (`PUT /{id}/medias/ordre`, tous les identifiants) : la première est la **photo principale** (vignette, image de partage). Une suppression renumérote les suivantes. | `MediaService.reordonnerMedias` |
 | RG-03-12 | Ajouter ou supprimer des photos est refusé si les annonces du compte sont masquées ; l'ajout est aussi refusé si la publication est bloquée par la licence. | `MediaService.java:236-237, 282` |
 
 ### 4.3 Modification
@@ -90,7 +90,7 @@ Hors périmètre (non implémenté) : vidéos, plans et visites virtuelles ; mis
 | ID | Règle | Source |
 |---|---|---|
 | RG-03-24 | Une vue est comptée à la consultation d'une fiche accessible, **jamais pour le propriétaire**, et une seule fois par lecteur (utilisateur connecté ou adresse IP) et par 24 h. Le compteur n'augmente que si l'annonce est en ligne. | `BienImmoController.java:156-186`, `VueCountTracker.java` |
-| RG-03-25 | `GET /{id}/stats` renvoie l'identifiant, la référence et le nombre de vues (propriétaire, PRO parent, modération). Aucun écran ne l'utilise (ECART-30). | `BienImmoServiceImpl.java:421-430` |
+| RG-03-25 | Le nombre de vues d'une annonce est fourni par l'annonce elle-même (`vueCount`) et affiché sur sa carte ; l'endpoint `GET /{id}/stats` a été retiré (ECART-30). | `AnnonceDTO.vueCount` |
 
 ### 4.6 Effets des événements du compte et de l'entreprise sur les annonces
 

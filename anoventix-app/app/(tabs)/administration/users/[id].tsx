@@ -15,6 +15,7 @@ import {
     STATUT_USER_LABELS,
     TYPE_PIECE_LABELS,
     type Avertissement,
+    type NiveauAvertissement,
     type StatutUtilisateur,
 } from '@/src/types/admin.types';
 import { NIVEAU_TONE, PIECE_TONE, USER_STATUT_TONE } from '@/src/features/admin/status';
@@ -153,14 +154,31 @@ function AvertissementModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (motif: string) => void;
+  onConfirm: (motif: string, niveau?: NiveauAvertissement) => void;
 }) {
   const [motif, setMotif] = useState('');
+  // Sans choix, le niveau suit le rang (6 derniers mois) ; « Grave » suspend tout de suite (fraude avérée).
+  const [niveau, setNiveau] = useState<NiveauAvertissement | undefined>(undefined);
   return (
     <Dialog visible={visible} onRequestClose={onClose} dimColor="rgba(0,0,0,0.5)">
       <View style={s.modalBox}>
         <AppText style={s.modalTitle}>Émettre un avertissement</AppText>
-        <AppText style={s.modalSub}>Décrivez le motif de cet avertissement.</AppText>
+        <AppText style={s.modalSub}>
+          L’utilisateur est prévenu par email. Un avertissement compte pendant 6 mois ; le 3e sur cette période, ou un
+          avertissement grave, suspend le compte.
+        </AppText>
+        <View style={s.motifRow}>
+          <Chip label="Selon le rang" selected={niveau === undefined} onPress={() => setNiveau(undefined)} />
+          {(Object.keys(NIVEAU_AVERTISSEMENT_LABELS) as NiveauAvertissement[]).map((n) => (
+            <Chip
+              key={n}
+              label={NIVEAU_AVERTISSEMENT_LABELS[n]}
+              selected={niveau === n}
+              onPress={() => setNiveau(n)}
+              tone={n === 'GRAVE' ? 'danger' : undefined}
+            />
+          ))}
+        </View>
         <AppTextInput
           style={s.modalInput}
           placeholder="Ex: Comportement inapproprié dans les messages..."
@@ -186,8 +204,9 @@ function AvertissementModal({
             style={s.modalBtnWarn}
             onPress={() => {
               if (motif.trim()) {
-                onConfirm(motif.trim());
+                onConfirm(motif.trim(), niveau);
                 setMotif('');
+                setNiveau(undefined);
               }
             }}
             disabled={!motif.trim()}
@@ -346,6 +365,55 @@ function StatutModal({
   );
 }
 
+// ─── Modale levée d'avertissement (administrateur) ───────────────────────────
+
+function LeveeAvertissementModal({
+  avertissement,
+  onClose,
+  onConfirm,
+}: {
+  avertissement: Avertissement | null;
+  onClose: () => void;
+  onConfirm: (avertissement: Avertissement, motif: string) => void;
+}) {
+  const [motif, setMotif] = useState('');
+  return (
+    <Dialog visible={!!avertissement} onRequestClose={onClose} dimColor="rgba(0,0,0,0.5)">
+      <View style={s.modalBox}>
+        <AppText style={s.modalTitle}>Lever l’avertissement</AppText>
+        <AppText style={s.modalSub}>
+          Il ne comptera plus mais restera dans l’historique. Une suspension éventuelle n’est pas levée.
+        </AppText>
+        <AppTextInput
+          style={s.modalInput}
+          placeholder="Ex : avertissement émis sur le mauvais compte"
+          placeholderTextColor={colors.placeholder}
+          value={motif}
+          onChangeText={setMotif}
+          multiline
+          numberOfLines={3}
+          maxLength={200}
+        />
+        <View style={s.modalActions}>
+          <Button title="Annuler" variant="outline" fullWidth={false} style={s.modalBtnCancel} onPress={onClose} />
+          <Button
+            title="Lever"
+            fullWidth={false}
+            style={s.modalBtnWarn}
+            onPress={() => {
+              if (avertissement && motif.trim()) {
+                onConfirm(avertissement, motif.trim());
+                setMotif('');
+              }
+            }}
+            disabled={!motif.trim()}
+          />
+        </View>
+      </View>
+    </Dialog>
+  );
+}
+
 // ─── Ligne avertissement ──────────────────────────────────────────────────────
 
 function formatAvertDate(raw: string): string {
@@ -357,17 +425,32 @@ function formatAvertDate(raw: string): string {
   return d.toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function AvertissementRow({ item }: { item: Avertissement }) {
+function AvertissementRow({ item, onLever }: { item: Avertissement; onLever?: () => void }) {
+  const leve = !!item.dateLevee;
   return (
-    <View style={s.avertRow}>
+    <View style={[s.avertRow, item.enVigueur === false && s.avertInactif]}>
       <View style={s.avertTop}>
         <StatusBadge label={NIVEAU_AVERTISSEMENT_LABELS[item.niveau] ?? item.niveau} tone={NIVEAU_TONE[item.niveau] ?? 'warning'} />
         {item.suspenduAutomatiquement ? (
           <StatusBadge label="Suspension automatique" tone="danger" icon="warning-outline" />
         ) : null}
+        {leve ? (
+          <StatusBadge label="Levé" tone="neutral" />
+        ) : item.enVigueur === false ? (
+          <StatusBadge label="Expiré" tone="neutral" />
+        ) : null}
       </View>
       <AppText style={s.avertMotif}>{item.motif}</AppText>
       <AppText style={s.avertMeta}>par {item.emitPar} · {formatAvertDate(item.date)}</AppText>
+      {leve ? (
+        <AppText style={s.avertMeta}>
+          Levé par {item.levePar} · {formatAvertDate(item.dateLevee ?? '')} · {item.motifLevee}
+        </AppText>
+      ) : onLever ? (
+        <TouchableOpacity onPress={onLever} hitSlop={8} accessibilityRole="button">
+          <AppText style={s.sectionAction}>Lever</AppText>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -384,7 +467,7 @@ export default function AdminUserDetail() {
   const {
     currentUser, isLoadingUser, usersError, loadUserById,
     changeUserStatut, changePieceIdentiteStatut,
-    avertissements, isLoadingAvertissements, avertissementsError, loadAvertissements, emettrAvertissement,
+    avertissements, isLoadingAvertissements, avertissementsError, loadAvertissements, emettrAvertissement, leverAvertissement,
     octroiRole, revoquerRole, supprimerCompte,
   } = useAdminStore(
     useShallow((s) => ({
@@ -399,6 +482,7 @@ export default function AdminUserDetail() {
       avertissementsError: s.avertissementsError,
       loadAvertissements: s.loadAvertissements,
       emettrAvertissement: s.emettrAvertissement,
+      leverAvertissement: s.leverAvertissement,
       octroiRole: s.octroiRole,
       revoquerRole: s.revoquerRole,
       supprimerCompte: s.supprimerCompte,
@@ -408,6 +492,7 @@ export default function AdminUserDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [rejetModalVisible, setRejetModalVisible] = useState(false);
   const [avertModalVisible, setAvertModalVisible] = useState(false);
+  const [avertALever, setAvertALever] = useState<Avertissement | null>(null);
   const [masquageModalVisible, setMasquageModalVisible] = useState(false);
   const [statutModal, setStatutModal] = useState<'SUSPENDU' | 'INACTIF' | null>(null);
   const [annoncesLoading, setAnnoncesLoading] = useState(false);
@@ -537,11 +622,22 @@ export default function AdminUserDetail() {
     }
   };
 
-  const handleEmettrAvertissement = async (motif: string) => {
+  const handleLeverAvertissement = async (a: Avertissement, motif: string) => {
+    if (!currentUser) return;
+    setAvertALever(null);
+    try {
+      await leverAvertissement(currentUser.id, a.id, motif);
+      appAlert('Avertissement levé', 'Il ne compte plus pour ce compte.');
+    } catch (e) {
+      appAlert('Levée impossible', getErrorMessage(e, "Impossible de lever l'avertissement"));
+    }
+  };
+
+  const handleEmettrAvertissement = async (motif: string, niveau?: NiveauAvertissement) => {
     if (!currentUser) return;
     setAvertModalVisible(false);
     try {
-      await emettrAvertissement(currentUser.id, { motif });
+      await emettrAvertissement(currentUser.id, { motif, niveau });
       appAlert('Avertissement émis', "L'utilisateur a été averti.");
     } catch (e) {
       appAlert("Avertissement non envoyé", getErrorMessage(e, 'Impossible d\'émettre l\'avertissement'));
@@ -751,6 +847,11 @@ export default function AdminUserDetail() {
         onClose={() => setRejetModalVisible(false)}
         onConfirm={handleRejetPiece}
       />
+      <LeveeAvertissementModal
+        avertissement={avertALever}
+        onClose={() => setAvertALever(null)}
+        onConfirm={handleLeverAvertissement}
+      />
       <AvertissementModal
         visible={avertModalVisible}
         onClose={() => setAvertModalVisible(false)}
@@ -903,7 +1004,10 @@ export default function AdminUserDetail() {
             (avertissements ?? []).map((a, i) => (
               <View key={a.id}>
                 {i > 0 && <RowSeparator inset={spacing.base} />}
-                <AvertissementRow item={a} />
+                <AvertissementRow
+                  item={a}
+                  onLever={isAdmin ? () => setAvertALever(a) : undefined}
+                />
               </View>
             ))
           )}
@@ -1110,6 +1214,7 @@ const s = StyleSheet.create({
   avertTop: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   avertMotif: { fontSize: typography.sizes.sm, color: colors.textPrimary },
   avertMeta: { fontSize: typography.sizes.xs, color: colors.textMuted },
+  avertInactif: { opacity: 0.6 },
 
   // Annonces
   masquage: {

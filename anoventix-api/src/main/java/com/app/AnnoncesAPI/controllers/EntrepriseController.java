@@ -284,29 +284,7 @@ public class EntrepriseController {
         return ResponseEntity.ok(entrepriseService.activerAgent(entrepriseId, agentId, authentication));
     }
 
-    /**
-     * Vérifie si une entreprise peut créer une annonce
-     */
-    @GetMapping("/{entrepriseId}/can-create-annonce")
-    @PreAuthorize("hasAnyRole('PROFESSIONNEL', 'AGENT_PROFESSIONNEL')")
-    @Operation(summary = "Vérifier le quota d'annonces",
-               description = "Vérifie si l'entreprise peut créer une nouvelle annonce")
-    public ResponseEntity<Boolean> canCreateAnnonce(@PathVariable UUID entrepriseId, Authentication authentication) {
-        boolean can = entrepriseService.canCreateAnnonce(entrepriseId, authentication);
-        return ResponseEntity.ok(can);
-    }
     
-    /**
-     * Vérifie si une entreprise peut ajouter un agent
-     */
-    @GetMapping("/{entrepriseId}/can-add-agent")
-    @PreAuthorize("hasRole('PROFESSIONNEL')")
-    @Operation(summary = "Vérifier le quota d'agents",
-               description = "Vérifie si l'entreprise peut ajouter un nouvel agent")
-    public ResponseEntity<Boolean> canAddAgent(@PathVariable UUID entrepriseId, Authentication authentication) {
-        boolean can = entrepriseService.canAddAgent(entrepriseId, authentication);
-        return ResponseEntity.ok(can);
-    }
     
     /**
      * Désactive une entreprise

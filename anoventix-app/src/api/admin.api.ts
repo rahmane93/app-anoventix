@@ -129,6 +129,18 @@ export async function changePieceIdentiteStatut(
 
 // ─── Utilisateurs admin ───────────────────────────────────────────────────────
 
+export interface StatsAvancees {
+  evolutionAnnonces: { periode: string; count: number }[];
+  annonceParRegion: { categorie: string; count: number }[];
+  annonceParTypeBien: { categorie: string; count: number }[];
+  annonceParTypeAnnonce: { categorie: string; count: number }[];
+}
+
+/** Évolution sur 12 mois et répartitions des annonces visibles (ECART-30). */
+export async function getStatsAvancees(): Promise<StatsAvancees> {
+  return (await apiClient.get<StatsAvancees>('/api/admin/stats/avancees')).data;
+}
+
 export async function getAvertissements(userId: string): Promise<Avertissement[]> {
   const res = await apiClient.get<Avertissement[]>(`/api/admin/utilisateurs/${userId}/avertissements`);
   return res.data;
@@ -141,6 +153,15 @@ export async function emettrAvertissement(
   const res = await apiClient.post<Avertissement>(
     `/api/admin/utilisateurs/${userId}/avertissements`,
     body,
+  );
+  return res.data;
+}
+
+/** Levée d'un avertissement émis par erreur (administrateur). */
+export async function leverAvertissement(userId: string, avertissementId: number, motif: string): Promise<Avertissement> {
+  const res = await apiClient.post<Avertissement>(
+    `/api/admin/utilisateurs/${userId}/avertissements/${avertissementId}/lever`,
+    { motif },
   );
   return res.data;
 }

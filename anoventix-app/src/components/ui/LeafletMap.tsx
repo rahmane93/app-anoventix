@@ -10,13 +10,13 @@ export type { LatLng, LeafletMapHandle } from './leaflet-html';
 // Deux usages : sélection d'un point (interactive) ou affichage seul d'un marqueur.
 
 export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function LeafletMap(
-  { latitude, longitude, interactive = false, onChange, zoom = 13, height = 220, fill = false, style },
+  { latitude, longitude, centre, interactive = false, onChange, zoom = 13, height = 220, fill = false, style },
   ref,
 ) {
   const webRef = useRef<WebView>(null);
   const hasInit = latitude != null && longitude != null;
-  const lat = hasInit ? (latitude as number) : DEFAULT_CENTER.lat;
-  const lng = hasInit ? (longitude as number) : DEFAULT_CENTER.lng;
+  const lat = hasInit ? (latitude as number) : centre?.latitude ?? DEFAULT_CENTER.lat;
+  const lng = hasInit ? (longitude as number) : centre?.longitude ?? DEFAULT_CENTER.lng;
 
   // HTML généré une seule fois au montage (les MAJ externes passent par injectJavaScript).
   const html = useMemo(

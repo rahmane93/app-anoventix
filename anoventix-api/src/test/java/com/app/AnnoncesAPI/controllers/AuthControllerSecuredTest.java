@@ -233,14 +233,14 @@ public class AuthControllerSecuredTest {
      */
     @Test
     public void testProtectedEndpointRequiresAuth() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/users"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/stats"))
             .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     /**
      * Vérifie qu'un endpoint protégé est accessible avec un JWT valide.
      * Note: Ce test vérifie l'authentification JWT fonctionne en vérifiant que l'on n'obtient pas un 401.
-     * L'endpoint /api/users nécessite un rôle ADMIN/MODERATEUR, mais on teste juste que le JWT est traité correctement.
+     * L'endpoint /api/admin/stats nécessite un rôle ADMIN/MODERATEUR, mais on teste juste que le JWT est traité correctement.
      */
     @Test
     public void testProtectedEndpointWithValidJWT() throws Exception {
@@ -250,7 +250,7 @@ public class AuthControllerSecuredTest {
         // Accès à un endpoint protégé avec JWT valide
         // Avec filtres de sécurité activés, on vérifie que le JWT est accepté (pas de 401)
         // On peut recevoir 403 (pas autorisé) ou 400 mais pas 401 (non authentifié)
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/users")
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/stats")
             .header("Authorization", "Bearer " + jwt))
             .andExpect(MockMvcResultMatchers.status().is4xxClientError())
             .andExpect(result -> {
@@ -266,7 +266,7 @@ public class AuthControllerSecuredTest {
      */
     @Test
     public void testProtectedEndpointWithInvalidJWT() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/users")
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/stats")
             .header("Authorization", "Bearer invalid_jwt_token"))
             .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
@@ -276,7 +276,7 @@ public class AuthControllerSecuredTest {
      */
     @Test
     public void testProtectedEndpointWithMalformedAuthHeader() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/users")
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/stats")
             .header("Authorization", "InvalidFormat token"))
             .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }

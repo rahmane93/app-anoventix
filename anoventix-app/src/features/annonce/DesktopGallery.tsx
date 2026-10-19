@@ -1,3 +1,4 @@
+import { photoMoyenne } from '@/src/api/annonce.api';
 import AppText from '@/src/components/AppText';
 import { colors, radius, spacing, typography, webShadow } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
@@ -40,10 +41,10 @@ export function DesktopGallery({
   medias,
   onOpen,
 }: {
-  medias: Pick<Media, 'id' | 'url'>[];
+  medias: Pick<Media, 'id' | 'url' | 'urlMoyenne'>[];
   onOpen: (index: number) => void;
 }) {
-  const urls = medias.map((m) => m.url);
+  const urls = medias.map(photoMoyenne);
 
   if (urls.length === 0) {
     return (

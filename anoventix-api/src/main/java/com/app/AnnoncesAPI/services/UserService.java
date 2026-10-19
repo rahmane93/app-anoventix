@@ -21,7 +21,6 @@ import com.app.AnnoncesAPI.payload.request.ValidationPieceIdentiteRequest;
  */
 public interface UserService {
 
-    org.springframework.data.domain.Page<UserDTO> getAllUsers(org.springframework.data.domain.Pageable pageable);
     UserDTO getUserById(UUID id);
     UserDTO getMyProfile(String username);
     UserDTO updateProfile(String username, UpdateProfileRequest request);

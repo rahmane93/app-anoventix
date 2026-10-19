@@ -7,6 +7,7 @@ import com.app.AnnoncesAPI.entities.Conversation;
 import com.app.AnnoncesAPI.entities.Message;
 import com.app.AnnoncesAPI.entities.User;
 import com.app.AnnoncesAPI.enums.MotifSignalementMessage;
+import com.app.AnnoncesAPI.enums.EtatConversation;
 import com.app.AnnoncesAPI.enums.StatutUtilisateur;
 import com.app.AnnoncesAPI.exceptions.ResourceNotFoundException;
 import com.app.AnnoncesAPI.exceptions.UnauthorizedActionException;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,13 +41,20 @@ public class MessagingServiceImpl implements MessagingService {
     private final AnnonceRepository annonceRepository;
     private final UserRepository userRepository;
     private final PushService push;
+    private final com.app.AnnoncesAPI.repositories.BlocageUtilisateurRepository blocages;
+
+    /** Limites d'envoi par compte et par 24 h (ECART-29) : au-delà, 429. */
+    static final int MESSAGES_PAR_JOUR = 300;
+    static final int CONVERSATIONS_PAR_JOUR = 20;
 
     public MessagingServiceImpl(
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             AnnonceRepository annonceRepository,
             UserRepository userRepository,
-            PushService push) {
+            PushService push,
+            com.app.AnnoncesAPI.repositories.BlocageUtilisateurRepository blocages) {
+        this.blocages = blocages;
         this.push = push;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
@@ -74,11 +83,23 @@ public class MessagingServiceImpl implements MessagingService {
             throw new IllegalStateException("Impossible de contacter ce vendeur : son compte n'est pas actif.");
         }
 
+        verifierNonBloque(currentUser, otherParticipant);
+
         Conversation existing = conversationRepository.findExistingConversation(
                         annonce.getId(), currentUser.getId(), otherParticipant.getId())
                 .orElse(null);
         if (existing != null) {
+            // Rouvrir une conversation archivée ou supprimée la ramène dans ma boîte.
+            if (existing.etatPour(currentUser.getId()) != EtatConversation.ACTIVE) {
+                existing.definirEtatPour(currentUser.getId(), EtatConversation.ACTIVE);
+                conversationRepository.save(existing);
+            }
             return toConversationDTO(existing, currentUser.getId());
+        }
+        if (conversationRepository.countByCreatedByIdAndCreatedAtAfter(currentUser.getId(),
+                LocalDateTime.now().minusDays(1)) >= CONVERSATIONS_PAR_JOUR) {
+            throw new com.app.AnnoncesAPI.exceptions.TooManyAttemptsException(
+                    "Vous avez ouvert beaucoup de conversations aujourd'hui. Réessayez demain.");
         }
 
         Conversation conversation = new Conversation();
@@ -103,9 +124,69 @@ public class MessagingServiceImpl implements MessagingService {
     @Override
     @Transactional(readOnly = true)
     public Page<ConversationDTO> getMyConversations(Authentication authentication, Pageable pageable) {
+        return getMyConversations(authentication, EtatConversation.ACTIVE, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ConversationDTO> getMyConversations(Authentication authentication, EtatConversation etat, Pageable pageable) {
+        if (etat == EtatConversation.SUPPRIMEE) {
+            throw new IllegalArgumentException("Les conversations supprimées ne sont pas listées.");
+        }
         User currentUser = getCurrentUser(authentication);
-        return conversationRepository.findByParticipant(currentUser.getId(), pageable)
+        return conversationRepository.findByParticipantEtEtat(currentUser.getId(), etat, pageable)
                 .map(conversation -> toConversationDTO(conversation, currentUser.getId()));
+    }
+
+    @Override
+    public void changerEtat(Long conversationId, EtatConversation etat, Authentication authentication) {
+        User currentUser = getCurrentUser(authentication);
+        Conversation conversation = getConversationForParticipant(conversationId, currentUser.getId());
+        conversation.definirEtatPour(currentUser.getId(), etat);
+        conversationRepository.save(conversation);
+    }
+
+    @Override
+    public void bloquer(UUID userId, Authentication authentication) {
+        User currentUser = getCurrentUser(authentication);
+        if (currentUser.getId().equals(userId)) {
+            throw new IllegalArgumentException("Vous ne pouvez pas vous bloquer vous-même.");
+        }
+        User cible = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable."));
+        if (cible.isAdministrateur() || cible.isModerateur()) {
+            throw new IllegalArgumentException("Ce compte ne peut pas être bloqué.");
+        }
+        if (!blocages.existsByBloqueurIdAndBloqueId(currentUser.getId(), userId)) {
+            com.app.AnnoncesAPI.entities.BlocageUtilisateur b = new com.app.AnnoncesAPI.entities.BlocageUtilisateur();
+            b.setBloqueur(currentUser);
+            b.setBloque(cible);
+            blocages.save(b);
+        }
+    }
+
+    @Override
+    public void debloquer(UUID userId, Authentication authentication) {
+        blocages.deleteByBloqueurIdAndBloqueId(getCurrentUser(authentication).getId(), userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UtilisateurBloque> mesBlocages(Authentication authentication) {
+        return blocages.findByBloqueurIdOrderByDateBlocageDesc(getCurrentUser(authentication).getId()).stream()
+                .map(b -> new UtilisateurBloque(b.getBloque().getId(), buildFullName(b.getBloque()),
+                        b.getBloque().getPhotoProfil(), b.getDateBlocage()))
+                .toList();
+    }
+
+    /** Écrire à quelqu'un qu'on a bloqué, ou qui nous a bloqué, est refusé (message neutre dans le second cas). */
+    private void verifierNonBloque(User expediteur, User destinataire) {
+        if (blocages.existsByBloqueurIdAndBloqueId(expediteur.getId(), destinataire.getId())) {
+            throw new IllegalStateException("Vous avez bloqué cet utilisateur : débloquez-le pour lui écrire.");
+        }
+        if (blocages.existsByBloqueurIdAndBloqueId(destinataire.getId(), expediteur.getId())) {
+            throw new UnauthorizedActionException("Vous ne pouvez pas écrire à cet utilisateur.");
+        }
     }
 
     @Override
@@ -129,6 +210,20 @@ public class MessagingServiceImpl implements MessagingService {
     public MessageDTO sendMessage(Long conversationId, SendMessageRequest request, Authentication authentication) {
         User currentUser = getCurrentUser(authentication);
         Conversation conversation = getConversationForParticipant(conversationId, currentUser.getId());
+
+        User destinataire = getOtherParticipant(conversation, currentUser.getId());
+        if (destinataire.getStatut() != StatutUtilisateur.ACTIF) {
+            throw new IllegalStateException("Cet utilisateur n'est plus joignable.");
+        }
+        verifierNonBloque(currentUser, destinataire);
+        if (messageRepository.countBySenderIdAndCreatedAtAfter(currentUser.getId(), LocalDateTime.now().minusDays(1))
+                >= MESSAGES_PAR_JOUR) {
+            throw new com.app.AnnoncesAPI.exceptions.TooManyAttemptsException(
+                    "Vous avez atteint la limite de messages pour aujourd'hui. Réessayez demain.");
+        }
+        // Un nouveau message remet la conversation dans la boîte de chacun, archivée ou masquée comprise.
+        conversation.setEtatParticipantOne(EtatConversation.ACTIVE);
+        conversation.setEtatParticipantTwo(EtatConversation.ACTIVE);
 
         Message message = new Message();
         message.setConversation(conversation);
@@ -160,23 +255,6 @@ public class MessagingServiceImpl implements MessagingService {
         push.notifier(destinataire.getId(), "Nouveau message",
                 "Nouveau message de " + prenom + " à propos de « " + conversation.getAnnonce().getTitre() + " »",
                 java.util.Map.of("type", "message", "conversationId", conversation.getId()));
-    }
-
-    @Override
-    public MessageDTO markMessageAsRead(Long messageId, Authentication authentication) {
-        User currentUser = getCurrentUser(authentication);
-        Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message non trouvé avec l'ID: " + messageId));
-
-        Conversation conversation = getConversationForParticipant(message.getConversation().getId(), currentUser.getId());
-        if (message.getSender().getId().equals(currentUser.getId())) {
-            return toMessageDTO(message, currentUser.getId());
-        }
-        if (message.getReadAt() == null) {
-            message.setReadAt(LocalDateTime.now());
-            messageRepository.save(message);
-        }
-        return toMessageDTO(message, currentUser.getId());
     }
 
     @Override
@@ -252,7 +330,25 @@ public class MessagingServiceImpl implements MessagingService {
                 .createdAt(conversation.getCreatedAt())
                 .updatedAt(conversation.getUpdatedAt())
                 .lastMessageAt(conversation.getLastMessageAt())
+                .etat(conversation.etatPour(currentUserId))
+                .bloqueParMoi(blocages.existsByBloqueurIdAndBloqueId(currentUserId, otherParticipant.getId()))
+                .ecriturePossible(motifEcritureImpossible(currentUserId, otherParticipant) == null)
+                .ecritureImpossibleMotif(motifEcritureImpossible(currentUserId, otherParticipant))
                 .build();
+    }
+
+    /** Pourquoi on ne peut pas écrire dans cette conversation (null = possible). */
+    private String motifEcritureImpossible(UUID moi, User autre) {
+        if (autre.getStatut() != StatutUtilisateur.ACTIF) {
+            return "Cet utilisateur n'est plus joignable.";
+        }
+        if (blocages.existsByBloqueurIdAndBloqueId(moi, autre.getId())) {
+            return "Vous avez bloqué cet utilisateur.";
+        }
+        if (blocages.existsByBloqueurIdAndBloqueId(autre.getId(), moi)) {
+            return "Vous ne pouvez pas écrire à cet utilisateur.";
+        }
+        return null;
     }
 
     private static final String MSG_SUPPRIME = "[Message supprimé par la modération]";

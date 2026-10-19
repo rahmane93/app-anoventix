@@ -17,4 +17,13 @@ public interface AvertissementRepository extends JpaRepository<Avertissement, Lo
     List<Avertissement> findByUtilisateurId(@Param("userId") UUID userId);
 
     long countByUtilisateurId(UUID userId);
+
+    /** Avertissements qui comptent encore : non levés et émis après {@code depuis} (ECART-24). */
+    long countByUtilisateurIdAndDateLeveeIsNullAndDateAfter(UUID userId, java.time.LocalDateTime depuis);
+
+    /** Nombre d'avertissements en vigueur d'un compte (ni levés, ni expirés). */
+    default long countEnVigueur(UUID userId) {
+        return countByUtilisateurIdAndDateLeveeIsNullAndDateAfter(userId,
+                java.time.LocalDateTime.now().minusMonths(Avertissement.VALIDITE_MOIS));
+    }
 }

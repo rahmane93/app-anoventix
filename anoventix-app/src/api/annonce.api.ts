@@ -26,9 +26,25 @@ export function normalizeMediaUrls(item: BienImmo): BienImmo {
     ...item,
     statutModeration:
       item.motifCloture != null && item.statutModeration === 'PUBLIEE' ? 'CLOTUREE' : item.statutModeration,
-    medias: (item.medias ?? []).map((m) => ({ ...m, url: buildMediaUrl(m.url) })),
+    medias: (item.medias ?? []).map(urlsAbsolues),
   };
 }
+
+/** URL absolues d'une photo et de ses variantes. */
+export function urlsAbsolues<T extends { url: string; urlMiniature?: string | null; urlMoyenne?: string | null }>(m: T): T {
+  return {
+    ...m,
+    url: buildMediaUrl(m.url),
+    urlMiniature: m.urlMiniature ? buildMediaUrl(m.urlMiniature) : null,
+    urlMoyenne: m.urlMoyenne ? buildMediaUrl(m.urlMoyenne) : null,
+  };
+}
+
+/** Miniature pour les listes et les cartes, repli sur la photo d'origine. */
+export const vignette = (m: { url: string; urlMiniature?: string | null }): string => m.urlMiniature || m.url;
+
+/** Version moyenne pour la fiche, repli sur la photo d'origine. */
+export const photoMoyenne = (m: { url: string; urlMoyenne?: string | null }): string => m.urlMoyenne || m.url;
 
 // ─── Annonce API ──────────────────────────────────────────────────────────────
 
@@ -126,6 +142,18 @@ export const addBienImmoMedias = async (
 };
 
 /**
+ * Nouvel ordre des photos (tous les identifiants) ; la première devient la photo principale.
+ * Endpoint : PUT /api/biens-immo/{id}/medias/ordre
+ */
+export const reordonnerBienImmoMedias = async (id: number, mediaIds: number[]): Promise<void> => {
+  try {
+    await apiClient.put(`/api/biens-immo/${id}/medias/ordre`, { mediaIds });
+  } catch (err) {
+    rethrowApiError(err, "Impossible de modifier l'ordre des photos.");
+  }
+};
+
+/**
  * Supprime un média par son ID.
  * Endpoint : DELETE /api/biens-immo/{id}/medias/{mediaId}
  */
@@ -205,6 +233,21 @@ export const filterAnnonces = async (
   const data = (res.data.data ?? []).map(normalizeMediaUrls);
   return { ...res.data, data };
 };
+
+/** Modification enregistrée sur une annonce (propriétaire, modération). */
+export interface HistoriqueAnnonce {
+  id: number;
+  annonceId: number;
+  champ: string;
+  ancienneValeur: string | null;
+  nouvelleValeur: string | null;
+  modifiePar: string | null;
+  dateModification: string;
+}
+
+/** Historique d'une annonce : propriétaire, son professionnel, ou modération (ECART-30). */
+export const getHistoriqueAnnonce = async (id: number): Promise<HistoriqueAnnonce[]> =>
+  (await apiClient.get<HistoriqueAnnonce[]>(`/api/biens-immo/${id}/historique`)).data;
 
 /**
  * Récupère une annonce par son ID.
@@ -301,6 +344,10 @@ export const getAnnoncesNearby = async (
   qs.set('lat', String(params.lat));
   qs.set('lng', String(params.lng));
   if (params.rayon != null) qs.set('rayon', String(params.rayon));
+  if (params.typeAnnonce) qs.set('typeAnnonce', params.typeAnnonce);
+  if (params.typeBien) qs.set('typeBien', params.typeBien);
+  if (params.prixMin != null) qs.set('prixMin', String(params.prixMin));
+  if (params.prixMax != null) qs.set('prixMax', String(params.prixMax));
   qs.set('page', String(params.page ?? 0));
   qs.set('size', String(params.size ?? 10));
 

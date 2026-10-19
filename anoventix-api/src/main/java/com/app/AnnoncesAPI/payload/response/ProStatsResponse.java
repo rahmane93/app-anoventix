@@ -15,6 +15,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProStatsResponse {
 
+    /**
+     * Périmètre du portefeuille et de la visibilité : ENTREPRISE (le professionnel et ses agents) ou PERSONNEL
+     * (le compte seul : agent, particulier, professionnel sans entreprise). ECART-50.
+     */
+    private String perimetre;
     private PortefeuilleStats portefeuille;
     private VisibiliteStats visibilite;
     private MessagerieStats messagerie;
@@ -113,6 +118,8 @@ public class ProStatsResponse {
         private int quotaMax;
         private int annoncesRestantes;
         private boolean canCreateAnnonce;
+        /** Raison pour laquelle la publication est impossible (pièce, masquage, entreprise, quota, licence), sinon null. */
+        private String motifPublicationImpossible;
         /** quotaMax = annonces gratuites (mode licence actif, pas de licence valide) au lieu du quota entreprise. */
         private boolean limiteParLicence;
     }

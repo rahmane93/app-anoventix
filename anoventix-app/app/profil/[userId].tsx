@@ -2,7 +2,7 @@ import { annonceHref } from '@/src/lib/annonce-url';
 import { goBackOr } from '@/src/lib/navigation';
 import { webColumnStyle } from '@/src/lib/responsive';
 import { LIST_PERF_PROPS } from '@/src/constants/list';
-import { buildMediaUrl } from '@/src/api/annonce.api';
+import { buildMediaUrl, vignette } from '@/src/api/annonce.api';
 
 import { getProfilPublic, type ProfilPublic } from '@/src/api/user.api';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
@@ -26,7 +26,7 @@ import { Button } from '@/src/components/ui/button';
 // ─── Mini carte annonce ───────────────────────────────────────────────────────
 
 function AnnonceItem({ item }: { item: BienImmo }) {
-  const cover = item.medias?.[0]?.url;
+  const cover = item.medias?.[0] ? vignette(item.medias[0]) : undefined;
   return (
     <TouchableOpacity
       style={s.annonceCard}

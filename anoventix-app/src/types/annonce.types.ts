@@ -9,6 +9,9 @@ export interface Localisation {
   typeCommune?: string;
   /** Entrée « Autre quartier » : l'annonce s'affiche avec sa commune seule (DEC-22). */
   technique?: boolean;
+  /** Point de référence du quartier, pour centrer la carte (ECART-45). */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // ─── Enums Annonce ────────────────────────────────────────────────────────────
@@ -59,6 +62,10 @@ export interface Media {
   url: string;
   typeMime: string;
   ordre: number;
+  /** Miniature d'environ 400 px (listes, cartes) ; absente d'une photo ancienne (ECART-55). */
+  urlMiniature?: string | null;
+  /** Version d'environ 1080 px (fiche) ; absente d'une photo ancienne. */
+  urlMoyenne?: string | null;
 }
 
 // ─── Annonceur (info publique de l'auteur) ────────────────────────────────────
@@ -220,6 +227,11 @@ export interface NearbyParams {
   lat: number;
   lng: number;
   rayon?: number; // km, défaut backend
+  /** Filtres appliqués par l'API avant la pagination (ECART-33). */
+  typeAnnonce?: TypeAnnonce;
+  typeBien?: TypeBien;
+  prixMin?: number;
+  prixMax?: number;
   page?: number;
   size?: number;
 }

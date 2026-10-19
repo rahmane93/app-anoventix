@@ -172,9 +172,6 @@ public class User {
 
     /** Délai pendant lequel un compte supprimé par son propriétaire reste réactivable. */
     public static final int DELAI_GRACE_SUPPRESSION_JOURS = 30;
-    @Column(name = "nb_avertissements", nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    // int (et non long) : la colonne est un INTEGER en base, sinon ddl-auto=validate échoue.
-    private int nbAvertissements;
 
     // --- Masquage système (administrateur) ---
     /**

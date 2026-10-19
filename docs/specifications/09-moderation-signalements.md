@@ -80,10 +80,10 @@ Hors périmètre (non implémenté) : modération avant publication et détectio
 
 | ID | Règle | Source |
 |---|---|---|
-| RG-09-21 | Avertissement : motif obligatoire (≤ 200 caractères). Le **niveau dépend du rang** : 1er LÉGER, 2e MODÉRÉ, 3e et suivants GRAVE, sans expiration. Motifs proposés : annonces non conformes, comportement abusif, fraude avérée, avertissements répétés, ou texte libre. | `AdminServiceImpl.java:417-460` |
-| RG-09-22 | Au niveau GRAVE, un compte qui n'est pas déjà SUSPENDU est **suspendu automatiquement** (« Suspension automatique suite à N avertissements. »). | idem |
+| RG-09-21 | Avertissement : motif obligatoire (≤ 200 caractères). 🆕 (DEC-33) Un avertissement **compte pendant 6 mois** ; le niveau proposé suit le rang parmi les avertissements **en vigueur** (ni expirés, ni levés) : 1er LÉGER, 2e MODÉRÉ, 3e et suivants GRAVE. Le modérateur peut **choisir le niveau** (GRAVE d'emblée pour une fraude avérée). Motifs proposés : annonces non conformes, comportement abusif, fraude avérée, avertissements répétés, ou texte libre. | `AdminServiceImpl.emettreAvertissement` |
+| RG-09-22 | Au niveau GRAVE (rang ou choix), un compte qui n'est pas déjà SUSPENDU est **suspendu automatiquement** (« Suspension automatique suite à N avertissements. » ou « Suspension suite à un avertissement grave : motif »). | idem |
 | RG-09-23 | Interdits : s'avertir soi-même, avertir un administrateur ; seul un administrateur avertit un modérateur. | idem |
-| RG-09-24 | L'utilisateur averti **n'est pas prévenu** (pas d'email) ; il voit le nombre d'avertissements sur son profil et son tableau de bord (ECART-24). | — |
+| RG-09-24 | 🆕 L'utilisateur averti est **prévenu par email** (E22) : niveau, motif, durée de validité et, le cas échéant, suspension. Il voit le nombre d'avertissements **en vigueur** sur son profil et son tableau de bord. Un **administrateur** peut **lever** un avertissement émis par erreur, avec un motif : il ne compte plus, reste dans l'historique et le journal d'audit (`AVERTISSEMENT_LEVE`) ; une suspension éventuelle n'est pas levée pour autant. | `AdminServiceImpl.leverAvertissement` |
 | RG-09-25 | Changement de statut (ACTIF, SUSPENDU, INACTIF ; EN_ATTENTE_ACTIVATION n'est pas filtré) avec un motif facultatif ; interdit sur un administrateur, et sur un modérateur sauf par un administrateur. Toute décision annule une suppression RGPD en cours. Pas d'email au titulaire. Le titulaire perd l'accès dès sa requête suivante (module 01, RG-01-28), mais **ses annonces ne sont pas modifiées et restent visibles du public** ; il en va de même pour la suspension automatique de RG-09-22 (ECART-52). | `UserServiceImpl.java:310-329` |
 | RG-09-27 | Une suspension n'a **pas de durée** : elle dure jusqu'à sa levée manuelle. Le motif est facultatif et le titulaire n'est pas prévenu (module 01, RG-01-31). | `UserServiceImpl.java:310-329` |
 | RG-09-28 | **Aucune voie de recours** : un propriétaire dont l'annonce est masquée ou rejetée, ou un compte suspendu, ne peut que contacter le support par email ; aucune demande de réexamen n'est tracée (ECART-03). | `APP/app/annonce/[id].tsx` (bandeau propriétaire) |
@@ -99,8 +99,8 @@ Hors périmètre (non implémenté) : modération avant publication et détectio
 
 | Sanction | Qui | Accès du titulaire | Annonces visibles | Publication / modification | Email au titulaire | Levée |
 |---|---|---|---|---|---|---|
-| Avertissement (1er, 2e) | Modération | ✅ | ✅ | ✅ | ❌ (ECART-24) | Aucune (sans expiration) |
-| Avertissement (3e et suivants) | Modération | ❌ suspension automatique | ✅ (ECART-52) | ❌ (pas d'accès) | ❌ | Levée de la suspension |
+| Avertissement (1er, 2e) | Modération | ✅ | ✅ | ✅ | ✅ (E22) | Expiration après 6 mois ; levée par un administrateur |
+| Avertissement GRAVE (3e en 6 mois, ou choisi) | Modération | ❌ suspension automatique | ❌ (DEC-01) | ❌ (pas d'accès) | ✅ (E22) | Levée de la suspension |
 | Masquage / rejet d'une annonce | Modération | ✅ | ❌ pour cette annonce | Annonce non modifiable (ECART-03) | ✅ (E6, E7) | Modération (« remettre en ligne ») |
 | Suspension du compte | Modération | ❌ | ✅ (ECART-52) | ❌ | ❌ | Modération |
 | Désactivation du compte (INACTIF) | Modération | ❌ (non réactivable par le titulaire) | ✅ (ECART-52) | ❌ | ❌ | Modération |
@@ -195,7 +195,7 @@ ECART-03, ECART-17, ECART-24, ECART-26, ECART-27, ECART-29, ECART-35 (aucune mod
 > **Arbitrages du 17/10/2026** (registre : [SFG §17](00-SFG-vue-ensemble.md)) : Q1 → DEC-01 ; Q3 → DEC-09 pour les annonces (le recours d'un compte suspendu reste ouvert) ; Q4 → DEC-11 (seuil : 3 signalements).
 
 1. Une suspension doit-elle masquer automatiquement les annonces du compte (99 §7, question 11) ?
-2. Faut-il des suspensions temporaires (7 jours, 30 jours) et une expiration des avertissements (ECART-24) ?
+2. Faut-il des suspensions temporaires (7 jours, 30 jours) ? (L'expiration des avertissements est tranchée par DEC-33 : 6 mois.)
 3. Faut-il une procédure de recours : demande de réexamen depuis l'annonce masquée ou depuis l'écran de connexion d'un compte suspendu ?
 4. À partir de combien de signalements « arnaque / fraude » une annonce doit-elle être masquée automatiquement en attendant la décision ?
 5. Quels délais de traitement viser pour les signalements et les messages signalés, et qui les suit ?

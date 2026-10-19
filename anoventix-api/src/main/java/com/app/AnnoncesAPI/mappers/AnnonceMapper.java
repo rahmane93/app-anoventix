@@ -72,6 +72,8 @@ public interface AnnonceMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "annonce", ignore = true)
     Media mediaToEntity(MediaDTO mediaDTO);
+    @Mapping(target = "urlMiniature", expression = "java(com.app.AnnoncesAPI.services.media.VariantesPhoto.url(media.getUrl(), media.isVariantes(), com.app.AnnoncesAPI.services.media.VariantesPhoto.MINIATURE))")
+    @Mapping(target = "urlMoyenne", expression = "java(com.app.AnnoncesAPI.services.media.VariantesPhoto.url(media.getUrl(), media.isVariantes(), com.app.AnnoncesAPI.services.media.VariantesPhoto.MOYENNE))")
     MediaDTO mediaToDTO(Media media);
 
     // Convertir une BienImmoRequest en entité BienImmo (création)

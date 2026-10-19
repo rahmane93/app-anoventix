@@ -115,6 +115,14 @@ function AnnonceItem({ item }: { item: AdminAnnonce }) {
           <AppText style={s.ownerLink} numberOfLines={1}>{item.proprietaireNom ?? item.proprietaireEmail ?? item.proprietaireId}</AppText>
         </TouchableOpacity>
         <Button
+          title="Historique"
+          variant="outline"
+          size="sm"
+          fullWidth={false}
+          onPress={() => router.push({ pathname: '/annonce-historique/[id]', params: { id: String(item.id), titre: item.titre } })}
+          accessibilityLabel={`Historique de l'annonce ${item.titre}`}
+        />
+        <Button
           title={item.actif ? 'Désactiver' : 'Activer'}
           variant={item.actif ? 'dangerOutline' : 'outline'}
           size="sm"

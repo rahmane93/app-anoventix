@@ -1,3 +1,4 @@
+import { photoMoyenne } from '@/src/api/annonce.api';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +23,7 @@ export function ImageCarousel({
   onFav,
   onImagePress,
 }: {
-  medias: Pick<Media, 'id' | 'url'>[];
+  medias: Pick<Media, 'id' | 'url' | 'urlMoyenne'>[];
   onBack: () => void;
   onShare: () => void;
   isFav: boolean;
@@ -33,7 +34,7 @@ export function ImageCarousel({
   const { screenW: SCREEN_W, imgHeight: IMG_HEIGHT } = useScreenDims();
   const scrollRef = useRef<ScrollView>(null);
 
-  const urls = medias.map((m) => m.url);
+  const urls = medias.map(photoMoyenne);
   // Photo supprimée pendant l'affichage : l'index est ramené dans les bornes
   // par calcul, et l'effet ne fait que recaler le défilement.
   const activeIndex = Math.min(indexChoisi, Math.max(0, urls.length - 1));

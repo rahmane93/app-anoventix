@@ -1,6 +1,7 @@
 package com.app.AnnoncesAPI.repositories;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,10 +42,6 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
          + "ORDER BY COUNT(b) DESC, l.commune ASC")
     List<com.app.AnnoncesAPI.dto.ZoneActiveDTO> findZonesActives(Pageable pageable);
 
-    /** Annonces visibles d'un quartier. */
-    @Query("SELECT b FROM BienImmo b WHERE b.localisation.id = :localisationId AND b.visiblePublic = true")
-    Page<BienImmo> findByLocalisationId(@Param("localisationId") String localisationId, Pageable pageable);
-
     /** Vue propriétaire : toutes ses annonces non supprimées (actif=true), quel que soit le statut. */
     Page<BienImmo> findByOwnerIdAndActifTrue(UUID ownerId, Pageable pageable);
 
@@ -66,43 +63,25 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     @Query("SELECT b FROM BienImmo b WHERE b.owner.id = :ownerId AND b.actif = true")
     List<BienImmo> findActiveByOwnerId(@Param("ownerId") UUID ownerId);
 
-    /** Annonces visibles dont la surface >= minSurface. */
-    @Query("SELECT b FROM BienImmo b WHERE b.surfaceTotal >= :minSurface AND b.visiblePublic = true")
-    Page<BienImmo> findBySurfaceTotalGreaterThanEqualAndActifTrue(@Param("minSurface") Double minSurface, Pageable pageable);
+    /** Nombre maximal d'identifiants renvoyés pour combiner le texte aux autres filtres (borne la mémoire). */
+    int PLEIN_TEXTE_MAX_COMBINE = 2000;
 
-    /** Recherche par mot-clé simple (LIKE) — annonces visibles uniquement. */
-    @Query("SELECT b FROM BienImmo b WHERE b.visiblePublic = true AND " +
-           "(LOWER(b.titre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(b.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<BienImmo> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
-
-    /**
-     * Recherche plein texte PostgreSQL sur les annonces visibles — retourne les IDs triés
-     * par pertinence (pas les entités, à cause du mapping clazz_ de l'héritage JOINED).
-     * Le texte indexé couvre le titre, la description, le type de bien et la localisation
-     * (quartier, commune, préfecture, région) ; accents ignorés des deux côtés (ECART-57).
-     */
+    /** Les meilleurs résultats du texte (au plus {@link #PLEIN_TEXTE_MAX_COMBINE}), pour les combiner aux filtres. */
     @Query(value = """
             SELECT a.id FROM annonce a
             INNER JOIN bien_immo b ON b.annonce_id = a.id
-            LEFT JOIN localisation l ON l.id = a.localisation_id
-            CROSS JOIN LATERAL (SELECT to_tsvector('french', unaccent(
-                coalesce(a.titre, '') || ' ' ||
-                coalesce(a.description, '') || ' ' ||
-                coalesce(a.type_bien, '') || ' ' ||
-                coalesce(l.quartier, '') || ' ' ||
-                coalesce(l.commune, '') || ' ' ||
-                coalesce(l.prefecture, '') || ' ' ||
-                coalesce(l.region, '')
-            )) AS doc) t
             WHERE a.visible_public
-              AND t.doc @@ plainto_tsquery('french', unaccent(:query))
-            ORDER BY ts_rank(t.doc, plainto_tsquery('french', unaccent(:query))) DESC
+              AND a.recherche_doc @@ plainto_tsquery('french', unaccent(:query))
+            ORDER BY ts_rank(a.recherche_doc, plainto_tsquery('french', unaccent(:query))) DESC, a.id DESC
+            LIMIT 2000
             """, nativeQuery = true)
     List<Long> findIdsByFullTextSearch(@Param("query") String query);
 
     /** Compte les biens actifs. */
     long countByActifTrue();
+
+    /** Annonces visibles du public : la définition unique de « annonce active » pour les statistiques (ECART-27). */
+    long countByVisiblePublicTrue();
 
     /** Compte les annonces par statut de modération. */
     long countByStatutModeration(StatutAnnonce statut);
@@ -134,12 +113,16 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
             @Param("q") String q,
             Pageable pageable);
 
-    /** Annonces similaires visibles : même typeBien, même commune, prix dans l'intervalle, sans l'annonce courante. */
+    /**
+     * Annonces similaires visibles : même typeBien, même commune (de la même préfecture : plusieurs communes portent
+     * le même nom, ECART-59), prix dans l'intervalle, sans l'annonce courante.
+     */
     @Query("""
             SELECT b FROM BienImmo b
             WHERE b.visiblePublic = true
               AND b.id <> :id
               AND b.typeBien = :typeBien
+              AND b.localisation.prefecture = :prefecture
               AND b.localisation.commune = :commune
               AND b.prix BETWEEN :prixMin AND :prixMax
             ORDER BY b.dateCreation DESC
@@ -147,6 +130,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     List<BienImmo> findSimilaires(
             @Param("id") Long id,
             @Param("typeBien") com.app.AnnoncesAPI.enums.TypeBien typeBien,
+            @Param("prefecture") String prefecture,
             @Param("commune") String commune,
             @Param("prixMin") java.math.BigDecimal prixMin,
             @Param("prixMax") java.math.BigDecimal prixMax,
@@ -178,20 +162,28 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     long countByOwnerIdAndStatutModeration(UUID ownerId, StatutAnnonce statut);
 
-    @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.owner.id = :ownerId AND b.motifCloture = :motif AND b.dateCloture >= :from")
-    long countCloturesByOwnerAndMotifSince(@Param("ownerId") UUID ownerId, @Param("motif") MotifCloture motif, @Param("from") LocalDateTime from);
+    // Périmètre du tableau de bord (ECART-50) : le compte seul, ou le professionnel et ses agents.
 
-    @Query("SELECT SUM(b.vueCount) FROM BienImmo b WHERE b.actif = true AND b.owner.id = :ownerId")
-    Long sumVueCountByOwnerId(@Param("ownerId") UUID ownerId);
+    @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.id IN :owners AND b.statutModeration = :statut")
+    long countEnLigneForOwners(@Param("owners") Collection<UUID> owners, @Param("statut") StatutAnnonce statut);
 
-    @Query("SELECT b FROM BienImmo b WHERE b.actif = true AND b.owner.id = :ownerId ORDER BY b.vueCount DESC")
-    List<BienImmo> findTopByVueCountForOwner(@Param("ownerId") UUID ownerId, Pageable pageable);
+    @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.owner.id IN :owners AND b.statutModeration = :statut")
+    long countByStatutForOwners(@Param("owners") Collection<UUID> owners, @Param("statut") StatutAnnonce statut);
 
-    @Query(value = "SELECT COUNT(*) FROM account_favoris af INNER JOIN annonce a ON a.id = af.annonce_id WHERE a.owner_id = :ownerId AND a.actif = true", nativeQuery = true)
-    long countTotalFavorisByOwnerId(@Param("ownerId") UUID ownerId);
+    @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.owner.id IN :owners AND b.motifCloture = :motif AND b.dateCloture >= :from")
+    long countCloturesForOwnersSince(@Param("owners") Collection<UUID> owners, @Param("motif") MotifCloture motif, @Param("from") LocalDateTime from);
 
-    @Query("SELECT b.typeAnnonce, COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.id = :ownerId GROUP BY b.typeAnnonce")
-    List<Object[]> countByTypeAnnonceForOwner(@Param("ownerId") UUID ownerId);
+    @Query("SELECT SUM(b.vueCount) FROM BienImmo b WHERE b.actif = true AND b.owner.id IN :owners")
+    Long sumVueCountForOwners(@Param("owners") Collection<UUID> owners);
+
+    @Query("SELECT b FROM BienImmo b WHERE b.actif = true AND b.owner.id IN :owners ORDER BY b.vueCount DESC")
+    List<BienImmo> findTopByVueCountForOwners(@Param("owners") Collection<UUID> owners, Pageable pageable);
+
+    @Query(value = "SELECT COUNT(*) FROM account_favoris af INNER JOIN annonce a ON a.id = af.annonce_id WHERE a.owner_id IN (:owners) AND a.actif = true", nativeQuery = true)
+    long countTotalFavorisForOwners(@Param("owners") Collection<UUID> owners);
+
+    @Query("SELECT b.typeAnnonce, COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.id IN :owners GROUP BY b.typeAnnonce")
+    List<Object[]> countByTypeAnnonceForOwners(@Param("owners") Collection<UUID> owners);
 
     @Query("SELECT b.owner.id, COUNT(b), SUM(b.vueCount) FROM BienImmo b WHERE b.actif = true AND b.owner.entreprise.id = :entrepriseId GROUP BY b.owner.id")
     List<Object[]> findAgentStatsByEntreprise(@Param("entrepriseId") UUID entrepriseId);
@@ -220,31 +212,57 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     Page<BienImmo> findByReexamenDemandeTrueOrderByDateReexamenAsc(Pageable pageable);
 
     /**
-     * Recherche géospatiale par rayon (Haversine) — retourne les IDs triés par distance.
-     * Utilise les colonnes {@code latitude}/{@code longitude} de la table {@code annonce}.
+     * Recherche géospatiale par rayon (Haversine) : identifiants triés par distance, une page à la fois, avec les
+     * filtres facultatifs de la recherche (type d'annonce, type de bien, prix). Paramètres nuls = pas de filtre.
      */
     @Query(value = """
-            SELECT a.id FROM annonce a
-            INNER JOIN bien_immo b ON b.annonce_id = a.id
-            WHERE a.visible_public
-              AND a.latitude  IS NOT NULL
-              AND a.longitude IS NOT NULL
-              AND (6371 * acos(LEAST(1.0,
-                    cos(radians(:lat))
-                    * cos(radians(CAST(a.latitude  AS double precision)))
-                    * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
-                    + sin(radians(:lat))
-                    * sin(radians(CAST(a.latitude  AS double precision)))
-                  ))) <= :rayonKm
-            ORDER BY (6371 * acos(LEAST(1.0,
-                    cos(radians(:lat))
-                    * cos(radians(CAST(a.latitude  AS double precision)))
-                    * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
-                    + sin(radians(:lat))
-                    * sin(radians(CAST(a.latitude  AS double precision)))
-                  ))) ASC
+            SELECT x.id FROM (
+              SELECT a.id,
+                     (6371 * acos(LEAST(1.0,
+                        cos(radians(:lat))
+                        * cos(radians(CAST(a.latitude  AS double precision)))
+                        * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
+                        + sin(radians(:lat))
+                        * sin(radians(CAST(a.latitude  AS double precision)))))) AS distance
+              FROM annonce a
+              INNER JOIN bien_immo b ON b.annonce_id = a.id
+              WHERE a.visible_public AND a.latitude IS NOT NULL AND a.longitude IS NOT NULL
+                AND (CAST(:typeAnnonce AS varchar) IS NULL OR a.type_annonce = CAST(:typeAnnonce AS varchar))
+                AND (CAST(:typeBien AS varchar) IS NULL OR a.type_bien = CAST(:typeBien AS varchar))
+                AND (CAST(:prixMin AS numeric) IS NULL OR a.prix >= CAST(:prixMin AS numeric))
+                AND (CAST(:prixMax AS numeric) IS NULL OR a.prix <= CAST(:prixMax AS numeric))
+            ) x
+            WHERE x.distance <= :rayonKm
+            ORDER BY x.distance ASC, x.id
+            LIMIT :limite OFFSET :decalage
             """, nativeQuery = true)
-    List<Long> findIdsByProximite(@Param("lat") double lat,
-                                  @Param("lng") double lng,
-                                  @Param("rayonKm") double rayonKm);
+    List<Long> findIdsByProximitePage(@Param("lat") double lat, @Param("lng") double lng,
+                                      @Param("rayonKm") double rayonKm,
+                                      @Param("typeAnnonce") String typeAnnonce, @Param("typeBien") String typeBien,
+                                      @Param("prixMin") java.math.BigDecimal prixMin,
+                                      @Param("prixMax") java.math.BigDecimal prixMax,
+                                      @Param("limite") int limite, @Param("decalage") long decalage);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM (
+              SELECT (6371 * acos(LEAST(1.0,
+                        cos(radians(:lat))
+                        * cos(radians(CAST(a.latitude  AS double precision)))
+                        * cos(radians(CAST(a.longitude AS double precision)) - radians(:lng))
+                        + sin(radians(:lat))
+                        * sin(radians(CAST(a.latitude  AS double precision)))))) AS distance
+              FROM annonce a
+              INNER JOIN bien_immo b ON b.annonce_id = a.id
+              WHERE a.visible_public AND a.latitude IS NOT NULL AND a.longitude IS NOT NULL
+                AND (CAST(:typeAnnonce AS varchar) IS NULL OR a.type_annonce = CAST(:typeAnnonce AS varchar))
+                AND (CAST(:typeBien AS varchar) IS NULL OR a.type_bien = CAST(:typeBien AS varchar))
+                AND (CAST(:prixMin AS numeric) IS NULL OR a.prix >= CAST(:prixMin AS numeric))
+                AND (CAST(:prixMax AS numeric) IS NULL OR a.prix <= CAST(:prixMax AS numeric))
+            ) x
+            WHERE x.distance <= :rayonKm
+            """, nativeQuery = true)
+    long countByProximite(@Param("lat") double lat, @Param("lng") double lng, @Param("rayonKm") double rayonKm,
+                          @Param("typeAnnonce") String typeAnnonce, @Param("typeBien") String typeBien,
+                          @Param("prixMin") java.math.BigDecimal prixMin,
+                          @Param("prixMax") java.math.BigDecimal prixMax);
 }

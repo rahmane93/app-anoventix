@@ -21,7 +21,6 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
 
     Optional<Annonce> findByIdAndActifTrue(Long id);
     
-    Page<Annonce> findByLocalisationId(String quartierId, Pageable pageable);
 
     // Trouver une annonce via la liste des localisations
     // Cette méthode permet de trouver des annonces qui sont associées à une ou plusieurs localisations
@@ -56,19 +55,19 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
     @Query("SELECT a.vueCount FROM Annonce a WHERE a.id = :id")
     Optional<Long> findVueCountById(@Param("id") Long id);
 
-    /** Nombre d'annonces actives par type de bien. Retourne [TypeBien, count]. */
-    @Query("SELECT a.typeBien, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.typeBien ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public (une seule définition de « active », ECART-27) par type de bien. Retourne [TypeBien, count]. */
+    @Query("SELECT a.typeBien, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.typeBien ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByTypeBien();
 
-    /** Nombre d'annonces actives par type d'annonce. Retourne [TypeAnnonce, count]. */
-    @Query("SELECT a.typeAnnonce, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.typeAnnonce ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public par type d'annonce. Retourne [TypeAnnonce, count]. */
+    @Query("SELECT a.typeAnnonce, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.typeAnnonce ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByTypeAnnonce();
 
-    /** Nombre d'annonces actives par région. Retourne [region, count]. */
-    @Query("SELECT a.localisation.region, COUNT(a) FROM Annonce a WHERE a.actif = true GROUP BY a.localisation.region ORDER BY COUNT(a) DESC")
+    /** Annonces visibles du public par région. Retourne [region, count]. */
+    @Query("SELECT a.localisation.region, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.localisation.region ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByRegion();
 
-    /** Évolution mensuelle des créations d'annonces sur les 12 derniers mois. Retourne [periode 'YYYY-MM', count]. */
+    /** Évolution mensuelle des créations d'annonces (toutes, quel que soit leur état) sur les 12 derniers mois. Retourne [periode 'YYYY-MM', count]. */
     @Query(value = """
             SELECT TO_CHAR(DATE_TRUNC('month', date_creation), 'YYYY-MM') AS periode,
                    COUNT(*) AS count
@@ -78,20 +77,4 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
             ORDER BY DATE_TRUNC('month', date_creation) ASC
             """, nativeQuery = true)
     java.util.List<Object[]> countByMoisSur12Mois();
-
-    /**
-     * Recherche textuelle dans titre, description et type_bien.
-     * Utilise JPQL (pas de requête native) pour éviter les problèmes de
-     * discriminateur clazz_ avec l'héritage JOINED.
-     */
-    @Query("""
-            SELECT a FROM BienImmo a
-            WHERE a.actif = true
-              AND (
-                LOWER(a.titre)       LIKE LOWER(CONCAT('%', :query, '%'))
-                OR LOWER(a.description) LIKE LOWER(CONCAT('%', :query, '%'))
-              )
-            ORDER BY a.dateCreation DESC
-            """)
-    Page<Annonce> naturalLanguageSearch(@Param("query") String query, Pageable pageable);
 }

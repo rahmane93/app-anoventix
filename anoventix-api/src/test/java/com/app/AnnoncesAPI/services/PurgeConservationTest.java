@@ -283,7 +283,7 @@ class PurgeConservationTest {
             l.setRegion("Conakry");
             l.setPrefecture("Conakry");
             l.setCommune("Matam");
-            l.setQuartier("Taouyah");
+            l.setQuartier("Taouyah (PurgeConservationTest)");
             return localisationRepository.save(l);
         });
         BienImmo b = new BienImmo();

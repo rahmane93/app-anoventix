@@ -125,6 +125,11 @@ public class QuartierDemandeService {
             throw new IllegalArgumentException("Le nom du quartier ne peut pas dépasser " + NOM_MAX + " caractères.");
         }
         Localisation technique = d.getLocalisation();
+        localisations.trouverQuartier(technique.getRegion(), technique.getPrefecture(), technique.getCommune(), nom)
+                .ifPresent(existant -> {
+                    throw new IllegalStateException("Le quartier « " + existant.getQuartier()
+                            + " » existe déjà dans cette commune : rattachez la demande à ce quartier.");
+                });
         Localisation nouveau = new Localisation();
         nouveau.setId(UUID.randomUUID().toString());
         nouveau.setRegion(technique.getRegion());

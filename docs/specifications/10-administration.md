@@ -6,7 +6,7 @@
 
 Fournir aux modérateurs et aux administrateurs un espace de pilotage intégré à l'application (onglet « Administration », barre latérale sur ordinateur) : tableau de bord des tâches en attente, gestion des utilisateurs, des rôles, des entreprises et des annonces, et réglages de la plateforme. Les décisions de modération sont détaillées au module 09, les licences et quotas au module 08, les localisations au module 05.
 
-Hors périmètre (non implémenté) : journal d'audit consultable (ECART-63) ; écran des statistiques avancées (ECART-30) ; exports CSV ; création d'un second administrateur ; double authentification du staff (ECART-64) ; réglage dans l'app des paramètres serveur (durée de validité des annonces, annonces gratuites : SFG §13) ; envoi d'un message ou d'un email à un utilisateur ; gestion des pages légales (CGU, confidentialité).
+Hors périmètre (non implémenté) : journal d'audit consultable (ECART-63) ; exports CSV ; création d'un second administrateur ; double authentification du staff (ECART-64) ; réglage dans l'app des paramètres serveur (durée de validité des annonces, annonces gratuites : SFG §13) ; envoi d'un message ou d'un email à un utilisateur ; gestion des pages légales (CGU, confidentialité).
 
 ## 2. Accès
 
@@ -17,7 +17,7 @@ Hors périmètre (non implémenté) : journal d'audit consultable (ECART-63) ; �
 | Utilisateurs (liste, fiche, statut, avertissements, pièce) | ✅ | ✅ |
 | Utilisateurs : rôles, suppression, masquage des annonces | ❌ (refusé par l'API) | ✅ |
 | Entreprises (liste, fiche, agents) | ✅ en lecture et suspension d'agents | ✅ + désactiver, réactiver, quotas propres |
-| Localisations | visible, mais écriture refusée par l'API (ECART-45) | ✅ |
+| Localisations | ❌ (écran réservé à l'administrateur, ECART-45) | ✅ |
 | Quotas, Licences | ❌ (masqués) | ✅ |
 
 Garde d'accès : `app/(tabs)/administration/_layout.tsx` (redirection si l'utilisateur n'est ni modérateur ni administrateur) ; côté API, `@PreAuthorize` sur chaque endpoint.
@@ -33,7 +33,7 @@ Garde d'accès : `app/(tabs)/administration/_layout.tsx` (redirection si l'utili
 | US-10-05 | En tant qu'administrateur, je supprime définitivement un compte (et, pour un professionnel, son entreprise et ses agents). |
 | US-10-06 | En tant que modérateur, je recherche une annonce (titre, référence, propriétaire) et je filtre par statut et par clôture. |
 | US-10-07 | En tant que modérateur, je consulte la liste des entreprises et leur fiche (propriétaire, agents, quotas, statut). |
-| US-10-08 | En tant qu'administrateur, je consulte des statistiques avancées (pas d'écran aujourd'hui : ECART-30). |
+| US-10-08 | En tant qu'administrateur, je consulte des statistiques avancées (écran « Statistiques » : annonces créées sur 12 mois, répartitions par région, type de bien et type d'annonce). |
 
 ## 4. Règles de gestion
 

@@ -29,6 +29,16 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     Page<Conversation> findByParticipant(@Param("userId") UUID userId, Pageable pageable);
 
+    /** Conversations d'un participant dans un état donné (sa boîte, ses archives) ; les supprimées n'y figurent jamais. */
+    @Query("""
+            SELECT c FROM Conversation c
+            WHERE (c.participantOne.id = :userId AND c.etatParticipantOne = :etat)
+               OR (c.participantTwo.id = :userId AND c.etatParticipantTwo = :etat)
+            """)
+    Page<Conversation> findByParticipantEtEtat(@Param("userId") UUID userId,
+                                               @Param("etat") com.app.AnnoncesAPI.enums.EtatConversation etat,
+                                               Pageable pageable);
+
     @Query("""
             SELECT c FROM Conversation c
             WHERE c.id = :conversationId
@@ -36,6 +46,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     Optional<Conversation> findByIdForParticipant(@Param("conversationId") Long conversationId,
                                                   @Param("userId") UUID userId);
+
+    /** Conversations ouvertes par un compte depuis une date (limite d'ouverture, ECART-29). */
+    long countByCreatedByIdAndCreatedAtAfter(UUID userId, java.time.LocalDateTime depuis);
 
     @Query("""
             SELECT COUNT(c) > 0 FROM Conversation c
