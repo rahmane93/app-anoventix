@@ -48,7 +48,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Retrait d'un agent : ses annonces et ses conversations passent à l'agence (ECART-16). */
+/** Retrait d'un agent : ses annonces et ses conversations passent à l'agence (DEC-34). */
 @SpringBootTest
 class RetraitAgentTest {
 

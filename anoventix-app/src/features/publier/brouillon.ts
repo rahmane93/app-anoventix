@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * Brouillon de l'assistant de publication, rangé par compte (ECART-56) : sur un
+ * Brouillon de l'assistant de publication, rangé par compte : sur un
  * appareil partagé, l'utilisateur suivant ne retrouve pas l'annonce commencée
  * (titre, prix, position GPS…) par le précédent.
  */

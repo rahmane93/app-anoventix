@@ -438,7 +438,7 @@ public class AdminControllerTest {
                 .andExpect(status().isOk());
     }
 
-    // ECART-31 : page publique d'agence sans données de gestion ; fiche de gestion réservée aux membres.
+    // DEC-14 : page publique d'agence sans données de gestion ; fiche de gestion réservée aux membres.
     @Test
     void testPageEntreprise_publiqueSansDonneesDeGestionEtFicheReservee() throws Exception {
         String proJwt = createPrivilegedUserAndGetJWT("pro-vitrine", TypeRole.PROFESSIONNEL);

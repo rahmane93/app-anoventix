@@ -120,7 +120,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         }
 
         // Même forme que les téléphones des comptes (+224…) : sans quoi « 00224… » et
-        // « +224… » passeraient tous deux le contrôle d'unicité (ECART-44).
+        // « +224… » passeraient tous deux le contrôle d'unicité.
         request.setTelephone(Identifiants.normaliserTelephone(request.getTelephone()));
 
         // Vérifier que le téléphone n'est pas déjà utilisé par une autre entreprise
@@ -171,7 +171,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new IllegalArgumentException("Ce numéro RCCM est déjà enregistré dans le système");
         }
 
-        // Vérifier le téléphone si modifié (normalisé comme à la création, ECART-44)
+        // Vérifier le téléphone si modifié (normalisé comme à la création)
         request.setTelephone(Identifiants.normaliserTelephone(request.getTelephone()));
         if (request.getTelephone() != null && !request.getTelephone().equals(entreprise.getTelephone())
                 && entrepriseRepository.existsByTelephoneAndIdNot(request.getTelephone(), id)) {
@@ -233,7 +233,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     /**
      * Informations de gestion (RCCM, quotas, email du propriétaire) : réservées aux membres de
-     * l'entreprise et à la modération (ECART-31). Le public passe par la page publique.
+     * l'entreprise et à la modération (DEC-14). Le public passe par la page publique.
      */
     private void verifierMembreOuModeration(UUID entrepriseId, Authentication authentication) {
         User caller = getCurrentUser(authentication);
@@ -303,8 +303,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         Role agentRole = roleRepository.findByName(TypeRole.AGENT_PROFESSIONNEL)
             .orElseThrow(() -> new RuntimeException("Erreur: Le rôle AGENT_PROFESSIONNEL n'existe pas"));
         
-        // 4️⃣ Créer l'agent, inactif jusqu'à ce qu'il accepte l'invitation et choisisse son mot de passe
-        // (ECART-47) : aucun mot de passe n'est généré ni envoyé, le compte reçoit un mot de passe
+        // 4️⃣ Créer l'agent, inactif jusqu'à ce qu'il accepte l'invitation et choisisse son mot de passe :
+        // aucun mot de passe n'est généré ni envoyé, le compte reçoit un mot de passe
         // aléatoire que personne ne connaît.
         User agent = new User();
         agent.setEmail(request.getEmail());
@@ -398,7 +398,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             throw new UnauthorizedActionException("Impossible de retirer un Annonceur Professionnel de l'entreprise");
         }
         
-        // Toutes ses annonces (en ligne ou non) et ses conversations passent au professionnel (ECART-16).
+        // Toutes ses annonces (en ligne ou non) et ses conversations passent au professionnel (DEC-34).
         transfertAgent.transferer(agent, owner, entreprise.getNom());
 
         agent.setStatut(StatutUtilisateur.INACTIF);

@@ -149,6 +149,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/user").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/user/signalements").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/{id}").permitAll()
+                    // Fiche par identifiant public : liens partagés, ouverts sans compte.
+                    .requestMatchers(HttpMethod.GET, "/api/biens-immo/public/p/*").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/biens-immo/*/similaires").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/entreprises/*/profil").permitAll()
                     .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()

@@ -42,7 +42,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Périmètre du tableau de bord professionnel (ECART-50). */
+/** Périmètre du tableau de bord professionnel. */
 @SpringBootTest
 class TableauDeBordProTest {
 

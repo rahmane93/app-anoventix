@@ -33,7 +33,7 @@ public class BienImmoRequest extends AnnonceRequest {
    /** Surface totale en m². */
     private Double surfaceTotal;
 
-    /** Usage du bien (HABITATION, COMMERCIAL…) : obligatoire, colonne NOT NULL (ECART-09). */
+    /** Usage du bien (HABITATION, COMMERCIAL…) : obligatoire, colonne NOT NULL. */
     @NotNull(message = "L'usage du bien est obligatoire")
     private TypeUsage typeUsage;
 

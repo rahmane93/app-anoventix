@@ -19,7 +19,7 @@ import com.app.AnnoncesAPI.repositories.ConversationRepository;
 import com.app.AnnoncesAPI.repositories.MessageRepository;
 
 /**
- * Retrait d'un agent (ECART-16) : toutes ses annonces, en ligne ou non, et ses conversations passent au
+ * Retrait d'un agent (DEC-34) : toutes ses annonces, en ligne ou non, et ses conversations passent au
  * professionnel de l'entreprise. L'acheteur continue l'échange avec l'agence ; un message l'informe du changement
  * d'interlocuteur.
  */

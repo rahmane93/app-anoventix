@@ -129,7 +129,7 @@ const secureDelete = async (key: string): Promise<void> => {
 // ─── Instance Axios ───────────────────────────────────────────────────────────
 
 // Site web : le jeton de rafraîchissement voyage dans un cookie HttpOnly posé par l'API
-// (illisible par les scripts de la page, ECART-54). `withCredentials` l'envoie avec les
+// (illisible par les scripts de la page). `withCredentials` l'envoie avec les
 // requêtes vers l'API ; l'en-tête X-Client active ce mode côté serveur et sert de garde CSRF.
 const WEB_AUTH = isWeb ? { withCredentials: true, headers: { "X-Client": "web" } } : {};
 

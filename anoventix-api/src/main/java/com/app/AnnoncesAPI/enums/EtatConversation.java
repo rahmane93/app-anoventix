@@ -1,6 +1,6 @@
 package com.app.AnnoncesAPI.enums;
 
-/** État d'une conversation pour l'un de ses participants (ECART-29). */
+/** État d'une conversation pour l'un de ses participants. */
 public enum EtatConversation {
     ACTIVE,
     /** Rangée à part : un nouveau message la ramène dans la boîte. */

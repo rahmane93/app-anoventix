@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getRegions } from '@/src/api/localisation.api';
 import { REGIONS_GUINEE } from '@/src/stores/annonce.store';
 
-// Régions chargées depuis le référentiel (ECART-59) : une région ajoutée ou renommée en base apparaît sans
+// Régions chargées depuis le référentiel : une région ajoutée ou renommée en base apparaît sans
 // nouvelle version de l'app. La liste connue sert en attendant la réponse, et si l'API est injoignable.
 let cache: string[] | null = null;
 let enCours: Promise<string[]> | null = null;

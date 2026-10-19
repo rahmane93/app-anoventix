@@ -10,7 +10,7 @@ import com.app.AnnoncesAPI.entities.Localisation;
 @Repository
 public interface LocalisationRepository extends JpaRepository<Localisation, String> {
 
-    /** Régions du référentiel, dans l'ordre alphabétique (ECART-59 : l'app ne les écrit plus en dur). */
+    /** Régions du référentiel, dans l'ordre alphabétique l'app ne les écrit plus en dur). */
     @org.springframework.data.jpa.repository.Query(
             "SELECT DISTINCT l.region FROM localisation l WHERE l.technique = false AND l.region IS NOT NULL ORDER BY l.region")
     java.util.List<String> findRegions();
@@ -33,7 +33,7 @@ public interface LocalisationRepository extends JpaRepository<Localisation, Stri
     java.util.List<Localisation> findByRegionAndPrefectureAndCommuneAndTechniqueFalse(
             String region, String prefecture, String commune);
 
-    /** Quartier de même nom dans la même commune, aux accents, à la casse et à la ponctuation près (ECART-45). */
+    /** Quartier de même nom dans la même commune, aux accents, à la casse et à la ponctuation près. */
     default java.util.Optional<Localisation> trouverQuartier(String region, String prefecture, String commune,
                                                              String quartier) {
         String cible = normaliser(quartier);

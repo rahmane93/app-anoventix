@@ -4136,7 +4136,7 @@
     },
     "/api/localisations/regions" : {
       "get" : {
-        "description" : "Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).",
+        "description" : "Liste triée des régions : l'app la charge au lieu de l'écrire en dur.",
         "operationId" : "getRegions",
         "responses" : {
           "200" : {

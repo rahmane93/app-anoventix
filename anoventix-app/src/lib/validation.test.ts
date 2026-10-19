@@ -21,7 +21,7 @@ function errorsByPath(error: { issues: { path: PropertyKey[]; message: string }[
 
 const STRONG_PWD = 'Abcdef1!';
 
-// Cas limites partagés avec l'API (MotDePasseTest) : même verdict des deux côtés (ECART-01).
+// Cas limites partagés avec l'API (MotDePasseTest) : même verdict des deux côtés.
 const CAS_MOTS_DE_PASSE: { valides: string[]; invalides: string[] } = require('../../../anoventix-api/src/test/resources/cas-mots-de-passe.json');
 
 describe('passwordRules (règle commune avec l’API)', () => {

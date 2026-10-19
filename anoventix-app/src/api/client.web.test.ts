@@ -1,7 +1,7 @@
 /* eslint-disable import/first -- jest.mock() doit précéder les imports du module testé (hoisting) */
 import axios from 'axios';
 
-// Site web : le jeton de rafraîchissement est un cookie HttpOnly posé par l'API (ECART-54).
+// Site web : le jeton de rafraîchissement est un cookie HttpOnly posé par l'API.
 // Ces tests simulent Platform.OS = 'web' et un localStorage de navigateur.
 
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));

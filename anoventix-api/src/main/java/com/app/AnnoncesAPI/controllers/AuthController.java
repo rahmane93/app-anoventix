@@ -89,7 +89,7 @@ public class AuthController {
     }
 
     /**
-     * Invitation d'un agent (ECART-47) : le lien reçu par email donne le jeton, l'agent choisit son
+     * Invitation d'un agent : le lien reçu par email donne le jeton, l'agent choisit son
      * mot de passe et son compte devient actif. Le jeton ne sert qu'une fois (7 jours).
      */
     @PostMapping("/accept-invitation")

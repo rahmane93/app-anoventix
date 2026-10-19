@@ -111,7 +111,7 @@ class VerificationIdentiteTest {
 
     @Test
     void laCarteDIdentiteExigeSonVersoEtUneDateDExpirationValide() throws Exception {
-        // ECART-28 : sans verso, ou sans date, ou périmée : refusée.
+        // DEC-36 : sans verso, ou sans date, ou périmée : refusée.
         mvc.perform(multipart("/api/users/me/piece-identite")
                 .file(TestPhotos.image("file", 800, 600)).file(TestPhotos.image("selfie", 800, 800))
                 .param("typePieceIdentite", "CARTE_IDENTITE").param("numeroPieceIdentite", "CNI-1")

@@ -17,7 +17,7 @@ public class ProStatsResponse {
 
     /**
      * Périmètre du portefeuille et de la visibilité : ENTREPRISE (le professionnel et ses agents) ou PERSONNEL
-     * (le compte seul : agent, particulier, professionnel sans entreprise). ECART-50.
+     * (le compte seul : agent, particulier, professionnel sans entreprise).
      */
     private String perimetre;
     private PortefeuilleStats portefeuille;

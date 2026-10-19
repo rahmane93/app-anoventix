@@ -241,7 +241,7 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalArgumentException("Ce signalement a déjà été traité (statut : " + signalement.getStatut() + ").");
         }
         Annonce annonce = signalement.getAnnonce();
-        // Décision sur l'annonce et clôture des signalements dans la même transaction (ECART-26).
+        // Décision sur l'annonce et clôture des signalements dans la même transaction.
         switch (request.getDecision()) {
             case MASQUER -> moderation.masquer(annonce, normaliserMotif(request.getMotif()), adminUsername);
             case REJETER -> moderation.rejeter(annonce, normaliserMotif(request.getMotif()), adminUsername);
@@ -378,7 +378,7 @@ public class AdminServiceImpl implements AdminService {
         if (roleEntity.equals(user.getRole())) {
             throw new IllegalArgumentException("L'utilisateur possède déjà le rôle " + role + ".");
         }
-        // ECART-22 : pas d'entreprise ni d'équipe orphelines. Les rôles professionnels changent par les parcours
+        // DEC-37 : pas d'entreprise ni d'équipe orphelines. Les rôles professionnels changent par les parcours
         // métier (création d'entreprise, invitation, retrait d'un agent).
         if (user.isAnnonceurProfessionnel() && user.getEntreprise() != null) {
             throw new IllegalStateException("Ce compte dirige l'entreprise « " + user.getEntreprise().getNom()

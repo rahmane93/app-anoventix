@@ -8,7 +8,7 @@ import type { AnnonceFilterParams } from '../types/annonce.types';
 const REFERENCE = /^(VE|LO|BA)-(\d{4}|\d{6})-[A-Z0-9]{4}$/i;
 
 /**
- * Paramètres de recherche pour une saisie libre (ECART-57) : une référence part dans
+ * Paramètres de recherche pour une saisie libre : une référence part dans
  * le filtre `reference` (recherche exacte), tout le reste dans la recherche plein texte.
  */
 export function parametresSaisie(saisie: string): Pick<AnnonceFilterParams, 'q' | 'reference'> {

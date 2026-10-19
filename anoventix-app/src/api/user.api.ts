@@ -50,7 +50,7 @@ export const uploadPieceIdentite = async (
   selfie: { uri: string; name: string; type: string },
   typePiece: TypePieceIdentite,
   numeroPiece: string,
-  /** AAAA-MM-JJ (ECART-28). */
+  /** AAAA-MM-JJ (DEC-36). */
   dateExpiration: string,
 ): Promise<void> => {
   // La pièce et le selfie partent ensemble : l'API refuse l'un sans l'autre (RG-02-28).

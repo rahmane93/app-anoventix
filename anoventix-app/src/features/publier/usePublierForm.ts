@@ -69,7 +69,7 @@ const EMPTY_COMPOSITION: Record<ChampComposition, string> = {
 export function usePublierForm() {
   const { isAuthenticated, user } = useAuthStore(useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user })));
   // Brouillon de création (hors photos déjà choisies) : survit à la fermeture de
-  // l'app, rangé par compte (ECART-56). Pas de brouillon sans compte connecté.
+  // l'app, rangé par compte. Pas de brouillon sans compte connecté.
   const brouillonKey = user?.id ? cleBrouillon(user.id) : null;
   const { profile } = useUserStore(useShallow((s) => ({ profile: s.profile })));
   const {
@@ -392,7 +392,7 @@ export function usePublierForm() {
     [locByRegion, prefecture, commune],
   );
 
-  // Point de référence du quartier choisi (ou de la commune), pour ouvrir la carte au bon endroit (ECART-45).
+  // Point de référence du quartier choisi (ou de la commune), pour ouvrir la carte au bon endroit.
   const centreCarte = useMemo(() => {
     const loc = (Array.isArray(locByRegion) ? locByRegion : []).find((l) => l.id === localisationId);
     return loc?.latitude != null && loc?.longitude != null

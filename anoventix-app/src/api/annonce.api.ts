@@ -245,7 +245,7 @@ export interface HistoriqueAnnonce {
   dateModification: string;
 }
 
-/** Historique d'une annonce : propriétaire, son professionnel, ou modération (ECART-30). */
+/** Historique d'une annonce : propriétaire, son professionnel, ou modération. */
 export const getHistoriqueAnnonce = async (id: number): Promise<HistoriqueAnnonce[]> =>
   (await apiClient.get<HistoriqueAnnonce[]>(`/api/biens-immo/${id}/historique`)).data;
 

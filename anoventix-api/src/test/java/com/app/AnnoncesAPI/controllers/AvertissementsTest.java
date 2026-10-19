@@ -33,7 +33,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Avertissements (ECART-24) : email au titulaire, validité de 6 mois, niveau choisi, levée par un administrateur. */
+/** Avertissements (DEC-33) : email au titulaire, validité de 6 mois, niveau choisi, levée par un administrateur. */
 @SpringBootTest
 class AvertissementsTest {
 

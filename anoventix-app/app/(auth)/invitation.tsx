@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**
  * Invitation d'un agent : le lien reçu par email (www.anoventix.com/invitation?token=…) ouvre cet
- * écran. L'agent choisit son mot de passe ; le lien ne sert qu'une fois (ECART-47).
+ * écran. L'agent choisit son mot de passe ; le lien ne sert qu'une fois.
  */
 export default function InvitationScreen() {
   const { token } = useLocalSearchParams<{ token?: string }>();

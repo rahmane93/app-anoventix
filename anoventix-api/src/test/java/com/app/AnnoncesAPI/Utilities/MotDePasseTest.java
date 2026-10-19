@@ -13,7 +13,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Règle de mot de passe (ECART-01) sur les cas limites partagés avec l'app
+ * Règle de mot de passe sur les cas limites partagés avec l'app
  * (cas-mots-de-passe.json, aussi lu par anoventix-app/src/lib/validation.test.ts).
  */
 class MotDePasseTest {

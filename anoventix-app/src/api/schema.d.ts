@@ -1872,7 +1872,7 @@ export interface paths {
         };
         /**
          * Régions du référentiel
-         * @description Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).
+         * @description Liste triée des régions : l'app la charge au lieu de l'écrire en dur.
          */
         get: operations["getRegions"];
         put?: never;

@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
-// ─── Journal d'audit (ECART-63) ──────────────────────────────────────────────
+// ─── Journal d'audit ──────────────────────────────────────────────
 // Actions de la modération, de l'administration et du système, de la plus récente à la plus ancienne.
 // Réservé à l'administrateur (l'API refuse les autres rôles).
 

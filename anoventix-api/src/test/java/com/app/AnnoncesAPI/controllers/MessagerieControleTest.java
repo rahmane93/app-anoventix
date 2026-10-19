@@ -43,7 +43,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Messagerie : blocage, archivage, suppression pour soi, comptes injoignables et limites d'envoi (ECART-29). */
+/** Messagerie : blocage, archivage, suppression pour soi, comptes injoignables et limites d'envoi. */
 @SpringBootTest
 class MessagerieControleTest {
 

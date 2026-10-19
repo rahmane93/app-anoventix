@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
- * Ce que le public voit d'une agence (page publique, ECART-31). Ni RCCM, ni email du propriétaire,
+ * Ce que le public voit d'une agence (page publique, DEC-14). Ni RCCM, ni email du propriétaire,
  * ni quotas, ni annonces restantes : ces informations de gestion restent dans {@link EntrepriseDTO},
  * réservé aux membres de l'entreprise et à la modération.
  */

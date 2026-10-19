@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Documents disponibles d'une annonce : liste fermée, choix multiple (ECART-35). Stockés en codes séparés par des
+ * Documents disponibles d'une annonce : liste fermée, choix multiple (DEC-35). Stockés en codes séparés par des
  * virgules, dans l'ordre de cette énumération.
  */
 public enum DocumentDisponible {

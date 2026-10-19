@@ -18,7 +18,7 @@ import com.app.AnnoncesAPI.entities.Media;
 import com.app.AnnoncesAPI.repositories.MediaRepository;
 
 /**
- * Rattrapage des miniatures (ECART-55) : les photos enregistrées avant leur introduction n'ont que le fichier
+ * Rattrapage des miniatures : les photos enregistrées avant leur introduction n'ont que le fichier
  * d'origine. Chaque heure, un lot est décliné en miniature et en version moyenne ; une photo dont le fichier est
  * introuvable est ignorée et ne bloque pas les suivantes.
  */

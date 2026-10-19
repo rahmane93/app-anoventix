@@ -102,7 +102,7 @@ public class Utility {
     /**
      * Référence lisible d'une annonce : préfixe du type, date (aammjj) et 4 caractères,
      * par exemple VE-260317-K7QM. L'année évite que les collisions s'accumulent d'une année
-     * sur l'autre (ECART-08). Les références antérieures (VE-0317-K7QM) restent valides.
+     * sur l'autre. Les références antérieures (VE-0317-K7QM) restent valides.
      */
     public static String generateUniqueReference(String prefix, int randomLength, Predicate<String> isUnique) {
         String ref;

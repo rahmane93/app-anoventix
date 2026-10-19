@@ -141,7 +141,7 @@ public class CompteSuppressionService {
     /**
      * Efface le compte et, pour un PROFESSIONNEL, son entreprise et tous ses agents : annonces
      * désactivées, photos et pièces d'identité supprimées du disque, données personnelles anonymisées.
-     * Commun à la suppression par un administrateur et à l'échéance du délai de grâce (ECART-15).
+     * Commun à la suppression par un administrateur et à l'échéance du délai de grâce.
      */
     private void effacerCompteEtEntreprise(User user) {
         entrepriseRepository.findByAnnonceurProfessionnel(user).ifPresent(entreprise -> {
@@ -208,7 +208,7 @@ public class CompteSuppressionService {
                 continue;
             }
             // Un professionnel emporte son entreprise et ses agents : avant ce correctif, seul son
-            // compte était anonymisé et ses agents gardaient leurs données personnelles (ECART-15).
+            // compte était anonymisé et ses agents gardaient leurs données personnelles.
             effacerCompteEtEntreprise(user);
         }
         if (!comptes.isEmpty()) {

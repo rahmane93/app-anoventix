@@ -37,7 +37,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Export RGPD (droit d'accès) : toutes les données de l'utilisateur, aucune donnée de tiers (ECART-32). */
+/** Export RGPD (droit d'accès) : toutes les données de l'utilisateur, aucune donnée de tiers. */
 @SpringBootTest
 class ExportDonneesTest {
 

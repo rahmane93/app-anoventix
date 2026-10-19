@@ -48,7 +48,7 @@ export default function ProximiteScreen() {
     async (c: { lat: number; lng: number }, r: number, type: TypeAnnonce | null = typeFilter) => {
       setFetching(true);
       try {
-        // Le filtre par type est appliqué par l'API avant la pagination (ECART-33).
+        // Le filtre par type est appliqué par l'API avant la pagination.
         await loadNearby({ lat: c.lat, lng: c.lng, rayon: r, typeAnnonce: type ?? undefined });
       } finally {
         setFetching(false);
