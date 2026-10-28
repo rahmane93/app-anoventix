@@ -122,11 +122,9 @@ export default function EntreprisePubliqueScreen() {
       showsVerticalScrollIndicator={false}
       onEndReached={loadMore}
       onEndReachedThreshold={0.3}
-      ListFooterComponent={
-        loadingMore ? (
+      ListFooterComponent={(loadingMore ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-        ) : null
-      }
+        ) : null) ?? undefined}
       renderItem={({ item }) => grid.isGrid ? grid.wrap(
         <SuggestCard
           item={item}

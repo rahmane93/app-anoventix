@@ -1,4 +1,26 @@
+import { Platform } from 'react-native';
 import { API_BASE_URL, fallbackMessageForStatus, getToken } from './client';
+
+/** Fichier à envoyer en multipart : URI locale (image picker / caméra) + nom et type MIME. */
+export type UploadFile = { uri: string; name: string; type: string };
+
+/**
+ * Ajoute un fichier à un FormData.
+ *
+ * Natif : le format React Native `{ uri, name, type }`, lu par le XMLHttpRequest de RN.
+ * Web : ce format n'existe pas, le navigateur transformerait l'objet en texte
+ * (« [object Object] ») et l'API répondrait « Failed to convert … MultipartFile ».
+ * On récupère donc le contenu de l'URI (blob: ou data:) et on l'ajoute en Blob.
+ */
+export async function appendFile(formData: FormData, field: string, file: UploadFile): Promise<void> {
+  if (Platform.OS !== 'web') {
+    formData.append(field, { uri: file.uri, name: file.name, type: file.type } as any);
+    return;
+  }
+  const blob = await (await fetch(file.uri)).blob();
+  // Le type du blob peut être vide (data: sans type) : on impose celui du fichier.
+  formData.append(field, blob.slice(0, blob.size, file.type || blob.type), file.name);
+}
 
 /** Délai d'un envoi de fichiers : plus long qu'un appel JSON (photos, réseau mobile). */
 const UPLOAD_TIMEOUT_MS = 60_000;

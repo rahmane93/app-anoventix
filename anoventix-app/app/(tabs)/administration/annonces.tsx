@@ -227,20 +227,16 @@ export default function AdminAnnonces() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          annonces.length > 0 ? (
+        ListHeaderComponent={(annonces.length > 0 ? (
             <ResultCount>{annoncesTotalItems} annonce{annoncesTotalItems > 1 ? 's' : ''}</ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          firstLoad ? <LoadingState /> : annoncesError ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(firstLoad ? <LoadingState /> : annoncesError ? null : (
             <EmptyState
               icon="home-outline"
               title="Aucune annonce"
               message={search.trim() ? `Aucun résultat pour « ${search.trim()} ».` : undefined}
             />
-          )
-        }
+          )) ?? undefined}
         onEndReached={() => loadMoreAnnonces()}
         onEndReachedThreshold={0.3}
         ListFooterComponent={<FooterLoader visible={isLoadingAnnonces && annoncesPage > 0} />}

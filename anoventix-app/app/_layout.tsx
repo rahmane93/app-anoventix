@@ -97,13 +97,19 @@ export default function RootLayout() {
     ouvrirDerniereNotification();
   }, [isAuthenticated]);
 
+  // Navigation montée seulement une fois la session restaurée : sinon les écrans
+  // protégés (profil, messagerie, publier…) voient « non connecté » pendant le
+  // /me et redirigent vers la connexion, puis l'utilisateur retombe sur l'accueil
+  // au lieu de la page demandée (rechargement ou lien direct).
+  // En cas d'échec des polices, on affiche l'app avec les polices système plutôt
+  // que de rester bloqué sur le splash.
+  const appReady = (fontsLoaded || !!fontError) && !isLoading;
+
   useEffect(() => {
-    // En cas d'échec, on affiche l'app avec les polices système plutôt que de
-    // rester bloqué sur le splash.
-    if (fontsLoaded || fontError) {
+    if (appReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [appReady]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -124,6 +130,10 @@ export default function RootLayout() {
 
   // La barre web est masquée sur les écrans d'authentification (plein écran de marque).
   const showTopBar = isDesktop && segments[0] !== '(auth)';
+
+  if (!appReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

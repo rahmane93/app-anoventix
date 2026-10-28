@@ -5,6 +5,7 @@ import { SKELETON_DATA, SkeletonCard } from '@/src/components/ui/skeleton-card';
 import { useZonesActives } from '@/src/features/explore/useZonesActives';
 import { useExploreAnnonces } from '@/src/features/explore/useExploreAnnonces';
 import { requireLogin } from '@/src/lib/auth-redirect';
+import { useReduceMotion } from '@/src/lib/reduce-motion';
 import { aDesCriteres, CreerAlerteSheet, criteresDepuisRecherche } from '@/src/features/explore/CreerAlerteSheet';
 import { useBreakpoint, useCardGrid, WebContainer } from '@/src/lib/responsive';
 import { getRoleFlags } from '@/src/lib/roles';
@@ -30,6 +31,7 @@ import {
     View,
 } from 'react-native';
 import AppText from '@/src/components/AppText';
+import { Button } from '@/src/components/ui/button';
 import AppTextInput from '@/src/components/AppTextInput';
 import BrandText from '@/src/components/BrandText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +46,7 @@ const CHIP_HIT_SLOP = { top: 8, bottom: 8, left: 2, right: 2 };
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReduceMotion();
   // Web desktop : bandeau d'accueil + grille de cartes (le mobile reste en colonne).
   const { isDesktop } = useBreakpoint();
   const grid = useCardGrid(300, 4);
@@ -98,6 +101,17 @@ export default function ExploreScreen() {
     renderCard,
   } = useExploreAnnonces();
   const zones = useZonesActives();
+  // Web desktop : 13 communes tiennent sur deux lignes et repoussent la liste. On garde
+  // les premières (plus la zone choisie) et on propose de déplier le reste.
+  const ZONES_VISIBLES_MAX = 6;
+  const [zonesDeployees, setZonesDeployees] = React.useState(false);
+  const zonesVisibles =
+    zonesDeployees || zones.length <= ZONES_VISIBLES_MAX
+      ? zones
+      : zones.filter(
+          (z, i) => i < ZONES_VISIBLES_MAX || (filters.commune === z.commune && filters.prefecture === z.prefecture),
+        );
+  const zonesMasquees = zones.length - zonesVisibles.length;
 
   // ── En-tête compact au défilement ─────────────────────────────────────────────
   // Le logo disparaît dès qu'on descend dans la liste pour laisser la place aux
@@ -111,7 +125,7 @@ export default function ExploreScreen() {
     const y = e.nativeEvent.contentOffset.y;
     const next = y > 60 ? true : y < 10 ? false : headerCompact;
     if (next !== headerCompact) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setCompact({ key: listKey, on: next });
     }
   };
@@ -192,9 +206,8 @@ export default function ExploreScreen() {
       {isDesktop ? (
         !headerCompact && (
           <View style={styles.heroIntro}>
-            <AppText style={styles.heroEyebrow}>Immobilier en Guinée</AppText>
             <AppText style={styles.heroTitle} accessibilityRole="header">
-              Trouvez votre prochain chez-vous.
+              L’immobilier en Guinée, quartier par quartier
             </AppText>
             <AppText style={styles.heroSub}>
               Maisons, appartements, terrains et bureaux à vendre, à louer ou en bail — à Conakry et dans tout le pays.
@@ -269,7 +282,7 @@ export default function ExploreScreen() {
         >
           <AppText style={[styles.zonePillText, isDesktop && styles.zonePillTextDark, !hasLieu && (isDesktop ? styles.zonePillTextOnDark : styles.zonePillTextOn)]}>Partout</AppText>
         </TouchableOpacity>
-        {zones.map((z) => {
+        {zonesVisibles.map((z) => {
           const on = filters.commune === z.commune && filters.prefecture === z.prefecture && !filters.quartier;
           return (
             <TouchableOpacity
@@ -293,6 +306,20 @@ export default function ExploreScreen() {
             </TouchableOpacity>
           );
         })}
+        {zones.length > ZONES_VISIBLES_MAX ? (
+          <TouchableOpacity
+            style={[styles.zonePill, styles.zonePillDark]}
+            onPress={() => setZonesDeployees((o) => !o)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: zonesDeployees }}
+            accessibilityLabel={zonesDeployees ? 'Afficher moins de communes' : `Afficher ${zonesMasquees} communes de plus`}
+          >
+            <AppText style={[styles.zonePillText, styles.zonePillTextDark]}>
+              {zonesDeployees ? 'Moins' : `+ ${zonesMasquees} communes`}
+            </AppText>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           style={[styles.zonePill, isDesktop ? styles.nearbyPillDark : styles.nearbyPill]}
           onPress={() => router.push('/proximite')}
@@ -391,8 +418,8 @@ export default function ExploreScreen() {
           accessibilityRole="button"
           accessibilityLabel="Créer une alerte pour cette recherche"
         >
-          <Ionicons name="notifications-outline" size={14} color={colors.primary} />
-          <AppText style={styles.alerteBtnText}>Créer une alerte</AppText>
+          <Ionicons name="notifications-outline" size={14} color={isDesktop ? colors.white : colors.primary} />
+          <AppText style={[styles.alerteBtnText, isDesktop && styles.alerteBtnTextDark]}>Créer une alerte</AppText>
         </TouchableOpacity>
       )}
       <CreerAlerteSheet
@@ -516,7 +543,7 @@ export default function ExploreScreen() {
           ListHeaderComponent={zoneHeader(resultsSousTitre(total))}
           onEndReachedThreshold={0.6}
           onEndReached={loadMoreResults}
-          ListFooterComponent={loadingMoreFooter(isResultsLoadingMore)}
+          ListFooterComponent={(loadingMoreFooter(isResultsLoadingMore)) ?? undefined}
           showsVerticalScrollIndicator={isDesktop}
           onScroll={handleListScroll}
           scrollEventThrottle={100}
@@ -553,9 +580,7 @@ export default function ExploreScreen() {
           <AppText style={styles.stateTitle}>Aucune annonce</AppText>
           <AppText style={styles.stateSub}>Il n’y a aucune annonce à afficher pour le moment.</AppText>
           {canPublish && (
-            <TouchableOpacity style={styles.tipChip} hitSlop={CHIP_HIT_SLOP} onPress={publier} activeOpacity={0.85} accessibilityRole="button">
-              <AppText style={styles.tipText}>Publier la première annonce</AppText>
-            </TouchableOpacity>
+            <Button title="Publier la première annonce" fullWidth={false} onPress={publier} />
           )}
         </View>
       );
@@ -580,7 +605,7 @@ export default function ExploreScreen() {
           if (isLoadingMore || isLoadingAll || !allHasMore) return;
           loadAllPage(allPage + 1);
         }}
-        ListFooterComponent={loadingMoreFooter(isLoadingMore)}
+        ListFooterComponent={(loadingMoreFooter(isLoadingMore)) ?? undefined}
         showsVerticalScrollIndicator={isDesktop}
         onScroll={handleListScroll}
         scrollEventThrottle={100}
@@ -650,18 +675,11 @@ const styles = StyleSheet.create({
       backgroundImage:
         'radial-gradient(900px 420px at 88% -10%, rgba(212,160,23,0.28), transparent 60%),' +
         'radial-gradient(700px 380px at -5% 120%, rgba(42,95,168,0.55), transparent 60%),' +
-        'linear-gradient(135deg, #0F2444 0%, #1A3C6E 100%)',
+        `linear-gradient(135deg, ${colors.primaryDark} 0%, ${colors.primary} 100%)`,
     } as object),
   },
   heroInner: { paddingTop: spacing.xl, paddingBottom: spacing.lg, gap: spacing.base },
   heroIntro: { gap: spacing.sm, maxWidth: 960 },
-  heroEyebrow: {
-    fontSize: typography.sizes.xs,
-    fontWeight: '800',
-    letterSpacing: 2.4,
-    textTransform: 'uppercase',
-    color: colors.accentLight,
-  },
   heroTitle: {
     fontSize: 38,
     lineHeight: 44,
@@ -703,11 +721,11 @@ const styles = StyleSheet.create({
   // ── Sélecteur de zone ─────────────────────────────────────────────────────
   zoneRow: { flexDirection: 'row', gap: spacing.sm },
   zoneRowWrap: { flexWrap: 'wrap' },
-  zonePillDark: { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.22)' },
+  zonePillDark: { backgroundColor: 'rgba(255,255,255,0.14)', borderColor: 'rgba(255,255,255,0.45)' },
   zonePillOnDark: { backgroundColor: colors.accent, borderColor: colors.accent },
   zonePillTextDark: { color: colors.white },
   zonePillTextOnDark: { color: colors.textOnAccent, fontWeight: '800' },
-  zonePillCountDark: { color: 'rgba(255,255,255,0.6)' },
+  zonePillCountDark: { color: 'rgba(255,255,255,0.85)' },
   zonePillCountOnDark: { color: 'rgba(26,26,26,0.7)' },
   nearbyPillDark: { backgroundColor: colors.white, borderColor: colors.white },
   zonePill: {
@@ -804,6 +822,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4, paddingHorizontal: spacing.sm,
   },
   alerteBtnText: { fontSize: typography.sizes.sm, fontWeight: '700', color: colors.primary },
+  // Web desktop : le bandeau est bleu foncé, le lien doit être clair.
+  alerteBtnTextDark: { color: colors.white, textDecorationLine: 'underline' },
   activeChipsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
   activeChip: {
     flexDirection: 'row',

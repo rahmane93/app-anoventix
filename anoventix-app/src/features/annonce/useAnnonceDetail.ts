@@ -138,12 +138,11 @@ export function useAnnonceDetail() {
     setIsSignaling(true);
     try {
       await signalerAnnonce(a.id, { motif: selectedMotif, commentaire: commentaire.trim() || undefined });
-      setSignalSuccess(true);
       setSelectedMotif(null);
-      setTimeout(() => {
-        setSignalerVisible(false);
-        setSignalSuccess(false);
-      }, 1800);
+      setSignalerVisible(false);
+      // Confirmation qui reste à l'écran jusqu'à validation : l'ancien message dans la
+      // feuille disparaissait en moins de 2 secondes, souvent sans avoir été vu.
+      appAlert('Signalement envoyé', 'Merci : la modération va examiner cette annonce.');
     } catch (err) {
       appAlert("Signalement non envoyé", getErrorMessage(err, 'Impossible d\'envoyer le signalement.'));
     } finally {

@@ -115,7 +115,7 @@ export function AnnonceurCard({ annonceur }: { annonceur: Annonceur }) {
 
 const ac = StyleSheet.create({
   verifiee: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 6 },
-  verifieeTexte: { fontSize: 11, fontWeight: '700', color: colors.successText },
+  verifieeTexte: { fontSize: 12, fontWeight: '700', color: colors.successText },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,

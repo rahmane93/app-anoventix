@@ -443,21 +443,17 @@ export default function AdminSignalements() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          signalements.length > 0 ? (
+        ListHeaderComponent={(signalements.length > 0 ? (
             <ResultCount>
               {signalementsTotalElements} signalement{signalementsTotalElements !== 1 ? 's' : ''}
               {activeFilter === 'EN_ATTENTE' ? ' à traiter' : ''}
             </ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          firstLoad ? <LoadingState /> : signalementsError ? null : activeFilter === 'EN_ATTENTE' ? (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(firstLoad ? <LoadingState /> : signalementsError ? null : activeFilter === 'EN_ATTENTE' ? (
             <EmptyState icon="checkmark-done-outline" tone="success" title="File vide" message="Aucun signalement en attente." />
           ) : (
             <EmptyState icon="flag-outline" title="Aucun signalement" />
-          )
-        }
+          )) ?? undefined}
         onEndReached={() => loadMoreSignalements(statutFiltre)}
         onEndReachedThreshold={0.3}
         ListFooterComponent={<FooterLoader visible={isLoadingSignalements && signalementsPage > 0} />}

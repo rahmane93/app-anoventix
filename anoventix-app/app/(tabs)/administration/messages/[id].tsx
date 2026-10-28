@@ -214,14 +214,12 @@ export default function AdminConversationScreen() {
               listRef.current?.scrollToOffset({ offset: index * averageItemLength, animated: false });
               setTimeout(() => listRef.current?.scrollToIndex({ index, viewPosition: 0.4, animated: true }), 100);
             }}
-            ListEmptyComponent={
-              adminConversationError ? null : (
+            ListEmptyComponent={(adminConversationError ? null : (
                 <View style={s.centered}>
                   <Ionicons name="chatbubble-outline" size={36} color={colors.border} />
                   <AppText style={s.emptyText}>Aucun message dans cette conversation</AppText>
                 </View>
-              )
-            }
+              )) ?? undefined}
             renderItem={({ item }) =>
               item.type === 'date' ? <DateSeparator date={item.date} /> : renderMessage(item.msg, item.showSender)
             }

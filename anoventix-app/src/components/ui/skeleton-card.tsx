@@ -1,3 +1,4 @@
+import { useReduceMotion } from '@/src/lib/reduce-motion';
 import { colors, radius, shadows, spacing } from '@/src/theme';
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
@@ -9,7 +10,13 @@ import { Animated, StyleSheet, View } from 'react-native';
  */
 export const SkeletonCard = React.memo(function SkeletonCard() {
   const opacity = useRef(new Animated.Value(0.4)).current;
+  const reduceMotion = useReduceMotion();
   useEffect(() => {
+    // Réduction des animations demandée : le squelette reste fixe.
+    if (reduceMotion) {
+      opacity.setValue(0.7);
+      return;
+    }
     const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
@@ -18,7 +25,7 @@ export const SkeletonCard = React.memo(function SkeletonCard() {
     );
     anim.start();
     return () => anim.stop();
-  }, [opacity]);
+  }, [opacity, reduceMotion]);
   return (
     <Animated.View style={[skeletonStyles.card, { opacity }]}>
       <View style={skeletonStyles.imageArea} />

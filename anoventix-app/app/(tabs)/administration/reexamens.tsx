@@ -226,12 +226,10 @@ export default function ReexamensScreen() {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => <ReexamenItem item={item} />}
           ItemSeparatorComponent={BlockGap}
-          ListHeaderComponent={reexamens.length > 0 ? <ResultCount>{total} demande{total > 1 ? 's' : ''} de réexamen</ResultCount> : null}
-          ListEmptyComponent={
-            error ? null : (
+          ListHeaderComponent={(reexamens.length > 0 ? <ResultCount>{total} demande{total > 1 ? 's' : ''} de réexamen</ResultCount> : null) ?? undefined}
+          ListEmptyComponent={(error ? null : (
               <EmptyState icon="refresh-circle-outline" title="Aucune demande de réexamen" message="Les annonces corrigées par leur propriétaire apparaissent ici." />
-            )
-          }
+            )) ?? undefined}
           ListFooterComponent={<FooterLoader visible={isLoading && reexamens.length > 0} />}
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}

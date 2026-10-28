@@ -119,14 +119,15 @@ export const AnnonceCard = React.memo(function AnnonceCard({
   }
 
   return (
-    <TouchableOpacity
-      style={[cardStyles.card, isDesktop && cardStyles.cardGrid]}
-      activeOpacity={0.88}
-      onPress={() => router.push(annonceHref(item))}
-      accessibilityRole="button"
-      accessibilityLabel={[TYPE_BIEN_LABELS[item.typeBien], item.titre, formatPrix(item.prixRevise ?? item.prix)].filter(Boolean).join(', ')}
-    >
-      {/* Haut : miniature + infos essentielles */}
+    <View style={[cardStyles.card, isDesktop && cardStyles.cardGrid]}>
+      {/* Haut : miniature + infos essentielles. Seule cette zone ouvre la fiche :
+          les boutons d'action ne peuvent pas être imbriqués dans un autre bouton (web). */}
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={() => router.push(annonceHref(item))}
+        accessibilityRole="button"
+        accessibilityLabel={[TYPE_BIEN_LABELS[item.typeBien], item.titre, formatPrix(item.prixRevise ?? item.prix)].filter(Boolean).join(', ')}
+      >
       <View style={cardStyles.topRow}>
         <View style={cardStyles.thumb}>
           {m0 ? (
@@ -176,6 +177,7 @@ export const AnnonceCard = React.memo(function AnnonceCard({
           <AppText style={cardStyles.subMeta} numberOfLines={1}>{subMetaParts.join('  ·  ')}</AppText>
         </View>
       </View>
+      </TouchableOpacity>
 
       {/* Motif communiqué par la modération (annonce masquée / rejetée) */}
       {(item.statutModeration === 'MASQUEE' || item.statutModeration === 'REJETEE') && (
@@ -284,8 +286,8 @@ export const AnnonceCard = React.memo(function AnnonceCard({
       </View>
 
       <ReexamenModal visible={reexamenOpen} annonceId={item.id} titre={item.titre} onClose={() => setReexamenOpen(false)} />
-      <CloturerModal visible={cloturerOpen} annonceId={item.id} titre={item.titre} onClose={() => setCloturerOpen(false)} />
-    </TouchableOpacity>
+      <CloturerModal visible={cloturerOpen} annonceId={item.id} titre={item.titre} typeAnnonce={item.typeAnnonce} onClose={() => setCloturerOpen(false)} />
+    </View>
   );
 });
 
@@ -337,7 +339,7 @@ const cardStyles = StyleSheet.create({
     paddingVertical: 2,
   },
   typeBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.white,
   },
@@ -353,7 +355,7 @@ const cardStyles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  photosCountText: { fontSize: 11, color: colors.white, fontWeight: '600' },
+  photosCountText: { fontSize: 12, color: colors.white, fontWeight: '600' },
 
   info: { flex: 1, gap: 3 },
   infoHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
@@ -370,7 +372,7 @@ const cardStyles = StyleSheet.create({
     flexShrink: 0,
     maxWidth: '70%',
   },
-  statutText: { fontSize: 11, fontWeight: '700', color: colors.white },
+  statutText: { fontSize: 12, fontWeight: '700', color: colors.white },
   titre: { fontSize: typography.sizes.md, fontWeight: '700', color: colors.textPrimary, lineHeight: 20 },
   meta: { fontSize: typography.sizes.xs, color: colors.textMuted },
   subMeta: { fontSize: 12, color: colors.textMuted },

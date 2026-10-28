@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "anoventixapp",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anoventix.app",

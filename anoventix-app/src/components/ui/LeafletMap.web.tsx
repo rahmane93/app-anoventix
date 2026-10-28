@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    backgroundColor: '#e8eef5',
+    backgroundColor: colors.mapBackground,
   },
   fill: { flex: 1 },
 });

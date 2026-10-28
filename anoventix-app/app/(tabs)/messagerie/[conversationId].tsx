@@ -90,6 +90,14 @@ function Composer({
           placeholderTextColor={colors.placeholder}
           multiline
           onFocus={onFocus}
+          // Web : Entrée envoie, Maj+Entrée passe à la ligne (comme les messageries habituelles).
+          onKeyPress={(e) => {
+            const ev = e.nativeEvent as unknown as { key: string; shiftKey?: boolean };
+            if (Platform.OS === 'web' && ev.key === 'Enter' && !ev.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
           style={styles.input}
         />
         <Button
@@ -414,11 +422,9 @@ export default function ConversationScreen() {
                   loadMoreMessages(conversationId!);
                 }
               }}
-              ListHeaderComponent={
-                isLoadingMoreMessages
+              ListHeaderComponent={(isLoadingMoreMessages
                   ? <ActivityIndicator size="small" color={colors.primary} style={styles.loadMoreIndicator} />
-                  : null
-              }
+                  : null) ?? undefined}
               onContentSizeChange={() => {
                 // Premier affichage : on se place sur le dernier message.
                 if (!initialScrollDone.current && orderedMessages.length > 0) {
@@ -587,7 +593,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   messageBubbleOther: {
-    backgroundColor: '#F4F4F6',
+    backgroundColor: colors.bubbleReceived,
     borderBottomLeftRadius: 4,
   },
   messageText: {

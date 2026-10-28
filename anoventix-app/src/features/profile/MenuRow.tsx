@@ -70,7 +70,7 @@ export function MenuRow({
 // Partagé par MenuRow / PieceStatusBadge ET l'écran Profil (menuIconWrap, sectionLabel).
 export const secStyles = StyleSheet.create({
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600' as const,
     color: colors.textMuted,
     letterSpacing: 0.8,

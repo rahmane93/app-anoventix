@@ -56,9 +56,16 @@ export const colors = {
   warningText: '#92400E',
   infoText:    '#1D4ED8',
 
+  // Surfaces secondaires (photos en chargement, cartes, bulles de messagerie)
+  photoPlaceholder: '#EAEDF3', // fond d'une photo avant chargement / sans photo
+  mapBackground:    '#E8EEF5', // fond d'une carte avant chargement des tuiles
+  bubbleReceived:   '#F4F4F6', // bulle de message reçu
+  onDarkMuted:      '#CBD5E1', // texte secondaire sur fond sombre (caméra)
+  onDarkError:      '#FCA5A5', // erreur sur fond sombre (caméra)
+
   // Utilitaires
   overlay:     'rgba(0, 0, 0, 0.5)',
-  placeholder: '#9CA3AF',
+  placeholder: '#6B7280', // ≥ 4.5:1 sur blanc (WCAG AA) : un placeholder reste du texte à lire
 } as const;
 
 /**

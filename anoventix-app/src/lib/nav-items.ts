@@ -50,6 +50,8 @@ export function useNavState() {
   // (les messages signalés sont dans Administration > Messages).
   const hasMessagerie = isAuthenticated && (isParticulier || isProfessionnel || isAgentProfessionnel);
   const hasAdministration = isAuthenticated && (isAdministrateur || isModerateur);
+  // Publier exige une pièce d'identité validée : on le signale dès le bouton plutôt qu'au bout du parcours.
+  const identiteARegler = hasMessagerie && !!profile && profile.statutPieceIdentite !== 'VALIDEE';
   const hasProDashboard = isAuthenticated && (isProfessionnel || isAgentProfessionnel);
 
   const items: NavItem[] = [
@@ -70,6 +72,7 @@ export function useNavState() {
     user,
     unreadCount: isAuthenticated ? totalUnread : 0,
     canPublish: isAuthenticated ? flags.canPublishAnnonce : true,
+    identiteARegler,
   };
 }
 

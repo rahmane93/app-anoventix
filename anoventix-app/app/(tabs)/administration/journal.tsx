@@ -93,8 +93,8 @@ export default function JournalScreen() {
         onEndReached={() => {
           if (!chargement && !fin) charger(page + 1, cible);
         }}
-        ListFooterComponent={chargement && page > 0 ? <ActivityIndicator color={colors.primary} /> : null}
-        ListEmptyComponent={!chargement ? <AppText style={s.vide}>Aucune action enregistrée.</AppText> : null}
+        ListFooterComponent={(chargement && page > 0 ? <ActivityIndicator color={colors.primary} /> : null) ?? undefined}
+        ListEmptyComponent={(!chargement ? <AppText style={s.vide}>Aucune action enregistrée.</AppText> : null) ?? undefined}
         renderItem={({ item }) => (
           <View style={s.carte}>
             <View style={s.entete}>

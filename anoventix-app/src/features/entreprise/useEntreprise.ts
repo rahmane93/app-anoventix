@@ -253,7 +253,7 @@ export function useEntreprise() {
   const handleRemoveAgent = (agent: AgentDTO) => {
     appAlert(
       'Retirer l\'agent',
-      `Voulez-vous retirer ${agent.prenom ?? ''} ${agent.nom ?? agent.email} ? Son compte sera désactivé.`,
+      `Voulez-vous retirer ${agent.prenom ?? ''} ${agent.nom ?? agent.email} ? Son compte sera désactivé et ses annonces seront transférées à votre compte.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -300,7 +300,8 @@ export function useEntreprise() {
 
     appAlert(
       isActive ? 'Suspendre l\'agent' : 'Activer l\'agent',
-      `Voulez-vous ${actionLabel} ${agent.prenom ?? ''} ${agent.nom ?? agent.email} ?`,
+      `Voulez-vous ${actionLabel} ${agent.prenom ?? ''} ${agent.nom ?? agent.email} ?` +
+        (isActive ? ' Il ne pourra plus se connecter ; ses annonces restent en ligne.' : ''),
       [
         { text: 'Annuler', style: 'cancel' },
         {

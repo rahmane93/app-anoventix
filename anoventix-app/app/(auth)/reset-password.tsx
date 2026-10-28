@@ -171,7 +171,7 @@ export default function ResetPasswordScreen() {
 
         <Button
           title="Réinitialiser le mot de passe"
-          onPress={handleSubmit(onSubmit)}
+          onPress={() => handleSubmit(onSubmit)()}
           isLoading={isLoading}
           disabled={Boolean(successMessage)}
         />

@@ -198,7 +198,7 @@ export default function AnnonceDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+        <StatusBar barStyle="dark-content" />
         <DetailSkeleton />
       </>
     );
@@ -630,7 +630,7 @@ export default function AnnonceDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" />
 
       <ScrollView
         style={s.scroll}
@@ -1092,7 +1092,7 @@ const s = StyleSheet.create({
   zoneBadge: { borderRadius: radius.xs, paddingHorizontal: 6, paddingVertical: 2 },
   zoneBadgeUrb: { backgroundColor: colors.infoLight },
   zoneBadgeRur: { backgroundColor: colors.successLight },
-  zoneBadgeText: { fontSize: 11, fontWeight: '700' as const },
+  zoneBadgeText: { fontSize: 12, fontWeight: '700' as const },
   zoneBadgeTextUrb: { color: colors.infoText },
   zoneBadgeTextRur: { color: colors.successText },
   refText: { fontSize: typography.sizes.xs, color: colors.textMuted, letterSpacing: 0.3 },

@@ -69,7 +69,7 @@ const miniStyles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  statusText: { fontSize: 11, fontWeight: '700', color: colors.white },
+  statusText: { fontSize: 12, fontWeight: '700', color: colors.white },
   body: { padding: spacing.sm, gap: 2 },
   type: {
     fontSize: typography.sizes['2xs'],

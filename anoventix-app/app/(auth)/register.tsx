@@ -305,7 +305,7 @@ export default function RegisterScreen() {
               )}
             />
 
-            <Button title="Créer mon compte" onPress={handleSubmit(onSubmit)} isLoading={isLoading} />
+            <Button title="Créer mon compte" onPress={() => handleSubmit(onSubmit)()} isLoading={isLoading} />
           </View>
 
           {/* Footer */}

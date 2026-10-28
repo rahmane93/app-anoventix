@@ -4,7 +4,7 @@ import { Input } from '@/src/components/ui/input';
 import { useUserStore } from '@/src/stores/user.store';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     KeyboardAvoidingView,
 
@@ -31,6 +31,12 @@ export default function EditProfileScreen() {
   const [prenom, setPrenom] = useState(profile?.prenom ?? '');
   const [telephone, setTelephone] = useState(profile?.telephone ?? '');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Rechargement ou lien direct : le profil n'est chargé que par le layout des
+  // onglets, jamais monté ici. Sans ce chargement, le formulaire reste vide.
+  useEffect(() => {
+    if (!profile) fetchProfile();
+  }, [profile, fetchProfile]);
 
   // Profil (re)chargé : les champs reprennent ses valeurs. Mise à jour pendant
   // le rendu plutôt que dans un effet (pas de rendu intermédiaire).

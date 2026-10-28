@@ -102,7 +102,7 @@ export default function InvitationScreen() {
                     />
                   )}
                 />
-                <Button title="Activer mon compte" onPress={handleSubmit(valider)} isLoading={enCours} disabled={!token} />
+                <Button title="Activer mon compte" onPress={() => handleSubmit(valider)()} isLoading={enCours} disabled={!token} />
               </>
             )}
           </View>

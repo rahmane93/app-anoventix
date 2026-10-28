@@ -1,7 +1,7 @@
 import { Sheet } from '@/src/components/ui/sheet';
 import { useAnnonceStore } from '@/src/stores/annonce.store';
 import { colors, radius, spacing, typography } from '@/src/theme';
-import type { MotifCloture } from '@/src/types/annonce.types';
+import type { MotifCloture, TypeAnnonce } from '@/src/types/annonce.types';
 import { MOTIF_CLOTURE_LABELS } from '@/src/types/annonce.types';
 import { getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,15 +16,18 @@ export function CloturerModal({
   visible,
   annonceId,
   titre,
+  typeAnnonce,
   onClose,
 }: {
   visible: boolean;
   annonceId: number;
   titre: string;
+  /** Sert à présélectionner le motif le plus probable : une location est « Louée », pas « Vendue ». */
+  typeAnnonce?: TypeAnnonce;
   onClose: () => void;
 }) {
   const { cloturerAnnonce } = useAnnonceStore(useShallow((s) => ({ cloturerAnnonce: s.cloturerAnnonce })));
-  const [motif, setMotif] = React.useState<MotifCloture>('VENDU');
+  const [motif, setMotif] = React.useState<MotifCloture>(typeAnnonce === 'LOCATION' || typeAnnonce === 'BAIL' ? 'LOUE' : 'VENDU');
   const [loading, setLoading] = React.useState(false);
 
   const handleCloturer = async () => {

@@ -477,15 +477,13 @@ function LocalisationsContenu() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          localisations.length > 0 ? (
+        ListHeaderComponent={(localisations.length > 0 ? (
             <ResultCount>
               {hasFilter
                 ? `${filtered.length} résultat${filtered.length > 1 ? 's' : ''} sur ${localisationsTotalItems}`
                 : `${localisationsTotalItems} localisation${localisationsTotalItems > 1 ? 's' : ''}`}
             </ResultCount>
-          ) : null
-        }
+          ) : null) ?? undefined}
         renderItem={({ item }) => {
           const deleting = deletingLocalisationIds.has(item.id);
           return (
@@ -522,15 +520,13 @@ function LocalisationsContenu() {
             />
           );
         }}
-        ListEmptyComponent={
-          isLoadingLocalisations ? <LoadingState /> : localisationsError ? null : (
+        ListEmptyComponent={(isLoadingLocalisations ? <LoadingState /> : localisationsError ? null : (
             <EmptyState
               icon="location-outline"
               title={hasFilter ? 'Aucun résultat' : 'Aucune localisation'}
               message={hasFilter ? 'Aucun quartier ne correspond à ces filtres.' : undefined}
             />
-          )
-        }
+          )) ?? undefined}
       />
 
       {/* ── Formulaire ───────────────────────────────────────────────────── */}
