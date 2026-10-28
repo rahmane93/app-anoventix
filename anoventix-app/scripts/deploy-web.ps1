@@ -4,14 +4,14 @@
 #   .\scripts\deploy-web.ps1                 # déployer
 #   .\scripts\deploy-web.ps1 -Rollback       # revenir à la version précédente
 #
-# Sur le serveur (~/app/anoventix-api/web, monté dans nginx) :
+# Sur le serveur (~/app/anoventix-edge/web, monté dans nginx) :
 #   releases/<date>/   une version par déploiement (les 3 dernières sont gardées)
 #   current            lien vers la version en ligne, basculé de façon atomique
 # Aucun redémarrage de nginx : il suit le lien `current`.
 
 param(
     [string]$Server = "deploy@51.178.49.231",
-    [string]$RemoteDir = "app/anoventix-api/web",   # relatif au dossier personnel
+    [string]$RemoteDir = "app/anoventix-edge/web",   # relatif au dossier personnel
     [string]$ApiUrl = "https://anoventix.com",
     [int]$Keep = 3,
     [switch]$Rollback

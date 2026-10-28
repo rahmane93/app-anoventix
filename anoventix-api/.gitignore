@@ -68,9 +68,4 @@ AuthController_old.java
 ### Local Docker override ###
 docker-compose.override.yml
 
-### APK Android déposé à la main sur le serveur ###
-downloads/*
-!downloads/.gitkeep
 
-# Application web déployée sur le serveur (export Expo, hors git)
-web/

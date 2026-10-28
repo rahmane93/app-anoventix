@@ -1,0 +1,5 @@
+# Application web déployée sur le serveur (export Expo, hors git)
+web/
+# APK Android déposé à la main
+downloads/*
+!downloads/.gitkeep

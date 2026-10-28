@@ -15,7 +15,7 @@
       "PowerShell(Get-Process -Id 22000)",
       "PowerShell(Get-Process -Id 22000, 28488 -ErrorAction SilentlyContinue)",
       "PowerShell(Get-WmiObject Win32_Process | Where-Object { $_.ProcessId -eq 22000 -or $_.ProcessId -eq 28488 } | Select-Object ProcessId, Name, CommandLine)",
-      "PowerShell(docker exec anoventix-nginx cat /etc/nginx/conf.d/default.conf)"
+      "PowerShell(docker exec anoventix-nginx cat /etc/nginx/conf.d/anoventix.conf)"
     ]
   }
 }

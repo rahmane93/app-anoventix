@@ -1,0 +1,51 @@
+# Reverse proxy commun : nginx (TLS, routage des domaines) + renouvellement Let's Encrypt.
+# Sert l'API AnoventiX, l'application web et Fleet. Les applications vivent dans leurs propres
+# projets et rejoignent le réseau partagé `anoventix-network` (créé une fois : voir README).
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: anoventix-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      # Application web (www) : web/current → web/releases/<date>, cf. anoventix-app/scripts/deploy-web.ps1.
+      # Lue aussi par l'API (anoventix-api/docker-compose.yml) pour les balises Open Graph.
+      - ./web:/var/www/web:ro
+      # Pages légales statiques (/cgu, /confidentialite, /mentions-legales).
+      - ./legal:/var/www/legal:ro
+      # APK Android déposé à la main (hors git), servi sous /downloads/
+      - ./downloads:/var/www/downloads:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - app_uploads:/app/uploads:ro
+    networks:
+      - anoventix-network
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: anoventix-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM; while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $!;
+      done"
+
+volumes:
+  certbot_www:
+    name: anoventix_certbot_www
+  # Photos publiques déposées par l'API (volume créé par anoventix-api).
+  app_uploads:
+    name: anoventix_uploads
+    external: true
+
+networks:
+  anoventix-network:
+    name: anoventix-network
+    external: true
