@@ -13,11 +13,18 @@ import * as notificationApi from '@/src/api/notification.api';
 const CLE_JETON = 'push.jeton';
 const CLE_PERMISSION_DEMANDEE = 'push.permissionDemandee';
 
+// Expo Go (Android, SDK 53+) n'embarque pas le module natif des notifications push : on ne le charge pas.
+const dansExpoGo = Constants.executionEnvironment === 'storeClient';
+
 // Chargé à la demande : un binaire compilé sans le module natif (ancien build de développement) doit
 // démarrer quand même, sans notifications, au lieu de planter à l'import.
 let notificationsChargees: typeof NotificationsModule | null | undefined;
 function charger(): typeof NotificationsModule | null {
   if (notificationsChargees === undefined) {
+    if (dansExpoGo) {
+      notificationsChargees = null;
+      return null;
+    }
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       notificationsChargees = require('expo-notifications') as typeof NotificationsModule;

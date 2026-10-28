@@ -5,8 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Annonce vue par la modération : le DTO public, plus l'identité du propriétaire
- * (ECART-18). L'email n'apparaît jamais dans les réponses publiques.
+ * Annonce vue par la modération : le DTO public, plus l'identité du propriétaire.
+ * L'email n'apparaît jamais dans les réponses publiques.
  */
 @Getter
 @Setter

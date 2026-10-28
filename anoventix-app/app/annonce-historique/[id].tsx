@@ -1,5 +1,6 @@
 import AppText from '@/src/components/AppText';
 import { getHistoriqueAnnonce, type HistoriqueAnnonce } from '@/src/api/annonce.api';
+import { useWebContentStyle } from '@/src/lib/responsive';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { formatDate, getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +8,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
-// ─── Historique des modifications d'une annonce (ECART-30) ───────────────────
+// ─── Historique des modifications d'une annonce ───────────────────
 // Ouvert par le propriétaire (« Mes annonces ») et par la modération (liste des annonces).
 
 const CHAMPS: Record<string, string> = {
@@ -43,6 +44,7 @@ export default function HistoriqueAnnonceScreen() {
   const { id, titre } = useLocalSearchParams<{ id: string; titre?: string }>();
   const [lignes, setLignes] = useState<HistoriqueAnnonce[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const colonne = useWebContentStyle('form');
 
   useEffect(() => {
     let actif = true;
@@ -73,8 +75,8 @@ export default function HistoriqueAnnonceScreen() {
         <FlatList
           data={lignes}
           keyExtractor={(l) => String(l.id)}
-          contentContainerStyle={s.liste}
-          ListHeaderComponent={titre ? <AppText style={s.titre} numberOfLines={2}>{titre}</AppText> : null}
+          contentContainerStyle={[s.liste, colonne]}
+          ListHeaderComponent={(titre ? <AppText style={s.titre} numberOfLines={2}>{titre}</AppText> : null) ?? undefined}
           ListEmptyComponent={
             <View style={s.centre}>
               <Ionicons name="time-outline" size={36} color={colors.textMuted} />

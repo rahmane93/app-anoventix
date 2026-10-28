@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, type ComponentRef } from 'react';
 import {
     StyleSheet,
     TextInput,
@@ -24,7 +24,7 @@ interface InputProps extends TextInputProps {
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
-export const Input = forwardRef<TextInput, InputProps>(
+export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(
   (
     {
       label,

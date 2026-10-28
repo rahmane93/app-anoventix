@@ -48,7 +48,7 @@ public interface AnnonceMapper {
     @Mapping(target = "slug", expression = "java(com.app.AnnoncesAPI.Utilities.Utility.slugify(bienImmo.getTitre()))")
     BienImmoDTO bienImmoEntityToDTO(BienImmo bienImmo);
 
-    // Vue de la modération : DTO public + identité du propriétaire (ECART-18)
+    // Vue de la modération : DTO public + identité du propriétaire
     @InheritConfiguration(name = "bienImmoEntityToDTO")
     @Mapping(source = "owner.id", target = "proprietaireId")
     @Mapping(source = "owner.email", target = "proprietaireEmail")

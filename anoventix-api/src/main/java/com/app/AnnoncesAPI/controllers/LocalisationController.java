@@ -68,7 +68,7 @@ public class LocalisationController {
     }
 
     @Operation(summary = "Régions du référentiel",
-               description = "Liste triée des régions : l'app la charge au lieu de l'écrire en dur (ECART-59).")
+               description = "Liste triée des régions : l'app la charge au lieu de l'écrire en dur.")
     @GetMapping("/regions")
     public ResponseEntity<java.util.List<String>> getRegions() {
         return ResponseEntity.ok(localisationService.getRegions());

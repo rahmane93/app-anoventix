@@ -671,7 +671,7 @@ public class BienImmoServiceImpl implements BienImmoService {
     @Transactional(readOnly = true)
     public Page<AnnonceDTO> findNearby(double lat, double lng, double rayonKm, TypeAnnonce typeAnnonce, TypeBien typeBien,
                                        BigDecimal prixMin, BigDecimal prixMax, Pageable pageable) {
-        // Filtres et pagination côté SQL (ECART-33, ECART-46) : un filtre appliqué à la page déjà chargée perdait des résultats.
+        // Filtres et pagination côté SQL : un filtre appliqué à la page déjà chargée perdait des résultats.
         String ta = typeAnnonce == null ? null : typeAnnonce.name();
         String tb = typeBien == null ? null : typeBien.name();
         List<Long> pageIds = bienImmoRepository.findIdsByProximitePage(lat, lng, rayonKm, ta, tb, prixMin, prixMax,

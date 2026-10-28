@@ -169,7 +169,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("La photo de la pièce et le selfie sont obligatoires.");
         }
         com.app.AnnoncesAPI.enums.TypePieceIdentite type = parserTypePiece(typePieceIdentiteStr);
-        // ECART-28 : deux faces pour la carte d'identité et le permis ; une pièce expirée n'est pas recevable.
+        // DEC-36 : deux faces pour la carte d'identité et le permis ; une pièce expirée n'est pas recevable.
         boolean deuxFaces = type == com.app.AnnoncesAPI.enums.TypePieceIdentite.CARTE_IDENTITE
                 || type == com.app.AnnoncesAPI.enums.TypePieceIdentite.PERMIS_DE_CONDUIRE;
         boolean versoFourni = verso != null && !verso.isEmpty();
@@ -240,7 +240,7 @@ public class UserServiceImpl implements UserService {
         return toDTO(userRepository.save(user));
     }
 
-    /** Date d'expiration obligatoire (AAAA-MM-JJ), postérieure à aujourd'hui (ECART-28). */
+    /** Date d'expiration obligatoire (AAAA-MM-JJ), postérieure à aujourd'hui (DEC-36). */
     private static java.time.LocalDate parserDateExpiration(String valeur) {
         if (valeur == null || valeur.isBlank()) {
             throw new IllegalArgumentException("La date d'expiration de la pièce est obligatoire.");

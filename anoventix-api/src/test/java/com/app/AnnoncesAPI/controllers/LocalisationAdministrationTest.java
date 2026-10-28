@@ -33,7 +33,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Administration des localisations : doublons refusés, coordonnées de référence (ECART-45). */
+/** Administration des localisations : doublons refusés, coordonnées de référence. */
 @SpringBootTest
 class LocalisationAdministrationTest {
 
@@ -89,7 +89,7 @@ class LocalisationAdministrationTest {
                 .andExpect(jsonPath("$.longitude").value(-13.6));
         mvc.perform(get("/api/localisations/{id}", id)).andExpect(jsonPath("$.latitude").value(9.6));
 
-        // Journal d'audit (ECART-63) : création et modification tracées avec leur auteur.
+        // Journal d'audit : création et modification tracées avec leur auteur.
         org.assertj.core.api.Assertions.assertThat(jdbc.queryForList(
                 "SELECT action FROM audit_event WHERE cible_id = ? AND acteur_libelle = 'admin@example.com' ORDER BY id",
                 String.class, id)).containsExactly("LOCALISATION_CREEE", "LOCALISATION_MODIFIEE");

@@ -48,7 +48,7 @@ export default function ProximiteScreen() {
     async (c: { lat: number; lng: number }, r: number, type: TypeAnnonce | null = typeFilter) => {
       setFetching(true);
       try {
-        // Le filtre par type est appliqué par l'API avant la pagination (ECART-33).
+        // Le filtre par type est appliqué par l'API avant la pagination.
         await loadNearby({ lat: c.lat, lng: c.lng, rayon: r, typeAnnonce: type ?? undefined });
       } finally {
         setFetching(false);
@@ -236,13 +236,10 @@ export default function ProximiteScreen() {
         renderItem={({ item }) => grid.wrap(
           <FavAnnonceCard item={item} returnTo="/proximite" />
         )}
-        ListHeaderComponent={
-          fetching ? (
+        ListHeaderComponent={(fetching ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-          ) : null
-        }
-        ListEmptyComponent={
-          fetching ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(fetching ? null : (
             <View style={s.empty}>
               <Ionicons name="map-outline" size={40} color={colors.border} />
               <AppText style={s.muted}>
@@ -251,8 +248,7 @@ export default function ProximiteScreen() {
                   : 'Aucune annonce localisée dans ce rayon.'}
               </AppText>
             </View>
-          )
-        }
+          )) ?? undefined}
       />
     </View>
   );

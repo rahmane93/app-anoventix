@@ -3,7 +3,7 @@ package com.app.AnnoncesAPI.Utilities;
 import java.util.regex.Pattern;
 
 /**
- * Règle unique de robustesse des mots de passe (ECART-01), appliquée à l'inscription,
+ * Règle unique de robustesse des mots de passe, appliquée à l'inscription,
  * à la réinitialisation et au changement de mot de passe.
  *
  * Même règle dans l'app (src/lib/validation.ts) ; les deux sont vérifiées sur les mêmes

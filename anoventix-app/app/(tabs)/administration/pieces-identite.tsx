@@ -97,23 +97,19 @@ export default function PiecesIdentiteScreen() {
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
-        ListHeaderComponent={
-          piecesIdentiteTotalElements > 0 ? (
+        ListHeaderComponent={(piecesIdentiteTotalElements > 0 ? (
             <ResultCount>
               {piecesIdentiteTotalElements} pièce{piecesIdentiteTotalElements > 1 ? 's' : ''} à vérifier
             </ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          isLoadingPiecesIdentite ? <LoadingState /> : piecesIdentiteError ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(isLoadingPiecesIdentite ? <LoadingState /> : piecesIdentiteError ? null : (
             <EmptyState
               icon="checkmark-done-outline"
               tone="success"
               title="Aucune pièce en attente"
               message="Toutes les pièces d'identité ont été traitées."
             />
-          )
-        }
+          )) ?? undefined}
         ListFooterComponent={<FooterLoader visible={isLoadingPiecesIdentite && piecesIdentitePage > 0} />}
       />
     </AdminPage>

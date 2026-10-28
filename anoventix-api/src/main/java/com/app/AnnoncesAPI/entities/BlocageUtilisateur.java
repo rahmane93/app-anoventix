@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Un utilisateur en bloque un autre : plus aucun message dans un sens comme dans l'autre (ECART-29). */
+/** Un utilisateur en bloque un autre : plus aucun message dans un sens comme dans l'autre. */
 @Entity
 @Table(name = "blocage_utilisateur")
 @Getter

@@ -34,7 +34,7 @@ import com.app.AnnoncesAPI.repositories.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Changement de rôle encadré (ECART-22). */
+/** Changement de rôle encadré (DEC-37). */
 @SpringBootTest
 class ChangementRoleTest {
 

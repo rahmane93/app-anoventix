@@ -329,6 +329,8 @@ export const s = StyleSheet.create({
     textAlign: 'center', lineHeight: 22,
   },
   gateBtn: { marginTop: spacing.sm },
+  // Écran de succès : les boutons gardent une largeur de lecture au lieu de s'étirer sur toute la page (web).
+  successColumn: { width: '100%', maxWidth: 420, alignItems: 'center', gap: spacing.base },
 
   // Écran de succès
   successIcon: { backgroundColor: colors.successLight },

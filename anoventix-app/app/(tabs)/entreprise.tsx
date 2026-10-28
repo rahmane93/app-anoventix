@@ -160,7 +160,7 @@ export default function EntrepriseScreen() {
             <EntrepriseFormFields form={entrepriseForm} />
             <Button
               title="Créer mon entreprise"
-              onPress={entrepriseForm.handleSubmit(onSubmitEntreprise)}
+              onPress={() => entrepriseForm.handleSubmit(onSubmitEntreprise)()}
               isLoading={isSaving}
               style={styles.btnTop}
             />
@@ -277,7 +277,7 @@ export default function EntrepriseScreen() {
         <EntrepriseFormFields form={entrepriseForm} />
         <Button
           title="Enregistrer les modifications"
-          onPress={entrepriseForm.handleSubmit(onSubmitEntreprise)}
+          onPress={() => entrepriseForm.handleSubmit(onSubmitEntreprise)()}
           isLoading={isSaving}
           style={styles.btnTop}
         />
@@ -393,7 +393,7 @@ export default function EntrepriseScreen() {
           />
           <Button
             title="Envoyer l'invitation"
-            onPress={agentForm.handleSubmit(onSubmitAgent)}
+            onPress={() => agentForm.handleSubmit(onSubmitAgent)()}
             isLoading={isSaving}
             style={styles.btnTop}
           />
@@ -557,7 +557,7 @@ export default function EntrepriseScreen() {
           {annoncesToolbar}
         </View>
       }
-      ListEmptyComponent={annoncesVides}
+      ListEmptyComponent={(annoncesVides) ?? undefined}
       ListFooterComponent={
         <View style={local.footer}>
           {zoneSensible}

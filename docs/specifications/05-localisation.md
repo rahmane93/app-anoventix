@@ -1,75 +1,89 @@
 # Module 05 — Localisation (référentiel géographique)
 
-[← Vue d'ensemble](00-SFG-vue-ensemble.md) · Écarts : [99](99-ecarts-incoherences.md)
+[← Vue d'ensemble](00-SFG-vue-ensemble.md) · Évolutions : [98](98-evolutions.md)
 
 ## 1. Objectif et périmètre
 
-Fournir le référentiel administratif de la Guinée utilisé pour localiser chaque annonce et pour filtrer les recherches, selon la hiérarchie **Région > Préfecture > Commune > Quartier**. Le module couvre aussi la position GPS facultative d'une annonce (sélecteur de carte) et l'administration du référentiel.
+Fournir le référentiel administratif de la Guinée utilisé pour localiser chaque annonce et pour filtrer les recherches, selon la hiérarchie **Région > Préfecture > Commune > Quartier**. Le module couvre aussi la position GPS facultative d'une annonce (sélecteur de carte), le point de référence des quartiers, les demandes d'ajout d'un quartier manquant et l'administration du référentiel.
 
-Hors périmètre (non implémenté) : coordonnées ou contours des quartiers, recherche d'une adresse sur la carte (géocodage), demande d'ajout d'un quartier par un annonceur, mise à jour depuis une source officielle. Le niveau « quartier » sert aussi pour les districts et secteurs des communes rurales : aucune distinction n'est faite.
+Hors périmètre : contours des quartiers, recherche d'une adresse sur la carte (géocodage), mise à jour depuis une source officielle, tables Région / Préfecture / Commune avec identifiants (évolution : [98](98-evolutions.md)). Le niveau « quartier » sert aussi pour les districts et secteurs des communes rurales : aucune distinction n'est faite.
 
-Modules qui utilisent le référentiel : 03 (localisation obligatoire d'une annonce), 04 (filtres, zones actives, similaires, proximité), 07 (aucune localisation pour l'entreprise), 12 (libellés dans les pages de partage).
+Modules qui utilisent le référentiel : 03 (localisation obligatoire d'une annonce), 04 (filtres, zones actives, similaires, proximité, texte de recherche), 07 (aucune localisation pour l'entreprise), 12 (libellés dans les pages de partage).
 
 ## 2. Acteurs et droits
 
-| Action | Public | Admin | Modérateur |
-|---|---|---|---|
-| Lire le référentiel | ✅ | ✅ | ✅ |
-| Ajouter, modifier, supprimer un quartier | ❌ | ✅ | ❌ (l'écran est listé dans l'administration, l'API refuse l'écriture) |
+| Action | Public | Annonceur | Admin | Modérateur |
+|---|---|---|---|---|
+| Lire le référentiel | ✅ | ✅ | ✅ | ✅ |
+| Signaler un quartier manquant (à la publication) | — | ✅ | — | — |
+| Ajouter, modifier, supprimer un quartier ; traiter les demandes | ❌ | ❌ | ✅ | ❌ (écran non proposé) |
 
 ## 3. User stories
 
 | ID | User story |
 |---|---|
 | US-05-01 | En tant qu'annonceur, je choisis successivement la région, la préfecture, la commune puis le quartier de mon bien, et je peux préciser un complément d'adresse et un point sur la carte. |
-| US-05-02 | En tant que visiteur, je filtre les annonces par région, préfecture, commune ou quartier. |
-| US-05-03 | En tant qu'administrateur, j'ajoute un quartier manquant, je corrige un libellé ou je supprime un quartier inutilisé. |
+| US-05-02 | En tant qu'annonceur dont le quartier manque, je saisis son nom : mon annonce est publiée sur la commune en attendant l'ajout. |
+| US-05-03 | En tant que visiteur, je filtre les annonces par région, préfecture, commune ou quartier. |
+| US-05-04 | En tant qu'administrateur, j'ajoute un quartier, je corrige un libellé, je saisis son point de référence, je supprime un quartier inutilisé et je traite les demandes d'ajout. |
 
 ## 4. Règles de gestion
+
+### 4.1 Référentiel
 
 | ID | Règle | Source |
 |---|---|---|
 | RG-05-01 | Une localisation = un **quartier** avec sa région, sa préfecture, sa commune et le type de commune (`urbaine` ou `rurale`). Tous les champs sont obligatoires (≤ 100 caractères). | `LocalisationRequest.java` |
-| RG-05-02 | Identifiant : chaîne (UUID généré à la création ; identifiants fournis par le script de chargement initial). | `LocalisationServiceImpl.java:57-65` |
-| RG-05-03 | Données initiales : `sql/localisation.sql`, **743 quartiers** dans 8 régions, 34 préfectures et 369 communes (385 quartiers en communes urbaines, 358 en communes rurales). Le script se charge à la main, il n'est pas intégré à Flyway (ECART-45). | `sql/localisation.sql` |
-| RG-05-04 | Lecture paginée (20 par défaut, 100 au plus), tri sur `region`, `prefecture`, `commune`, `quartier` ou `typeCommune`. L'app charge toutes les pages (par 100) et construit les listes en cascade côté client. | `LocalisationController.java`, `src/api/localisation.api.ts:7-36` |
-| RG-05-05 | Suppression refusée si des annonces sont rattachées au quartier (« Impossible de supprimer cette localisation : des annonces y sont encore rattachées. »). | `LocalisationServiceImpl.java:81-91` |
-| RG-05-06 | 🆕 (ECART-45) **Pas de doublon** : un quartier n'existe qu'une fois par commune, aux accents, à la casse et à la ponctuation près (API, et index unique `uq_localisation_quartier`, V37) ; l'ajout d'un quartier demandé (DEC-22) applique la même règle. Chaque quartier peut porter un **point de référence** (latitude, longitude), saisi par l'administrateur, qui centre la carte de l'assistant de publication. | `LocalisationServiceImpl`, `QuartierDemandeService` |
-| RG-05-07 | La position GPS d'une annonce est facultative (latitude −90 à 90, longitude −180 à 180, 6 décimales). Elle est saisie sur une carte Leaflet (`MapPickerModal`), avec possibilité de se géolocaliser. Sans position, l'annonce n'apparaît pas dans la recherche de proximité. Les quartiers n'ont pas de coordonnées de référence pour proposer un point par défaut. | `Annonce.java:92-100`, `components/ui/MapPickerModal.tsx` |
-| RG-05-08 | Les filtres de recherche comparent les libellés (région, préfecture, commune, quartier) sans tenir compte de la casse, mais en tenant compte des accents. | `BienImmoSpecification.java` |
-| RG-05-09 | Une annonce est rattachée à un quartier par son **identifiant**. Modifier un quartier (libellé, commune, type) modifie donc la localisation affichée de toutes ses annonces, pages de partage comprises (module 12), sans historique. | `Annonce.java` (`localisation_id`) |
-| RG-05-10 | 🆕 (ECART-59) Les régions sont **chargées depuis l'API** (`GET /api/localisations/regions`) ; la liste écrite dans l'app ne sert que de secours hors connexion. | `useRegions.ts` |
-| RG-05-11 | L'app charge les quartiers **d'une région à la fois** (`/region/{nom}`, comparaison exacte, sensible à la casse et aux accents), par pages de 100, sans cache : chaque choix de région relance le chargement. Préfectures, communes et quartiers sont ensuite déduits côté client. | `APP/src/api/localisation.api.ts`, `annonce.store.ts:94-105` |
-| RG-05-12 | **Homonymes** : 8 noms de commune existent dans deux préfectures différentes (Banko, Dialakoro, Koba, Kollet, Missira, Moribayah, Tanene, Touba) et 10 noms de quartier dans plusieurs communes. Les listes en cascade et les zones actives les distinguent (elles portent la préfecture), mais les **annonces similaires** comparent le seul nom de la commune et mélangent les homonymes (ECART-59). | `sql/localisation.sql`, `BienImmoServiceImpl.java:514` |
-| RG-05-13 | **Administration** : dans l'app, la région, la préfecture et la commune d'un nouveau quartier se choisissent parmi les valeurs existantes. Créer une préfecture ou une commune, ou renommer une commune pour tous ses quartiers, est impossible depuis l'app. L'API accepte n'importe quel libellé, ce qui permet des variantes d'orthographe qui créent de fausses communes. | `administration/localisations.tsx:230-240`, `LocalisationRequest.java` |
-| RG-05-14 | **Quartier manquant** : l'assistant ne propose aucune option « Mon quartier n'est pas dans la liste ». L'annonceur doit choisir un quartier voisin (donnée fausse, recherche faussée) ou écrire au support par email ; aucune demande n'est tracée (ECART-58). | `features/publier/usePublierForm.ts` |
-| RG-05-15 | **Carte** : sans position enregistrée, la carte s'ouvre sur Conakry (9,6412 ; −13,5784) quelle que soit la région choisie ; la géolocalisation recentre sur l'appareil (zoom 15 au moins). La bibliothèque Leaflet est chargée depuis le CDN `unpkg.com`, et les tuiles depuis OpenStreetMap (SFG §4.1). 🆕 Retenu (DEC-30) : tuiles servies par un fournisseur de tuiles OSM, avec clé d'API et attribution affichée sur chaque carte. | `components/ui/leaflet-html.ts:30, 49-59, 93` |
-| 🆕 RG-05-16 | **Cible DEC-22** : à l'étape « Lieu », après le choix de la commune, l'option « Mon quartier n'est pas dans la liste » permet de saisir le nom du quartier (≤ 100 caractères). L'annonce est rattachée à une entrée technique « Autre quartier » de la commune et s'affiche avec le nom de la commune seul. | DEC-22 |
-| 🆕 RG-05-17 | La saisie crée une **demande d'ajout** (nom saisi, commune, annonce, demandeur), traitée dans la file « Quartiers demandés » de l'administration : **ajouter** le quartier (ou le rattacher à un quartier existant en cas de variante d'orthographe), ce qui rattache aussitôt les annonces concernées, ou **refuser** avec un motif, l'annonce restant rattachée à la commune. | DEC-22 |
-| 🆕 RG-05-18 | Une annonce rattachée à « Autre quartier » apparaît dans les filtres par région, préfecture et commune, pas dans les filtres par quartier ; elle compte dans les zones actives de sa commune. | DEC-22 |
+| RG-05-02 | Identifiant : chaîne (UUID généré à la création ; identifiants fournis par les données initiales). | `LocalisationServiceImpl.create` |
+| RG-05-03 | Données initiales : migration Flyway V14, **743 quartiers** dans 8 régions, 34 préfectures et 369 communes (385 quartiers en communes urbaines, 358 en communes rurales). Chargement idempotent : sans effet sur une base déjà alimentée. | `V14__donnees_localisation.sql` |
+| RG-05-04 | Lecture paginée (20 par défaut, 100 au plus), tri sur `region`, `prefecture`, `commune`, `quartier` ou `typeCommune`. Les entrées techniques « Autre quartier » (RG-05-16) ne sont jamais listées. | `LocalisationController.java` |
+| RG-05-05 | Suppression refusée si des annonces sont rattachées au quartier (« Impossible de supprimer cette localisation : des annonces y sont encore rattachées. »). | `LocalisationServiceImpl.delete` |
+| RG-05-06 | **Pas de doublon** : un quartier n'existe qu'une fois par commune, aux accents, à la casse et à la ponctuation près. L'API refuse un doublon (« Le quartier « … » existe déjà dans la commune … », 422), à la création comme à la modification et à l'ajout d'un quartier demandé ; la base l'interdit aussi (index unique `uq_localisation_quartier`, V37). | `LocalisationRepository.trouverQuartier` |
+| RG-05-07 | **Point de référence** : chaque quartier peut porter une latitude et une longitude (les deux ou aucune), saisies par l'administrateur. Il centre la carte de l'assistant de publication quand l'annonceur choisit ce quartier. | `Localisation.latitude`, `MapPickerModal` |
+| RG-05-08 | Les filtres de recherche comparent les libellés (région, préfecture, commune, quartier) sans tenir compte de la casse, mais en tenant compte des accents. La recherche texte, elle, ignore les accents (module 04, RG-04-03). | `BienImmoSpecification.java` |
+| RG-05-09 | Une annonce est rattachée à un quartier par son **identifiant**. Modifier un quartier (libellé, commune, type) modifie donc la localisation affichée de toutes ses annonces, pages de partage et texte de recherche compris, sans historique. | `annonce.localisation_id`, trigger `trg_localisation_recherche` (V33) |
+| RG-05-10 | Les régions sont **chargées depuis l'API** (`GET /api/localisations/regions`) et gardées en cache pendant la session ; une liste écrite dans l'app ne sert que de secours si l'API ne répond pas. | `src/lib/useRegions.ts` |
+| RG-05-11 | L'app charge les quartiers **d'une région à la fois** (`/region/{nom}`, comparaison exacte), par pages de 100 ; préfectures, communes et quartiers sont ensuite déduits côté client. | `src/api/localisation.api.ts`, `annonce.store.ts` |
+| RG-05-12 | **Homonymes** : 8 noms de commune existent dans deux préfectures différentes (Banko, Dialakoro, Koba, Kollet, Missira, Moribayah, Tanene, Touba) et 10 noms de quartier dans plusieurs communes. Les listes en cascade, les zones actives et les annonces similaires les distinguent : elles portent toujours la préfecture. | V14, `BienImmoRepository.findSimilaires` |
+| RG-05-13 | **Administration** : dans l'app, la région, la préfecture et la commune d'un nouveau quartier se choisissent parmi les valeurs existantes. Créer une préfecture ou une commune, ou renommer une commune pour tous ses quartiers, n'est pas possible depuis l'app. Chaque création, modification ou suppression est inscrite au journal d'audit. | `administration/localisations.tsx`, `LocalisationServiceImpl` |
+
+### 4.2 Position sur la carte
+
+| ID | Règle | Source |
+|---|---|---|
+| RG-05-14 | La position GPS d'une annonce est facultative (latitude −90 à 90, longitude −180 à 180, 6 décimales). Elle est saisie sur une carte Leaflet (`MapPickerModal`), avec possibilité de se géolocaliser. Sans position, l'annonce n'apparaît pas dans la recherche de proximité. | `Annonce.java`, `components/ui/MapPickerModal.tsx` |
+| RG-05-15 | **Carte** : sans position enregistrée, la carte s'ouvre sur le point de référence du quartier choisi (zoom 15), sinon sur Conakry (9,6412 ; −13,5784) ; la géolocalisation recentre sur l'appareil. Par défaut, la bibliothèque Leaflet est chargée depuis `unpkg.com` et les tuiles depuis les serveurs d'OpenStreetMap. Avec `EXPO_PUBLIC_MAP_PROVIDER=lfmaps`, la carte utilise MapLibre GL (`unpkg.com`) et les tuiles vectorielles LFMaps (`data.lfmaps.fr`), sans clé d'API ; sans WebGL, elle affiche « Carte indisponible sur cet appareil. ». Le choix définitif du fournisseur (DEC-30) est à faire avant la mise en production ([98](98-evolutions.md)). | `components/ui/leaflet-html.ts` |
+
+### 4.3 Quartier manquant (DEC-22)
+
+| ID | Règle | Source |
+|---|---|---|
+| RG-05-16 | À l'étape « Lieu », après le choix de la commune, l'option « Mon quartier n'est pas dans la liste » permet de saisir le nom du quartier (≤ 100 caractères). L'annonce est rattachée à une entrée technique « Autre quartier » de la commune (`technique = true`, créée à la demande) et s'affiche avec le nom de la commune seul. | `QuartierDemandeService.java`, `GET /api/localisations/autre-quartier` |
+| RG-05-17 | La saisie crée une **demande d'ajout** (nom saisi, commune, annonce, demandeur), traitée dans la file « Quartiers demandés » de l'administration, qui propose les quartiers proches (variantes d'orthographe) : **ajouter** le quartier (nom éventuellement corrigé), ce qui rattache aussitôt les annonces concernées et traite les autres demandes de même nom ; **rattacher** à un quartier existant de la même commune ; ou **refuser** avec un motif, l'annonce restant rattachée à la commune. | idem |
+| RG-05-18 | Une annonce rattachée à « Autre quartier » apparaît dans les filtres par région, préfecture et commune, pas dans les filtres par quartier ; elle compte dans les zones actives de sa commune. | `BienImmoSpecification.java` |
 
 ## 5. Écrans
 
 | Écran | Route | Contenu |
 |---|---|---|
-| Étape « Lieu » de l'assistant | `app/(tabs)/publier.tsx` | Listes en cascade, complément d'adresse, sélecteur de carte |
+| Étape « Lieu » de l'assistant | `app/(tabs)/publier.tsx` | Listes en cascade, « Mon quartier n'est pas dans la liste », complément d'adresse, sélecteur de carte |
 | Filtres de recherche | `features/explore/FilterModal.tsx` | Région, préfecture, commune, quartier |
-| Administration > Localisations | `app/(tabs)/administration/localisations.tsx` | Recherche, filtres par région / préfecture, liste, formulaire (région, préfecture, commune, nom du quartier, « Commune urbaine / rurale »), modification, suppression avec confirmation |
+| Administration > Localisations | `app/(tabs)/administration/localisations.tsx` (administrateur) | Recherche, filtres par région / préfecture, liste, formulaire (région, préfecture, commune, nom du quartier, type de commune, point de référence), modification, suppression avec confirmation |
+| Administration > Quartiers demandés | `app/(tabs)/administration/quartiers-demandes.tsx` (administrateur) | Demandes en attente, quartiers proches proposés, ajouter / rattacher / refuser |
 
 ## 6. API
 
 | Méthode | URL | Accès |
 |---|---|---|
-| GET | `/api/localisations` · `/api/localisations/{id}` · `/region/{nom}` · `/prefecture/{nom}` · `/commune/{nom}` | public |
-| POST | `/api/localisations` | admin |
-| PUT | `/api/localisations/{id}` | admin |
-| DELETE | `/api/localisations/{id}` | admin |
-
-`/{id}`, `/prefecture/{nom}` et `/commune/{nom}` ne sont pas utilisés par l'app.
+| GET | `/api/localisations` · `/{id}` · `/regions` · `/region/{nom}` · `/prefecture/{nom}` · `/commune/{nom}` | public |
+| GET | `/api/localisations/autre-quartier?region&prefecture&commune` | public (entrée technique de la commune) |
+| POST · PUT · DELETE | `/api/localisations` · `/api/localisations/{id}` | admin |
+| GET | `/api/admin/quartiers-demandes` | admin |
+| PUT | `/api/admin/quartiers-demandes/{id}/ajouter` · `/rattacher` · `/refuser` | admin |
 
 ## 7. Données
 
-Table `localisation` : `id` (varchar), `region`, `prefecture`, `commune`, `quartier`, `type_commune`. Aucune contrainte d'unicité sur le quadruplet région / préfecture / commune / quartier.
+Table `localisation` : `id` (varchar), `region`, `prefecture`, `commune`, `quartier`, `type_commune`, `technique` (entrée « Autre quartier »), `latitude`, `longitude` (9,6). Unicité du quartier par commune (hors entrées techniques). Table `demande_quartier` : `nom`, `localisation_id` (entrée technique), `annonce_id`, `demandeur_id`, `statut` (EN_ATTENTE, AJOUTEE, RATTACHEE, REFUSEE), `motif_refus`, `localisation_finale`, dates, `decide_par`.
 
 ## 8. Critères d'acceptation
 
@@ -77,22 +91,9 @@ Table `localisation` : `id` (varchar), `region`, `prefecture`, `commune`, `quart
 |---|---|
 | CA-05-01 | Choisir une région vide la préfecture et la commune déjà saisies. |
 | CA-05-02 | La suppression d'un quartier utilisé par une annonce renvoie un message explicite, jamais une erreur 500. |
-| CA-05-03 | Un modérateur ne peut pas créer de quartier (403). |
-| CA-05-04 | Renommer un quartier change aussitôt le libellé affiché sur toutes ses annonces. |
-| CA-05-05 | *Cible (ECART-59)* : les similaires d'une annonce située à Koba (préfecture de Dalaba) ne contiennent aucune annonce de Koba (préfecture de Télimélé). |
-| CA-05-06 | Choisir la région « N'Zérékoré » dans l'assistant charge bien ses quartiers (apostrophe et accents identiques à la base). |
-| CA-05-07 | Sans position enregistrée, la carte de l'assistant s'ouvre centrée sur Conakry. |
-| 🆕 CA-05-08 | Une annonce publiée avec « Mon quartier n'est pas dans la liste » est visible tout de suite sur la commune ; quand l'admin ajoute le quartier, l'annonce l'affiche sans action de l'annonceur. |
-
-## 9. Écarts propres au module
-
-ECART-45 (doublons, coordonnées de référence, script initial hors Flyway, écran visible pour le modérateur), ECART-58 (quartier manquant sans recours), ECART-59 (libellés utilisés comme clés : régions en dur, communes homonymes mélangées).
-
-## 10. Questions ouvertes
-
-> **Arbitrages du 17/10/2026** (registre : [SFG §17](00-SFG-vue-ensemble.md)) : Q1 → DEC-22.
-
-1. Faut-il une option « Mon quartier n'est pas dans la liste » qui crée une demande d'ajout traitée par l'administration (ECART-58) ? En attendant sa validation, l'annonce est-elle rattachée à la commune ?
-2. Faut-il ajouter des **coordonnées par quartier**, pour centrer la carte sur le quartier choisi et inclure les annonces sans GPS dans « À proximité » (ECART-45, module 04 §9) ?
-3. Qui tient le référentiel à jour (nouvelles communes, découpages) et à partir de quelle source officielle ?
-4. Faut-il distinguer quartiers urbains et districts ou secteurs ruraux dans les libellés affichés ?
+| CA-05-03 | Un modérateur ne peut pas créer de quartier (403) et ne voit pas l'écran Localisations. |
+| CA-05-04 | Renommer un quartier change aussitôt le libellé affiché sur toutes ses annonces et le texte sur lequel porte la recherche. |
+| CA-05-05 | Créer « quartier temoin » dans une commune qui a déjà « Quartier Témoin » est refusé (422). |
+| CA-05-06 | Choisir la région « N'Zérékoré » dans l'assistant charge bien ses quartiers. |
+| CA-05-07 | Pour un quartier qui a un point de référence, la carte de l'assistant s'ouvre sur ce point ; sinon, sur Conakry. |
+| CA-05-08 | Une annonce publiée avec « Mon quartier n'est pas dans la liste » est visible tout de suite sur la commune ; quand l'admin ajoute le quartier, l'annonce l'affiche sans action de l'annonceur. |

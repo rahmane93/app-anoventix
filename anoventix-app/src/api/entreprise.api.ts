@@ -10,7 +10,7 @@ import type {
 import { normalizeMediaUrls } from './annonce.api';
 import { API_BASE_URL, apiClient } from './client';
 import type { Operation } from './contrat';
-import { multipartPut } from './multipart';
+import { appendFile, multipartPut } from './multipart';
 
 // ─── Entreprise API ───────────────────────────────────────────────────────────
 
@@ -73,8 +73,8 @@ export const getEntrepriseProfil = async (
   page = 0,
   size = 20,
 ): Promise<EntrepriseProfilResponse> => {
-  // Paramètres typés par le contrat de l'API : un nom erroné (ex. « limit »,
-  // ECART-19) ne compile plus.
+  // Paramètres typés par le contrat de l'API : un nom erroné (ex. « limit »)
+  // ne compile plus.
   const params: Operation<'getEntrepriseProfil'>['parameters']['query'] = { page, size };
   const response = await apiClient.get<EntrepriseProfilResponse>(
     `/api/entreprises/${id}/profil`,
@@ -190,7 +190,7 @@ export const uploadEntreprisePhoto = async (
   file: { uri: string; name: string; type: string },
 ): Promise<EntrepriseDTO> => {
   const formData = new FormData();
-  formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
+  await appendFile(formData, 'file', file);
   const json = await multipartPut<any>(`/api/entreprises/${entrepriseId}/photo`, formData);
   return normalizeEntreprise(json);
 };

@@ -89,7 +89,7 @@ public class User {
     @Column(length = 500)
     private String pieceIdentiteUrl;
 
-    /** Verso de la pièce (ECART-28) : obligatoire pour la carte d'identité et le permis. */
+    /** Verso de la pièce (DEC-36) : obligatoire pour la carte d'identité et le permis. */
     @Column(name = "piece_identite_verso_url", length = 500)
     private String pieceIdentiteVersoUrl;
 
@@ -148,7 +148,7 @@ public class User {
     @Column(name = "must_change_password", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean mustChangePassword = false;
 
-    /** Acceptation des CGU à l'inscription (ECART-41) ; null pour un compte créé avant leur enregistrement. */
+    /** Acceptation des CGU à l'inscription ; null pour un compte créé avant leur enregistrement. */
     @Column(name = "cgu_acceptees_le")
     private LocalDateTime cguAccepteesLe;
 

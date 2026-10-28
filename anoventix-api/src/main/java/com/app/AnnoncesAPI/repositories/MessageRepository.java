@@ -30,7 +30,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     /** Nombre de messages signalés non encore traités (signalés et non supprimés). */
     long countBySignaleTrueAndSupprimeFalse();
 
-    /** Messages envoyés par un compte depuis une date (limite d'envoi, ECART-29). */
+    /** Messages envoyés par un compte depuis une date (limite d'envoi). */
     long countBySenderIdAndCreatedAtAfter(UUID senderId, java.time.LocalDateTime depuis);
 
     /** Messages signalés par un utilisateur (export RGPD). */

@@ -79,7 +79,7 @@ public interface AdminService {
     /** Liste les utilisateurs dont la pièce d'identité est en attente de validation. */
     Page<UserDTO> getPiecesIdentiteEnAttente(Pageable pageable);
 
-    /** Change le rôle d'un compte (administrateur), avec les garde-fous d'ECART-22. */
+    /** Change le rôle d'un compte (administrateur), avec les garde-fous de DEC-37. */
     void changerRole(UUID userId, TypeRole role, UUID adminId);
 
 

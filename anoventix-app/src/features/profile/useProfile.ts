@@ -77,7 +77,7 @@ export function useProfile() {
   const [pieceTypeSel, setPieceTypeSel] = useState<TypePieceIdentite | ''>('');
   const [pieceNumero, setPieceNumero] = useState('');
   const [pieceFile, setPieceFile] = useState<{ uri: string; name: string; type: string } | null>(null);
-  // ECART-28 : verso (obligatoire pour la carte d'identité et le permis) et date d'expiration (JJ/MM/AAAA).
+  // DEC-36 : verso (obligatoire pour la carte d'identité et le permis) et date d'expiration (JJ/MM/AAAA).
   const [versoFile, setVersoFile] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [pieceExpiration, setPieceExpiration] = useState('');
   // Selfie de vérification (EVO-01) : pris en direct, jamais importé de la galerie.

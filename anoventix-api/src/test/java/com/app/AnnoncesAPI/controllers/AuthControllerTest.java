@@ -310,7 +310,7 @@ public class AuthControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/activate"))
             .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
-    // ECART-41 : le consentement aux CGU est enregistré avec la date et la version en vigueur.
+    // le consentement aux CGU est enregistré avec la date et la version en vigueur.
     @Test
     public void testInscription_enregistreLeConsentementAuxCgu() throws Exception {
         Map<String, Object> payload = new HashMap<>();
@@ -372,7 +372,7 @@ public class AuthControllerTest {
             .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
-    // ECART-36 : un compte suspendu ne reçoit pas de code, et un code émis avant la
+    // un compte suspendu ne reçoit pas de code, et un code émis avant la
     // suspension ne sert plus ; la réponse reste celle d'un email inconnu.
     @Test
     public void testForgotPassword_compteSuspendu_aucunCodeUtilisable() throws Exception {

@@ -1,6 +1,6 @@
 import type { AnnonceFilterParams, BienImmo, CreateBienImmoRequest, MotifCloture, NearbyParams, PageResponse, UpdateBienImmoRequest } from '../types/annonce.types';
 import { API_BASE_URL, apiClient, rethrowApiError } from './client';
-import { multipartPost, multipartPut } from './multipart';
+import { appendFile, multipartPost, multipartPut } from './multipart';
 
 // ─── Helper URL médias ────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ export const createBienImmo = async (
 
   const [principale, ...suivantes] = req.medias;
   if (principale) {
-    formData.append('medias', { uri: principale.uri, name: principale.name, type: principale.type } as any);
+    await appendFile(formData, 'medias', principale);
   }
 
   onPhotoUploaded?.(0, req.medias.length);
@@ -133,7 +133,7 @@ export const addBienImmoMedias = async (
   for (const file of medias) {
     try {
       const formData = new FormData();
-      formData.append('medias', { uri: file.uri, name: file.name, type: file.type } as any);
+      await appendFile(formData, 'medias', file);
       await multipartPut<unknown>(`/api/biens-immo/${id}/medias`, formData);
     } catch (err) {
       rethrowApiError(err, "Impossible d'ajouter les images.");
@@ -245,7 +245,7 @@ export interface HistoriqueAnnonce {
   dateModification: string;
 }
 
-/** Historique d'une annonce : propriétaire, son professionnel, ou modération (ECART-30). */
+/** Historique d'une annonce : propriétaire, son professionnel, ou modération. */
 export const getHistoriqueAnnonce = async (id: number): Promise<HistoriqueAnnonce[]> =>
   (await apiClient.get<HistoriqueAnnonce[]>(`/api/biens-immo/${id}/historique`)).data;
 

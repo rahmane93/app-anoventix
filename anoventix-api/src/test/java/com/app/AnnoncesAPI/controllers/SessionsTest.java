@@ -38,7 +38,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Sessions (ECART-21, 51, 54, 05) : jetons de rafraîchissement en base, rotation, détection de
+ * Sessions : jetons de rafraîchissement en base, rotation, détection de
  * rejeu, cookie du site web, et limite de débit du rafraîchissement.
  */
 @SpringBootTest
@@ -268,7 +268,7 @@ class SessionsTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // ── Limite de débit (ECART-05) ─────────────────────────────────────────
+    // ── Limite de débit ─────────────────────────────────────────
 
     @Test
     void leRafraichissementNEstPlusLimiteACinqParQuinzeMinutes() throws Exception {

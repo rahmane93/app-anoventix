@@ -15,7 +15,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 
 /**
- * Installation sur une base vierge (ECART-04) : toutes les migrations s'appliquent
+ * Installation sur une base vierge : toutes les migrations s'appliquent
  * depuis une base vide (FlywayTestConfig) et Hibernate valide le schéma obtenu au
  * démarrage du contexte (ddl-auto=validate). Si ce test échoue, une nouvelle
  * installation de l'API échouerait aussi.

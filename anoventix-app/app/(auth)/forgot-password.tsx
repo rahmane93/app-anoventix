@@ -97,7 +97,7 @@ export default function ForgotPasswordScreen() {
               )}
             />
 
-            <Button title="Recevoir le code" onPress={handleSubmit(onSubmit)} isLoading={isLoading} />
+            <Button title="Recevoir le code" onPress={() => handleSubmit(onSubmit)()} isLoading={isLoading} />
           </View>
 
           {/* Footer */}

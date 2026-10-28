@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { AlertBanner } from '@/src/components/ui/alert-banner';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
+import { useBreakpoint } from '@/src/lib/responsive';
 import { LOGIN_REASON_MESSAGES, clearReturnTo, type LoginReason } from '@/src/lib/auth-redirect';
 import { SigninFormData, signinSchema } from '@/src/lib/validation';
 import { useAuthStore } from '@/src/stores/auth.store';
@@ -27,6 +28,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 export default function LoginScreen() {
   const { signin, reactivate, resendActivation } = useAuthStore(useShallow((s) => ({ signin: s.signin, reactivate: s.reactivate, resendActivation: s.resendActivation })));
+  const { isWide } = useBreakpoint();
   const { raison } = useLocalSearchParams<{ raison?: LoginReason }>();
   const reasonMessage = raison ? LOGIN_REASON_MESSAGES[raison] : undefined;
   const [apiError, setApiError] = useState<string | null>(null);
@@ -148,7 +150,8 @@ export default function LoginScreen() {
               style={s.logo}
             />
             <BrandText size={30} />
-            <AppText style={s.tagline}>Trouvez votre bien idéal</AppText>
+            {/* Le panneau de marque (web large) porte déjà cette accroche. */}
+            {!isWide ? <AppText style={s.tagline}>L’immobilier en Guinée, quartier par quartier</AppText> : null}
           </View>
 
           {/* Formulaire */}
@@ -213,7 +216,7 @@ export default function LoginScreen() {
               <AppText style={s.forgotText}>Mot de passe oublié ?</AppText>
             </TouchableOpacity>
 
-            <Button title="Se connecter" onPress={handleSubmit(onSubmit)} isLoading={isLoading} />
+            <Button title="Se connecter" onPress={() => handleSubmit(onSubmit)()} isLoading={isLoading} />
           </View>
 
           {/* Footer */}
@@ -271,6 +274,7 @@ const s = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.textMuted,
     marginTop: 4,
+    textAlign: 'center',
   },
 
   // Form

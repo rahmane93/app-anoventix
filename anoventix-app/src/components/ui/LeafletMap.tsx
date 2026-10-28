@@ -1,26 +1,27 @@
+import type { ComponentRef } from 'react';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { colors, radius } from '../../theme';
-import { buildLeafletHtml, DEFAULT_CENTER, type LeafletMapHandle, type LeafletMapProps } from './leaflet-html';
+import { buildMapHtml, DEFAULT_CENTER, type LeafletMapHandle, type LeafletMapProps } from './leaflet-html';
 
 export type { LatLng, LeafletMapHandle } from './leaflet-html';
 
-// Carte gratuite (OpenStreetMap + Leaflet) rendue dans une WebView — sans clé API.
+// Carte (Leaflet ou MapLibre, voir leaflet-html.ts) rendue dans une WebView — sans clé API.
 // Deux usages : sélection d'un point (interactive) ou affichage seul d'un marqueur.
 
 export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function LeafletMap(
   { latitude, longitude, centre, interactive = false, onChange, zoom = 13, height = 220, fill = false, style },
   ref,
 ) {
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<ComponentRef<typeof WebView>>(null);
   const hasInit = latitude != null && longitude != null;
   const lat = hasInit ? (latitude as number) : centre?.latitude ?? DEFAULT_CENTER.lat;
   const lng = hasInit ? (longitude as number) : centre?.longitude ?? DEFAULT_CENTER.lng;
 
   // HTML généré une seule fois au montage (les MAJ externes passent par injectJavaScript).
   const html = useMemo(
-    () => buildLeafletHtml(lat, lng, hasInit, interactive, zoom),
+    () => buildMapHtml(lat, lng, hasInit, interactive, zoom),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    backgroundColor: '#e8eef5',
+    backgroundColor: colors.mapBackground,
   },
   fill: { flex: 1 },
   web: { flex: 1, backgroundColor: 'transparent' },

@@ -45,7 +45,7 @@ export const getLocalisationsByRegion = async (region: string): Promise<Localisa
 export const getAutreQuartier = async (region: string, prefecture: string, commune: string): Promise<Localisation> =>
   (await apiClient.get<Localisation>('/api/localisations/autre-quartier', { params: { region, prefecture, commune } })).data;
 
-/** Régions du référentiel, triées (ECART-59). */
+/** Régions du référentiel, triées. */
 export const getRegions = async (): Promise<string[]> =>
   (await apiClient.get<string[]>('/api/localisations/regions')).data;
 

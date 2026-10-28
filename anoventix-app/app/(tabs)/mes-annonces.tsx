@@ -124,11 +124,9 @@ export default function MesAnnoncesScreen() {
       ListEmptyComponent={<EmptyState />}
       onEndReached={loadMore}
       onEndReachedThreshold={0.3}
-      ListFooterComponent={
-        isLoadingMore ? (
+      ListFooterComponent={(isLoadingMore ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-        ) : null
-      }
+        ) : null) ?? undefined}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

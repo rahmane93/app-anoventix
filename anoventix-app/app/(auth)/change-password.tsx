@@ -152,7 +152,7 @@ export default function ChangePasswordScreen() {
 
         <Button
           title="Modifier le mot de passe"
-          onPress={handleSubmit(onSubmit)}
+          onPress={() => handleSubmit(onSubmit)()}
           isLoading={isLoading}
           style={styles.btn}
         />

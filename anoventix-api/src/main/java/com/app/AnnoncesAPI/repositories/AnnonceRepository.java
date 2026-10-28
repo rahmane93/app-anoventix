@@ -55,7 +55,7 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long>, JpaSpec
     @Query("SELECT a.vueCount FROM Annonce a WHERE a.id = :id")
     Optional<Long> findVueCountById(@Param("id") Long id);
 
-    /** Annonces visibles du public (une seule définition de « active », ECART-27) par type de bien. Retourne [TypeBien, count]. */
+    /** Annonces visibles du public (une seule définition de « active ») par type de bien. Retourne [TypeBien, count]. */
     @Query("SELECT a.typeBien, COUNT(a) FROM Annonce a WHERE a.visiblePublic = true GROUP BY a.typeBien ORDER BY COUNT(a) DESC")
     java.util.List<Object[]> countByTypeBien();
 

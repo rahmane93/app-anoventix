@@ -5,7 +5,7 @@ import java.util.List;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
-/** Nouvel ordre des photos d'une annonce : tous ses identifiants, la photo principale en premier (ECART-49). */
+/** Nouvel ordre des photos d'une annonce : tous ses identifiants, la photo principale en premier. */
 @Data
 public class OrdreMediasRequest {
 

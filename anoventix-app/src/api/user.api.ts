@@ -5,7 +5,7 @@ import type {
 } from '../types/user.types';
 import type { BienImmo, PageResponse } from '../types/annonce.types';
 import { apiClient } from './client';
-import { multipartPost, multipartPut } from './multipart';
+import { appendFile, multipartPost, multipartPut } from './multipart';
 
 // ─── User API ─────────────────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ export const uploadPhoto = async (
   photoType: 'profil' = 'profil',
 ): Promise<UserProfile> => {
   const formData = new FormData();
-  formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
+  await appendFile(formData, 'file', file);
   formData.append('type', photoType);
   return multipartPut<UserProfile>('/api/users/me/photo', formData);
 };
@@ -50,14 +50,14 @@ export const uploadPieceIdentite = async (
   selfie: { uri: string; name: string; type: string },
   typePiece: TypePieceIdentite,
   numeroPiece: string,
-  /** AAAA-MM-JJ (ECART-28). */
+  /** AAAA-MM-JJ (DEC-36). */
   dateExpiration: string,
 ): Promise<void> => {
   // La pièce et le selfie partent ensemble : l'API refuse l'un sans l'autre (RG-02-28).
   const formData = new FormData();
-  formData.append('file', { uri: piece.uri, name: piece.name, type: piece.type } as any);
-  if (verso) formData.append('verso', { uri: verso.uri, name: verso.name, type: verso.type } as any);
-  formData.append('selfie', { uri: selfie.uri, name: selfie.name, type: selfie.type } as any);
+  await appendFile(formData, 'file', piece);
+  if (verso) await appendFile(formData, 'verso', verso);
+  await appendFile(formData, 'selfie', selfie);
   formData.append('dateExpiration', dateExpiration);
   formData.append('typePieceIdentite', typePiece);
   formData.append('numeroPieceIdentite', numeroPiece);
@@ -70,7 +70,7 @@ export const uploadPieceIdentite = async (
  */
 export const uploadSelfie = async (selfie: { uri: string; name: string; type: string }): Promise<void> => {
   const formData = new FormData();
-  formData.append('selfie', { uri: selfie.uri, name: selfie.name, type: selfie.type } as any);
+  await appendFile(formData, 'selfie', selfie);
   await multipartPost<unknown>('/api/users/me/selfie', formData);
 };
 

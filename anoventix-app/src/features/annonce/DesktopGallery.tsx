@@ -1,6 +1,6 @@
 import { photoMoyenne } from '@/src/api/annonce.api';
 import AppText from '@/src/components/AppText';
-import { colors, radius, spacing, typography, webShadow } from '@/src/theme';
+import { colors, radius, spacing, typography, webShadow, interactive } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
@@ -98,11 +98,11 @@ const g = StyleSheet.create({
     gap: GAP,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    backgroundColor: '#EAEDF3',
+    backgroundColor: colors.photoPlaceholder,
   },
   empty: { alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: spacing.sm },
   emptyText: { fontSize: typography.sizes.md, color: colors.textMuted },
-  tile: { overflow: 'hidden', backgroundColor: '#EAEDF3' },
+  tile: { overflow: 'hidden', backgroundColor: colors.photoPlaceholder },
   img: { width: '100%', height: '100%' },
   main: { flex: 1.3 },
   full: { flex: 1 },
@@ -124,6 +124,6 @@ const g = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.textPrimary,
   },
-  allBtnHover: { ...({ boxShadow: webShadow.md } as object), backgroundColor: '#F7F9FC' },
+  allBtnHover: { ...({ boxShadow: webShadow.md } as object), backgroundColor: interactive.hoverSurface },
   allText: { fontSize: typography.sizes.sm, fontWeight: '700', color: colors.textPrimary },
 });

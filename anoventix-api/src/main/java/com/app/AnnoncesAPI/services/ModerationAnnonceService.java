@@ -67,7 +67,12 @@ public class ModerationAnnonceService {
         this.seuilMasquageAutoDefaut = seuilMasquageAuto;
     }
 
-    /** Seuil effectif : réglage de l'administrateur, sinon la configuration ; 0 désactive le masquage automatique. */
+    /**
+     * Seuil effectif : réglage de l'administrateur, sinon la configuration ; 0 désactive le masquage automatique.
+     * Lecture appelée aussi directement par l'écran Paramètres, hors transaction : d'où REQUIRED malgré le
+     * MANDATORY de la classe.
+     */
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public int getSeuilMasquageAuto() {
         return parametres.findById(PARAM_SEUIL_MASQUAGE)
                 .map(com.app.AnnoncesAPI.entities.ParametrePlateforme::getValeur)
@@ -82,7 +87,7 @@ public class ModerationAnnonceService {
     }
 
     /** Écran Paramètres (RG-10-19), administrateur seulement. */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public int setSeuilMasquageAuto(int seuil) {
         if (seuil < 0 || seuil > 50) {
             throw new IllegalArgumentException("Le seuil doit être compris entre 0 (désactivé) et 50.");

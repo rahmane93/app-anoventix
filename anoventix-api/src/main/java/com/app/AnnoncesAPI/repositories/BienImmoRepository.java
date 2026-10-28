@@ -25,7 +25,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     Optional<BienImmo> findByPublicId(String publicId);
 
-    /** Toutes les annonces, actives ou non : la base impose l'unicité sur toutes (ECART-08). */
+    /** Toutes les annonces, actives ou non : la base impose l'unicité sur toutes. */
     boolean existsByReferenceAnnonce(String referenceAnnonce);
 
     // Requêtes publiques : elles filtrent toutes sur visiblePublic, seule
@@ -59,7 +59,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
      */
     Page<BienImmo> findByOwnerIdAndStatutModerationNot(UUID ownerId, StatutAnnonce statut, Pageable pageable);
 
-    /** Retrait d'un agent : toutes ses annonces, en ligne ou non (ECART-16). */
+    /** Retrait d'un agent : toutes ses annonces, en ligne ou non (DEC-34). */
     List<BienImmo> findAllByOwnerId(UUID ownerId);
 
     /** Nombre maximal d'identifiants renvoyés pour combiner le texte aux autres filtres (borne la mémoire). */
@@ -79,7 +79,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
     /** Compte les biens actifs. */
     long countByActifTrue();
 
-    /** Annonces visibles du public : la définition unique de « annonce active » pour les statistiques (ECART-27). */
+    /** Annonces visibles du public : la définition unique de « annonce active » pour les statistiques. */
     long countByVisiblePublicTrue();
 
     /** Compte les annonces par statut de modération. */
@@ -114,7 +114,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     /**
      * Annonces similaires visibles : même typeBien, même commune (de la même préfecture : plusieurs communes portent
-     * le même nom, ECART-59), prix dans l'intervalle, sans l'annonce courante.
+     * le même nom), prix dans l'intervalle, sans l'annonce courante.
      */
     @Query("""
             SELECT b FROM BienImmo b
@@ -161,7 +161,7 @@ public interface BienImmoRepository extends JpaRepository<BienImmo, Long>, JpaSp
 
     long countByOwnerIdAndStatutModeration(UUID ownerId, StatutAnnonce statut);
 
-    // Périmètre du tableau de bord (ECART-50) : le compte seul, ou le professionnel et ses agents.
+    // Périmètre du tableau de bord : le compte seul, ou le professionnel et ses agents.
 
     @Query("SELECT COUNT(b) FROM BienImmo b WHERE b.actif = true AND b.owner.id IN :owners AND b.statutModeration = :statut")
     long countEnLigneForOwners(@Param("owners") Collection<UUID> owners, @Param("statut") StatutAnnonce statut);

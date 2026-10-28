@@ -3,7 +3,7 @@ import { colors, radius } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
-import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useRef, useState, type ComponentRef } from 'react';
 import {
     NativeScrollEvent,
     Platform,
@@ -54,7 +54,7 @@ export function ImageLightboxModal({
 
   const goTo = (next: number) => {
     if (next < 0 || next > medias.length - 1) return;
-    (listRef.current as ScrollView | null)?.scrollTo({ x: next * SCREEN_W, animated: true });
+    (listRef.current as ComponentRef<typeof ScrollView> | null)?.scrollTo({ x: next * SCREEN_W, animated: true });
     setActiveIndex(next);
   };
 

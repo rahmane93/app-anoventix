@@ -43,7 +43,7 @@ public class MessagingServiceImpl implements MessagingService {
     private final PushService push;
     private final com.app.AnnoncesAPI.repositories.BlocageUtilisateurRepository blocages;
 
-    /** Limites d'envoi par compte et par 24 h (ECART-29) : au-delà, 429. */
+    /** Limites d'envoi par compte et par 24 h : au-delà, 429. */
     static final int MESSAGES_PAR_JOUR = 300;
     static final int CONVERSATIONS_PAR_JOUR = 20;
 
@@ -64,6 +64,20 @@ public class MessagingServiceImpl implements MessagingService {
 
     @Override
     public ConversationDTO createOrGetConversation(CreateConversationRequest request, Authentication authentication) {
+        ConversationDTO conversation = ouvrirConversation(request, authentication);
+        String premierMessage = request.getMessage();
+        if (premierMessage == null || premierMessage.isBlank()) {
+            return conversation;
+        }
+        // Le message saisi à l'ouverture part avec elle : sans lui, la conversation reste vide
+        // et n'apparaît dans aucune boîte de réception.
+        sendMessage(conversation.getId(), new SendMessageRequest(premierMessage), authentication);
+        User currentUser = getCurrentUser(authentication);
+        return toConversationDTO(
+                conversationRepository.findById(conversation.getId()).orElseThrow(), currentUser.getId());
+    }
+
+    private ConversationDTO ouvrirConversation(CreateConversationRequest request, Authentication authentication) {
         User currentUser = getCurrentUser(authentication);
         // Nouvelle conversation : uniquement sur une annonce visible du public. Les
         // conversations déjà ouvertes restent accessibles depuis la messagerie.

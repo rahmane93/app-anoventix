@@ -75,7 +75,7 @@ public class Conversation {
     @Column(nullable = false)
     private Boolean active = true;
 
-    /** État de la conversation pour le participant « one » : active, archivée ou supprimée pour lui (ECART-29). */
+    /** État de la conversation pour le participant « one » : active, archivée ou supprimée pour lui. */
     @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
     @Column(name = "etat_participant_one", nullable = false, length = 10)
     private com.app.AnnoncesAPI.enums.EtatConversation etatParticipantOne = com.app.AnnoncesAPI.enums.EtatConversation.ACTIVE;

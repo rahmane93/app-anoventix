@@ -77,9 +77,13 @@ function AlertView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  // Deux actions côte à côte (annuler à gauche), au-delà en colonne.
-  const ordered = [...actions].sort((a, b) => (a.style === 'cancel' ? -1 : b.style === 'cancel' ? 1 : 0));
-  const inRow = ordered.length <= 2;
+  // Deux actions côte à côte (annuler à gauche). Au-delà, en colonne : les choix d'abord,
+  // « Annuler » en dernier (c'est là qu'on le cherche), et un seul style plein est réservé
+  // à l'action destructive, pour ne pas mettre « Archiver » et « Bloquer » au même niveau.
+  const inRow = actions.length <= 2;
+  const cancelFirst = (a: AlertButton, b: AlertButton) => (a.style === 'cancel' ? -1 : b.style === 'cancel' ? 1 : 0);
+  const cancelLast = (a: AlertButton, b: AlertButton) => (a.style === 'cancel' ? 1 : b.style === 'cancel' ? -1 : 0);
+  const ordered = [...actions].sort(inRow ? cancelFirst : cancelLast);
 
   return (
     <Animated.View
@@ -103,7 +107,11 @@ function AlertView({
               key={`${b.text}-${i}`}
               title={b.text ?? 'OK'}
               size="sm"
-              variant={b.style === 'destructive' ? 'danger' : b.style === 'cancel' ? 'outline' : 'primary'}
+              variant={
+                b.style === 'destructive' ? (inRow ? 'danger' : 'dangerOutline')
+                  : b.style === 'cancel' ? (inRow ? 'outline' : 'ghost')
+                  : inRow ? 'primary' : 'secondary'
+              }
               fullWidth={!inRow}
               style={inRow ? styles.rowBtn : undefined}
               onPress={() => onPress(b)}
