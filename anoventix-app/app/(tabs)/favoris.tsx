@@ -3,14 +3,12 @@ import { SKELETON_DATA, SkeletonCard } from '@/src/components/ui/skeleton-card';
 import { LIST_PERF_PROPS } from '@/src/constants/list';
 import { useCardGrid } from '@/src/lib/responsive';
 import { AnnonceCard } from '@/src/features/explore/AnnonceCard';
-import { getRoleFlags } from '@/src/lib/roles';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { useFavorisStore } from '@/src/stores/favoris.store';
-import { useUserStore } from '@/src/stores/user.store';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useFocusEffect } from 'expo-router';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import {
     FlatList,
 
@@ -31,14 +29,12 @@ export default function FavorisScreen() {
   const grid = useCardGrid(300, 4);
   const { favoris, isLoading, error, loadFavoris, removeFavori } = useFavorisStore(useShallow((s) => ({ favoris: s.favoris, isLoading: s.isLoading, error: s.error, loadFavoris: s.loadFavoris, removeFavori: s.removeFavori })));
   const { isAuthenticated, user } = useAuthStore(useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user })));
-  const { profile } = useUserStore(useShallow((s) => ({ profile: s.profile })));
-  const { isProfessionnel } = getRoleFlags(profile?.roles ?? profile?.role ?? user?.roles);
 
   // ── Hooks (doivent tous être AVANT tout early return) ────────────────────────
   useFocusEffect(
     useCallback(() => {
-      if (isAuthenticated && !isProfessionnel) loadFavoris();
-    }, [loadFavoris, isAuthenticated, isProfessionnel]),
+      if (isAuthenticated) loadFavoris();
+    }, [loadFavoris, isAuthenticated]),
   );
 
   const handleRemove = useCallback(async (id: number) => {
@@ -48,10 +44,6 @@ export default function FavorisScreen() {
   // ── Guards auth ──────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
-  }
-
-  if (isProfessionnel) {
-    return <Redirect href="/entreprise" />;
   }
 
   // ── Loading initial ──────────────────────────────────────────────────────────

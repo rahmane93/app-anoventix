@@ -6,7 +6,7 @@ import { ErrorBanner, LoadingState, Section, webColumn } from '@/src/features/ad
 import { colors, spacing } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
 const chiffres = (t: string) => t.replace(/[^0-9]/g, '');

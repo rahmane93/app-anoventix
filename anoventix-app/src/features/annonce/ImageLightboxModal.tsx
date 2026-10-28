@@ -3,7 +3,7 @@ import { colors, radius } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
-import React, { useEffect, useEffectEvent, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ComponentRef } from 'react';
 import {
     NativeScrollEvent,
     Platform,

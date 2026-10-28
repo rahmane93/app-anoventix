@@ -11,7 +11,7 @@ import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS, type TypeAnnonce, type TypeBien 
 import { formatDate, getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 
 // ─── Mes alertes (DEC-16, RG-04-22) : renommer, mettre en pause, supprimer ───

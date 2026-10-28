@@ -12,7 +12,7 @@ import { formatPrix } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,

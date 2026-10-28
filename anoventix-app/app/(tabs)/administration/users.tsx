@@ -25,7 +25,7 @@ import {
     type StatutUtilisateur,
 } from '@/src/types/admin.types';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, RefreshControl } from 'react-native';
 
 // ─── Ligne utilisateur ────────────────────────────────────────────────────────

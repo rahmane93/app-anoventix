@@ -5,7 +5,7 @@ import { MOTIF_SIGNALEMENT_MESSAGE_LABELS } from '@/src/types/messagerie.types';
 import { confirmerMessageConforme, confirmerSuppressionMessage } from '@/src/features/admin/moderationMessage';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
     FlatList,
     StyleSheet,

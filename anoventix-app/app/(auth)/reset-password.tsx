@@ -9,7 +9,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';

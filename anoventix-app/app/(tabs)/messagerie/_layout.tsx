@@ -4,7 +4,6 @@ import { useBreakpoint, WebContainer } from '@/src/lib/responsive';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { colors, radius, spacing, typography, webShadow } from '@/src/theme';
 import { Redirect, Stack, useGlobalSearchParams } from 'expo-router';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 

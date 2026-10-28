@@ -4,7 +4,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS, type TypeAnnonce, type TypeBien } from '@/src/types/annonce.types';
 import { getErrorMessage } from '@/src/utils/format';
 import { Stack } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 // ─── Statistiques avancées de l'administration ────────────────────

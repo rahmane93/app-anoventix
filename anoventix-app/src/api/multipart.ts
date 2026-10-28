@@ -39,7 +39,7 @@ const UPLOAD_TIMEOUT_MS = 60_000;
  * compatible avec `getErrorMessage` et les consommateurs qui lisent `.errors`
  * (création annonce) ou `.raw` (upload profil).
  */
-export async function multipartRequest<T>(
+async function multipartRequest<T>(
   method: 'POST' | 'PUT',
   path: string,
   formData: FormData,

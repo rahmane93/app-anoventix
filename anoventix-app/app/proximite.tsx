@@ -12,7 +12,7 @@ import { TYPE_ANNONCE_LABELS, type TypeAnnonce } from '@/src/types/annonce.types
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,

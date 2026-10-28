@@ -9,7 +9,7 @@ import { colors, spacing, typography } from '@/src/theme';
 import type { AnnonceFilterParams } from '@/src/types/annonce.types';
 import { getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 /** Critères d'une alerte : la recherche en cours, sans tri ni référence. */

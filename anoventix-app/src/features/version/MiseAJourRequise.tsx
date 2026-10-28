@@ -6,7 +6,7 @@ import { comparerVersions } from '@/src/lib/version';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 // Version minimale exigée par l'API (RG-12-21) : une app plus ancienne est bloquée sur cet écran jusqu'à la mise

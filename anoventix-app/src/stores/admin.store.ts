@@ -26,8 +26,8 @@ import type {
 import { getErrorMessage } from '../utils/format';
 
 // Critères de la liste affichée : réutilisés pour charger les pages suivantes.
-export type AdminUsersFiltre = { search: string; statut?: StatutUtilisateur };
-export type AdminAnnoncesFiltre = { statut?: StatutAnnonce; q?: string };
+type AdminUsersFiltre = { search: string; statut?: StatutUtilisateur };
+type AdminAnnoncesFiltre = { statut?: StatutAnnonce; q?: string };
 
 // Ignore les réponses d'une recherche remplacée entre-temps (frappe rapide,
 // changement de filtre) : la dernière demandée gagne.

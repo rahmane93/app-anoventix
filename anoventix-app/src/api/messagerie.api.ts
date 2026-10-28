@@ -1,5 +1,4 @@
 import type {
-    UtilisateurBloque,
     ConversationDTO,
     ConversationListResponse,
     CreateConversationRequest,
@@ -104,7 +103,3 @@ export const debloquerUtilisateur = async (userId: string): Promise<void> => {
   await apiClient.delete(`/api/messagerie/blocages/${userId}`);
 };
 
-export const getBlocages = async (): Promise<UtilisateurBloque[]> => {
-  const response = await apiClient.get<UtilisateurBloque[]>('/api/messagerie/blocages');
-  return response.data;
-};

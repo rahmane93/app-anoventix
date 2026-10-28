@@ -22,7 +22,7 @@ import {
     type StatutPieceIdentite,
 } from '@/src/types/admin.types';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { FlatList, RefreshControl } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 

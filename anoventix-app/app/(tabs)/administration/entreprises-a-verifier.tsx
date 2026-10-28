@@ -11,7 +11,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
 import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 // ─── File « Entreprises à vérifier » (DEC-04, RG-10-20) ──────────────────────

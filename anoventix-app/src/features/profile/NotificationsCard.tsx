@@ -5,7 +5,7 @@ import { demanderPermissionEtEnregistrer } from '@/src/lib/push';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 
 /**

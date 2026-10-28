@@ -10,7 +10,7 @@ import { estVerificationRequise } from '@/src/types/auth.types';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     KeyboardAvoidingView,

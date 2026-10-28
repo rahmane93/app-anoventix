@@ -4,7 +4,7 @@ import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,

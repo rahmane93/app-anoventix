@@ -126,7 +126,7 @@ export const getProfilPublic = async (userId: string, page = 0, size = 50): Prom
   return response.data;
 };
 
-export interface UserPresence {
+interface UserPresence {
   userId: string;
   status: 'ONLINE' | 'OFFLINE';
   lastSeenAt: string | null;

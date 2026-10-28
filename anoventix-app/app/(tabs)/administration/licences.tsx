@@ -37,7 +37,7 @@ import {
 import { formatDate, getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
 
 const MOYENS = Object.keys(MOYEN_PAIEMENT_LABELS) as MoyenPaiement[];

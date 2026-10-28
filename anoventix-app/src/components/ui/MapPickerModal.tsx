@@ -2,7 +2,7 @@ import { useBreakpoint } from '@/src/lib/responsive';
 import AppText from '@/src/components/AppText';
 import { colors, spacing, typography, webShadow } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCurrentCoords, type Coords } from '../../utils/location';

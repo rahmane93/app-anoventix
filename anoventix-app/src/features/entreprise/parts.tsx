@@ -1,7 +1,6 @@
 import { colors } from '@/src/theme';
 import type { AgentDTO } from '@/src/types/entreprise.types';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { styles } from './styles';

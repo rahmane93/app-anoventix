@@ -243,7 +243,7 @@ export function MetaText({ children }: { children: React.ReactNode }) {
 
 // ─── Sections (fiches détail, réglages) ───────────────────────────────────────
 
-export function SectionHeader({ title, trailing }: { title: string; trailing?: React.ReactNode }) {
+function SectionHeader({ title, trailing }: { title: string; trailing?: React.ReactNode }) {
   return (
     <View style={u.sectionHeader}>
       <AppText style={u.sectionTitle} accessibilityRole="header">{title.toUpperCase()}</AppText>

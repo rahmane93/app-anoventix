@@ -9,7 +9,6 @@ import { useMesAnnonces } from '@/src/features/mes-annonces/useMesAnnonces';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
-import React from 'react';
 import {
     ActivityIndicator,
 

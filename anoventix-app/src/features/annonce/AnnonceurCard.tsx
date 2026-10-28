@@ -7,7 +7,7 @@ import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { Annonceur } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 

@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 
 // ─── Vérification de l'agence (DEC-04, RG-07-23 à RG-07-28) ──────────────────
 
-export type StatutVerification = 'NON_VERIFIEE' | 'EN_ATTENTE' | 'VERIFIEE' | 'REJETEE';
+type StatutVerification = 'NON_VERIFIEE' | 'EN_ATTENTE' | 'VERIFIEE' | 'REJETEE';
 
 interface Props {
   entrepriseId: string;

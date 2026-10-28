@@ -6,7 +6,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
 import { Image } from 'expo-image';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 // ─── Selfie de vérification d'identité (EVO-01, RG-02-23 à RG-02-26) ─────────

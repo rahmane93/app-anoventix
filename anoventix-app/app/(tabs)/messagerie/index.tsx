@@ -6,7 +6,6 @@ import { useAuthStore } from '@/src/stores/auth.store';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect } from 'expo-router';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 

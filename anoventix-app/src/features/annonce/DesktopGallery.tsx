@@ -4,7 +4,6 @@ import { colors, radius, spacing, typography, webShadow, interactive } from '@/s
 import type { Media } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
-import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 // Galerie de la fiche annonce sur le web desktop : une grande photo et jusqu'à

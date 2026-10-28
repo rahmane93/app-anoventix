@@ -4,7 +4,7 @@ import { getMesSignalements, MOTIF_LABELS, retirerSignalement, type UserSignalem
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,

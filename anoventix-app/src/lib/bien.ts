@@ -5,10 +5,10 @@ import type { TypeAnnonce, TypeBien } from '@/src/types/annonce.types';
 // fiche annonce (miroir de TypeBien.estBati() côté API).
 
 /** Biens non bâtis : vendus ou loués en l'état, sans pièces ni chambres. */
-export const BIENS_NON_BATIS: readonly TypeBien[] = ['TERRAIN', 'DOMAINE'];
+const BIENS_NON_BATIS: readonly TypeBien[] = ['TERRAIN', 'DOMAINE'];
 
 /** Biens d'habitation : pièces, chambres et salles de bain pertinentes. */
-export const BIENS_HABITATION: readonly TypeBien[] = ['APPARTEMENT', 'MAISON', 'VILLA'];
+const BIENS_HABITATION: readonly TypeBien[] = ['APPARTEMENT', 'MAISON', 'VILLA'];
 
 export function isBienBati(typeBien?: TypeBien | '' | null): boolean {
   return !!typeBien && !BIENS_NON_BATIS.includes(typeBien);

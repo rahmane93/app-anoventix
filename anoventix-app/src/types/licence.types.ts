@@ -1,6 +1,6 @@
-export type StatutLicence = 'ACTIVE' | 'EN_ATTENTE' | 'EXPIREE' | 'AUCUNE';
+type StatutLicence = 'ACTIVE' | 'EN_ATTENTE' | 'EXPIREE' | 'AUCUNE';
 
-export type TypeLicence = 'PARTICULIER' | 'PROFESSIONNEL';
+type TypeLicence = 'PARTICULIER' | 'PROFESSIONNEL';
 
 export const TYPE_LICENCE_LABELS: Record<TypeLicence, string> = {
   PARTICULIER: 'Particulier',

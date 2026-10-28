@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors, radius } from '../../theme';
 import {

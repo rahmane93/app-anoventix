@@ -8,7 +8,7 @@ import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { ConversationDTO } from '@/src/types/messagerie.types';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Animated,
     FlatList,

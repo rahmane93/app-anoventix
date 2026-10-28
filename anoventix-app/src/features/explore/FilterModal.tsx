@@ -6,7 +6,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import type { AnnonceFilterParams, Localisation } from '@/src/types/annonce.types';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Platform,

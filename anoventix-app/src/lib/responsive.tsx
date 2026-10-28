@@ -6,11 +6,11 @@ import { Platform, StyleProp, useWindowDimensions, View, ViewStyle } from 'react
 // Les mises en page desktop ne concernent que le web : sur iOS/Android le
 // breakpoint vaut toujours `compact`, le rendu natif reste donc inchangé.
 
-export type Breakpoint = 'compact' | 'medium' | 'wide';
+type Breakpoint = 'compact' | 'medium' | 'wide';
 
 const IS_WEB = Platform.OS === 'web';
 
-export function breakpointFor(width: number): Breakpoint {
+function breakpointFor(width: number): Breakpoint {
   if (!IS_WEB) return 'compact';
   if (width >= layout.breakpoints.wide) return 'wide';
   if (width >= layout.breakpoints.medium) return 'medium';
@@ -35,7 +35,7 @@ export function useBreakpoint() {
  * Nombre de colonnes d'une grille de cartes : autant que possible avec une
  * largeur minimale par carte, bornées à `maxCols`. Toujours 1 hors desktop web.
  */
-export function useGridColumns(minCardWidth: number, maxCols: number, maxWidth: number = layout.maxWidth.page) {
+function useGridColumns(minCardWidth: number, maxCols: number, maxWidth: number = layout.maxWidth.page) {
   const { width, isDesktop } = useBreakpoint();
   if (!isDesktop) return 1;
   const available = Math.min(width, maxWidth) - layout.gutter * 2;

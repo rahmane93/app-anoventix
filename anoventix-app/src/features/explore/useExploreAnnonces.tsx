@@ -8,7 +8,7 @@ import { useMessagerieStore } from '@/src/stores/messagerie.store';
 import type { AnnonceFilterParams, BienImmo } from '@/src/types/annonce.types';
 import { getErrorMessage } from '@/src/utils/format';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, TextInput } from 'react-native';
 import { FavAnnonceCard } from './FavAnnonceCard';
 import { countActiveFilters, sanitizeFilters } from './filters';

@@ -46,7 +46,6 @@ export function useAnnonceDetail() {
   const [signalerVisible, setSignalerVisible] = useState(false);
   const [selectedMotif, setSelectedMotif] = useState<MotifSignalement | null>(null);
   const [isSignaling, setIsSignaling] = useState(false);
-  const [signalSuccess, setSignalSuccess] = useState(false);
   // Prise de contact : premier message modifiable avant envoi.
   const [contactVisible, setContactVisible] = useState(false);
 
@@ -245,7 +244,6 @@ export function useAnnonceDetail() {
     selectedMotif,
     setSelectedMotif,
     isSignaling,
-    signalSuccess,
     contactVisible,
     setContactVisible,
     // handlers

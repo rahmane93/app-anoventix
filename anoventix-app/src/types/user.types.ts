@@ -1,7 +1,7 @@
 // ─── User Profile ─────────────────────────────────────────────────────────────
 
 export type TypePieceIdentite = 'CARTE_IDENTITE' | 'PASSEPORT' | 'PERMIS_DE_CONDUIRE' | 'AUTRE';
-export type StatutCompte = 'EN_ATTENTE_ACTIVATION' | 'ACTIF' | 'INACTIF' | 'SUSPENDU';
+type StatutCompte = 'EN_ATTENTE_ACTIVATION' | 'ACTIF' | 'INACTIF' | 'SUSPENDU';
 
 // ─── Pièce d'identité ────────────────────────────────────────────────────────
 

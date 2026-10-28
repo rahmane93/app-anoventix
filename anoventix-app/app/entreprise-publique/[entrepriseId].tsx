@@ -11,7 +11,7 @@ import type { EntrepriseProfilDTO } from '@/src/types/entreprise.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,

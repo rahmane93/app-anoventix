@@ -1,7 +1,6 @@
 import AppText from '@/src/components/AppText';
 import { colors, spacing, typography } from '@/src/theme';
 import { formatPrix, formatPrixCompact } from '@/src/utils/format';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 type PrixVariant = 'card' | 'detail' | 'small';

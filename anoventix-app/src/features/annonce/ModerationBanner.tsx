@@ -5,7 +5,7 @@ import { getEtatReexamen } from '@/src/lib/annonce-statut';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import type { BienImmo } from '@/src/types/annonce.types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 /**

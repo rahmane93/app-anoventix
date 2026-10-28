@@ -21,7 +21,7 @@ import {
     Toolbar,
 } from '@/src/features/admin/ui';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { useShallow } from 'zustand/react/shallow';

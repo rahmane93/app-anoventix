@@ -25,7 +25,7 @@ import { useShallow } from 'zustand/react/shallow';
  * restructuration de garde nécessaire, comportement identique.
  */
 /** « JJ/MM/AAAA » saisi → « AAAA-MM-JJ », ou null si la date n'existe pas. */
-export function dateExpirationIso(saisie: string): string | null {
+function dateExpirationIso(saisie: string): string | null {
   const m = /^\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})\s*$/.exec(saisie);
   if (!m) return null;
   const [j, mo, a] = [Number(m[1]), Number(m[2]), Number(m[3])];

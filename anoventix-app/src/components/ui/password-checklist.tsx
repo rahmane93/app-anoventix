@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import AppText from '../AppText';
 import { PASSWORD_CHECKS } from '../../lib/validation';

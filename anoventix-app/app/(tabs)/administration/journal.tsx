@@ -4,7 +4,7 @@ import { Chip } from '@/src/components/ui/chip';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
 import { Stack } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 // ─── Journal d'audit ──────────────────────────────────────────────

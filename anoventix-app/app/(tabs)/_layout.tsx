@@ -6,7 +6,7 @@ import { useUserStore } from '@/src/stores/user.store';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

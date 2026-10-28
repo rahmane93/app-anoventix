@@ -1,5 +1,5 @@
 import type { ComponentRef } from 'react';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { colors, radius } from '../../theme';

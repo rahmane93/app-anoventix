@@ -17,7 +17,7 @@ import {
 } from '@/src/features/admin/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import {
     FlatList,
     RefreshControl,

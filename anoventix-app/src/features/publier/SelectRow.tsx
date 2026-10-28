@@ -1,6 +1,6 @@
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import AppText from "@/src/components/AppText";
 import { s } from "./styles";

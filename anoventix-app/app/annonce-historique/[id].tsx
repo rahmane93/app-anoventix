@@ -5,7 +5,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { formatDate, getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
 // ─── Historique des modifications d'une annonce ───────────────────

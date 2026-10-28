@@ -6,7 +6,7 @@ import { useBreakpoint } from '@/src/lib/responsive';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 // ─── Popup « Installer l'application » (web mobile Android) ───────────────────

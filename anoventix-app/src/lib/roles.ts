@@ -25,7 +25,7 @@ export const ROLE_ANNONCEUR_COLORS: Record<RoleAnnonceur, string> = {
 
 // ─── Libellés officiels des rôles ────────────────────────────────────────────
 
-export const ROLE_DISPLAY_LABELS: Record<string, string> = {
+const ROLE_DISPLAY_LABELS: Record<string, string> = {
   ROLE_ADMINISTRATEUR: 'Administrateur',
   ROLE_MODERATEUR: 'Modérateur',
   ROLE_PROFESSIONNEL: 'Professionnel',

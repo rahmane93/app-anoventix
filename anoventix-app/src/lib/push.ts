@@ -153,7 +153,7 @@ export function ouvrirDerniereNotification(): void {
 type Donnees = { type?: string; conversationId?: number | string; alerteId?: number | string };
 
 /** Ouverture d'une notification : mène à la conversation ou à la liste des nouvelles annonces de l'alerte. */
-export function ouvrirNotification(donnees: Donnees | undefined): void {
+function ouvrirNotification(donnees: Donnees | undefined): void {
   if (!donnees) return;
   if (donnees.type === 'message' && donnees.conversationId != null) {
     router.push({ pathname: '/conversation/[conversationId]', params: { conversationId: String(donnees.conversationId) } } as never);

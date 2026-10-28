@@ -68,20 +68,6 @@ export const colors = {
   placeholder: '#6B7280', // ≥ 4.5:1 sur blanc (WCAG AA) : un placeholder reste du texte à lire
 } as const;
 
-/**
- * Variante lisible (≥ 4.5:1) d'une couleur d'état vive, pour un texte ou pour
- * un fond plein sous texte blanc. Les autres couleurs sont renvoyées telles quelles.
- */
-export function readableColor(c: string): string {
-  switch (c) {
-    case colors.success: return colors.successText;
-    case colors.warning: return colors.warningText;
-    case colors.error:   return colors.errorText;
-    case colors.info:    return colors.infoText;
-    default:             return c;
-  }
-}
-
 // ─── Types d'annonce ──────────────────────────────────────────────────────────
 // Code couleur unique Vente / Location / Bail, partagé par toutes les cartes,
 // la fiche et les filtres. `fg` sert de texte sur `bg` et de fond plein avec

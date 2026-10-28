@@ -6,7 +6,6 @@ import { useUserStore } from '@/src/stores/user.store';
 import { colors, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Stack } from 'expo-router';
-import React from 'react';
 import { View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 

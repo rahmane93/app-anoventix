@@ -359,7 +359,7 @@ export const getAnnoncesNearby = async (
 };
 
 /** Commune et nombre d'annonces publiées (sélecteur de zones d'Explorer). */
-export interface ZoneActive {
+interface ZoneActive {
   region: string;
   prefecture: string;
   commune: string;

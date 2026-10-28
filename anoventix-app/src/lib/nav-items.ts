@@ -12,7 +12,7 @@ import React from 'react';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-export type NavKey =
+type NavKey =
   | 'explore'
   | 'messagerie'
   | 'favoris'

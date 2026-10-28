@@ -11,7 +11,7 @@ const WEB_URL = 'https://www.anoventix.com';
 
 type AnnonceRef = { id: number; publicId?: string; slug?: string };
 
-export type AnnonceParam =
+type AnnonceParam =
   | { kind: 'id'; id: number }
   | { kind: 'publicId'; publicId: string };
 

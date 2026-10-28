@@ -1,5 +1,4 @@
 import { AnnonceMosaic } from '@/src/components/annonce/AnnonceMosaic';
-import React from 'react';
 import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { isLoyerMensuel } from '@/src/lib/bien';

@@ -4,7 +4,7 @@ import { Input } from '@/src/components/ui/input';
 import { useUserStore } from '@/src/stores/user.store';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     KeyboardAvoidingView,
 

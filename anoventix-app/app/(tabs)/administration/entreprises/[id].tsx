@@ -33,7 +33,7 @@ import { Button } from '@/src/components/ui/button';
 import { Dialog } from '@/src/components/ui/dialog';
 import { Input } from '@/src/components/ui/input';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 import { useShallow } from 'zustand/react/shallow';

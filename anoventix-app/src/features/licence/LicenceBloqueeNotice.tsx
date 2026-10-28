@@ -4,7 +4,6 @@ import { useLicenceStore } from '@/src/stores/licence.store';
 import { colors, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 /**

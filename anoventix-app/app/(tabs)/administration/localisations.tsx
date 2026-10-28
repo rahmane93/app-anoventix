@@ -24,7 +24,7 @@ import { Redirect, useFocusEffect } from 'expo-router';
 import { getRoleFlags } from '@/src/lib/roles';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { useUserStore } from '@/src/stores/user.store';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     FlatList,
     Modal,

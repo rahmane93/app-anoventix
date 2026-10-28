@@ -57,7 +57,7 @@ import { useShallow } from 'zustand/react/shallow';
  * restructuration de garde n'est donc nécessaire — comportement identique.
  */
 /** Résultat affiché sur l'écran de succès après une création. */
-export type PublicationReussie = { id: number; reference: string; statut: StatutAnnonce };
+type PublicationReussie = { id: number; reference: string; statut: StatutAnnonce };
 
 
 const EMPTY_COMPOSITION: Record<ChampComposition, string> = {

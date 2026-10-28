@@ -179,7 +179,6 @@ export default function AnnonceDetailScreen() {
     selectedMotif,
     setSelectedMotif,
     isSignaling,
-    signalSuccess,
     contactVisible,
     setContactVisible,
     handleSendFirstMessage,
@@ -575,33 +574,24 @@ export default function AnnonceDetailScreen() {
         <View style={[s.signalerSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={s.signalerHandle} />
           <AppText style={s.signalerTitle}>Signaler cette annonce</AppText>
-          {signalSuccess ? (
-            <View style={s.signalerSuccess}>
-              <Ionicons name="checkmark-circle" size={40} color={colors.success} />
-              <AppText style={s.signalerSuccessText}>Signalement envoyé, merci !</AppText>
-            </View>
-          ) : (
-            <>
-              <AppText style={s.signalerSubtitle}>Choisissez un motif</AppText>
-              <View style={s.motifGrid}>
-                {(Object.keys(MOTIF_LABELS) as MotifSignalement[]).map((motif) => (
-                  <Chip
-                    key={motif}
-                    label={MOTIF_LABELS[motif]}
-                    selected={selectedMotif === motif}
-                    onPress={() => setSelectedMotif(motif)}
-                    tone="danger"
-                  />
-                ))}
-              </View>
-              <SignalementCommentForm
-                canSubmit={!!selectedMotif}
-                isLoading={isSignaling}
-                onCancel={() => setSignalerVisible(false)}
-                onSubmit={handleSubmitSignalement}
+          <AppText style={s.signalerSubtitle}>Choisissez un motif</AppText>
+          <View style={s.motifGrid}>
+            {(Object.keys(MOTIF_LABELS) as MotifSignalement[]).map((motif) => (
+              <Chip
+                key={motif}
+                label={MOTIF_LABELS[motif]}
+                selected={selectedMotif === motif}
+                onPress={() => setSelectedMotif(motif)}
+                tone="danger"
               />
-            </>
-          )}
+            ))}
+          </View>
+          <SignalementCommentForm
+            canSubmit={!!selectedMotif}
+            isLoading={isSignaling}
+            onCancel={() => setSignalerVisible(false)}
+            onSubmit={handleSubmitSignalement}
+          />
         </View>
       </Sheet>
 
@@ -877,33 +867,24 @@ export default function AnnonceDetailScreen() {
         <View style={[s.signalerSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={s.signalerHandle} />
           <AppText style={s.signalerTitle}>Signaler cette annonce</AppText>
-          {signalSuccess ? (
-            <View style={s.signalerSuccess}>
-              <Ionicons name="checkmark-circle" size={40} color={colors.success} />
-              <AppText style={s.signalerSuccessText}>Signalement envoyé, merci !</AppText>
-            </View>
-          ) : (
-            <>
-              <AppText style={s.signalerSubtitle}>Choisissez un motif</AppText>
-              <View style={s.motifGrid}>
-                {(Object.keys(MOTIF_LABELS) as MotifSignalement[]).map((motif) => (
-                  <Chip
-                    key={motif}
-                    label={MOTIF_LABELS[motif]}
-                    selected={selectedMotif === motif}
-                    onPress={() => setSelectedMotif(motif)}
-                    tone="danger"
-                  />
-                ))}
-              </View>
-              <SignalementCommentForm
-                canSubmit={!!selectedMotif}
-                isLoading={isSignaling}
-                onCancel={() => setSignalerVisible(false)}
-                onSubmit={handleSubmitSignalement}
+          <AppText style={s.signalerSubtitle}>Choisissez un motif</AppText>
+          <View style={s.motifGrid}>
+            {(Object.keys(MOTIF_LABELS) as MotifSignalement[]).map((motif) => (
+              <Chip
+                key={motif}
+                label={MOTIF_LABELS[motif]}
+                selected={selectedMotif === motif}
+                onPress={() => setSelectedMotif(motif)}
+                tone="danger"
               />
-            </>
-          )}
+            ))}
+          </View>
+          <SignalementCommentForm
+            canSubmit={!!selectedMotif}
+            isLoading={isSignaling}
+            onCancel={() => setSignalerVisible(false)}
+            onSubmit={handleSubmitSignalement}
+          />
         </View>
       </Sheet>
 
@@ -1299,16 +1280,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.xs,
-  },
-  signalerSuccess: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    gap: spacing.md,
-  },
-  signalerSuccessText: {
-    fontSize: typography.sizes.md,
-    fontWeight: '600',
-    color: colors.successText,
   },
 });
 

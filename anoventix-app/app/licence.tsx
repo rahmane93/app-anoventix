@@ -13,7 +13,7 @@ import { useAuthStore } from '@/src/stores/auth.store';
 import { formatDate, formatPrix, getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 // Premier message pré-rempli : l'admin sait tout de suite quel type de licence préparer.

@@ -1,7 +1,6 @@
 import AppText from '@/src/components/AppText';
 import { Button } from '@/src/components/ui/button';
 import { colors, radius, spacing, typography } from '@/src/theme';
-import React from 'react';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 
 /** Les 8 codes de secours, à copier ou partager (note, gestionnaire de mots de passe…). */

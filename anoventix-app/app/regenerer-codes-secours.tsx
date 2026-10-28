@@ -5,7 +5,7 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { CodesSecoursListe } from '@/src/features/profile/CodesSecoursListe';
 import { colors, radius, spacing, typography } from '@/src/theme';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
 /**

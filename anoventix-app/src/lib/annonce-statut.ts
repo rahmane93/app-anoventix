@@ -7,7 +7,7 @@ import { MOTIF_CLOTURE_LABELS, STATUT_ANNONCE_LABELS } from '@/src/types/annonce
 // partagée par « Mes annonces » et l'écran Entreprise. Une annonce publiée
 // n'a pas de puce : seul ce qui demande l'attention est signalé.
 
-export interface StatutChip {
+interface StatutChip {
   text: string;
   color: string;
 }
@@ -32,7 +32,7 @@ export function getStatutChip(
 // ─── Correction et réexamen d'une annonce masquée (DEC-09, DEC-10) ───────────
 
 /** Demandes de réexamen permises par annonce (RG-03-31). */
-export const REEXAMENS_MAX = 3;
+const REEXAMENS_MAX = 3;
 
 type EtatModeration = Pick<BienImmo, 'statutModeration' | 'reexamenDemande' | 'nbReexamens'>;
 
@@ -44,7 +44,7 @@ export const estCorrigeable = (item: Pick<BienImmo, 'statutModeration'>): boolea
 export const estRejetee = (item: Pick<BienImmo, 'statutModeration'>): boolean =>
   item.statutModeration === 'REJETEE';
 
-export type EtatReexamen = 'DISPONIBLE' | 'EN_COURS' | 'EPUISE' | 'AUCUN';
+type EtatReexamen = 'DISPONIBLE' | 'EN_COURS' | 'EPUISE' | 'AUCUN';
 
 /** « Demander un réexamen », « Réexamen en cours », ou plus de demande possible (support). */
 export function getEtatReexamen(item: EtatModeration): EtatReexamen {

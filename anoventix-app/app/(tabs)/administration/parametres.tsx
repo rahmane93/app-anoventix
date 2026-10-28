@@ -6,7 +6,7 @@ import { Input } from '@/src/components/ui/input';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { getErrorMessage } from '@/src/utils/format';
 import { Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 // ─── Paramètres de la modération (RG-10-19, DEC-11) ──────────────────────────

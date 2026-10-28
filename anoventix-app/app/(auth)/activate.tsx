@@ -3,7 +3,7 @@ import { Button } from '@/src/components/ui/button';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import AppText from '@/src/components/AppText';
 

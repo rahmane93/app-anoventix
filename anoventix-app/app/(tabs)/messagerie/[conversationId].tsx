@@ -14,7 +14,7 @@ import { getErrorMessage } from '@/src/utils/format';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Stack, router, useFocusEffect, useLocalSearchParams, useSegments } from 'expo-router';
 import { useBreakpoint, webColumnStyle } from '@/src/lib/responsive';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     AppState,

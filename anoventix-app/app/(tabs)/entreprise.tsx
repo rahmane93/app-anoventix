@@ -13,7 +13,7 @@ import { useBreakpoint, useCardGrid, webColumnStyle } from '@/src/lib/responsive
 import { colors, layout, spacing } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import {
     ActivityIndicator,

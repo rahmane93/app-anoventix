@@ -29,12 +29,6 @@ export const NIVEAU_AVERTISSEMENT_LABELS: Record<NiveauAvertissement, string> = 
   GRAVE: 'Grave',
 };
 
-export const NIVEAU_AVERTISSEMENT_COLORS: Record<NiveauAvertissement, string> = {
-  LEGER: '#F59E0B',
-  MODERE: '#EF4444',
-  GRAVE: '#7C3AED',
-};
-
 export const STATUT_USER_LABELS: Record<StatutUtilisateur, string> = {
   ACTIF: 'Actif',
   SUSPENDU: 'Suspendu',
@@ -164,7 +158,7 @@ export interface AdminUser {
   createdAt: string;
 }
 
-export interface AdminAnnonceLocalisation {
+interface AdminAnnonceLocalisation {
   id: number;
   pays: string | null;
   region: string | null;
@@ -175,7 +169,7 @@ export interface AdminAnnonceLocalisation {
   longitude: number | null;
 }
 
-export interface AdminAnnonceMedia {
+interface AdminAnnonceMedia {
   id: number;
   url: string;
   typeMedia: 'IMAGE' | 'VIDEO';

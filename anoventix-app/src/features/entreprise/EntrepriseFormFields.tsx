@@ -1,6 +1,5 @@
 import { Input } from '@/src/components/ui/input';
 import type { EntrepriseFormData } from '@/src/lib/validation';
-import React from 'react';
 import { Controller, type useForm } from 'react-hook-form';
 import { StyleSheet } from 'react-native';
 import AppText from '@/src/components/AppText';
