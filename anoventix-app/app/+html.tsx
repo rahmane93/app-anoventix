@@ -1,7 +1,10 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
 // Document HTML racine du rendu web statique (non utilisé sur iOS/Android).
+// Depuis Expo SDK 58, le document doit rendre lui-même les nœuds fournis par le serveur :
+// headNodes (styles, préchargements) et bodyNodes (balises <script> du bundle). Sans eux, le HTML
+// exporté ne charge aucun JavaScript et la page reste vide.
 
 const globalCss = `
 html, body { background-color: #F2F2F2; }
@@ -21,8 +24,9 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 `;
 
 export default function Root({ children }: PropsWithChildren) {
+  const { htmlAttributes, bodyAttributes, headNodes, bodyNodes } = useServerDocumentContext();
   return (
-    <html lang="fr">
+    <html lang="fr" {...htmlAttributes}>
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -35,8 +39,12 @@ export default function Root({ children }: PropsWithChildren) {
         <title>Anoventix — Immobilier en Guinée</title>
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: globalCss }} />
+        {headNodes}
       </head>
-      <body>{children}</body>
+      <body {...bodyAttributes}>
+        {children}
+        {bodyNodes}
+      </body>
     </html>
   );
 }
