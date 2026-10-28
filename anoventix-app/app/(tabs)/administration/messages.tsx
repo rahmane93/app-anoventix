@@ -202,18 +202,14 @@ export default function AdminMessages() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          messagesSignales.length > 0 ? (
+        ListHeaderComponent={(messagesSignales.length > 0 ? (
             <ResultCount>
               {messagesSignalesTotalElements} message{messagesSignalesTotalElements !== 1 ? 's' : ''} à traiter
             </ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          firstLoad ? <LoadingState /> : messagesSignalesError ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(firstLoad ? <LoadingState /> : messagesSignalesError ? null : (
             <EmptyState icon="checkmark-done-outline" tone="success" title="File vide" message="Aucun message signalé en attente." />
-          )
-        }
+          )) ?? undefined}
         onEndReached={() => loadMoreMessagesSignales()}
         onEndReachedThreshold={0.3}
         ListFooterComponent={<FooterLoader visible={isLoadingMessagesSignales && messagesSignalesPage > 0} />}

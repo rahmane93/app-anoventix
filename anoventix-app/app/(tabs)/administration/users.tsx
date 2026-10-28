@@ -137,22 +137,18 @@ export default function AdminUsers() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          users.length > 0 ? (
+        ListHeaderComponent={(users.length > 0 ? (
             <ResultCount>
               {usersTotalElements} utilisateur{usersTotalElements > 1 ? 's' : ''}
             </ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          firstLoad ? <LoadingState /> : usersError ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(firstLoad ? <LoadingState /> : usersError ? null : (
             <EmptyState
               icon="people-outline"
               title="Aucun utilisateur"
               message={search.trim() ? `Aucun résultat pour « ${search.trim()} ».` : 'Aucun compte ne correspond à ce filtre.'}
             />
-          )
-        }
+          )) ?? undefined}
         ListFooterComponent={<FooterLoader visible={isLoadingUsers && usersPage > 0} />}
       />
     </AdminPage>

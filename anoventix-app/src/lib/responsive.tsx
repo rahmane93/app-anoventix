@@ -51,6 +51,17 @@ export function webColumnStyle(size: ContainerSize): ViewStyle | undefined {
 }
 
 /**
+ * Style de contenu d'une liste plein écran (FlatList) pour qu'elle suive la colonne du
+ * titre de page : sur le web desktop, largeur bornée, centrée, avec la marge latérale
+ * du titre. `undefined` ailleurs : les marges d'origine de l'écran s'appliquent.
+ */
+export function useWebContentStyle(size: ContainerSize = 'form'): ViewStyle | undefined {
+  const { isDesktop } = useBreakpoint();
+  if (!isDesktop) return undefined;
+  return { ...webColumnStyle(size), paddingHorizontal: layout.gutter };
+}
+
+/**
  * Colonne centrée à largeur de lecture sur le web desktop. Sur mobile (et natif),
  * c'est un simple `View` transparent : les marges existantes s'appliquent.
  */

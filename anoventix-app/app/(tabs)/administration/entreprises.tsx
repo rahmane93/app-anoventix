@@ -131,23 +131,19 @@ export default function EntreprisesAdminScreen() {
             tintColor={colors.primary}
           />
         }
-        ListHeaderComponent={
-          entreprises.length > 0 ? (
+        ListHeaderComponent={(entreprises.length > 0 ? (
             <ResultCount>
               {matching.length} entreprise{matching.length > 1 ? 's' : ''}
               {q ? ` sur ${entreprises.length}` : ''}
             </ResultCount>
-          ) : null
-        }
-        ListEmptyComponent={
-          isLoadingEntreprises ? <LoadingState /> : entreprisesError ? null : (
+          ) : null) ?? undefined}
+        ListEmptyComponent={(isLoadingEntreprises ? <LoadingState /> : entreprisesError ? null : (
             <EmptyState
               icon="business-outline"
               title="Aucune entreprise"
               message={q ? `Aucun résultat pour « ${search.trim()} ».` : undefined}
             />
-          )
-        }
+          )) ?? undefined}
       />
     </AdminPage>
   );

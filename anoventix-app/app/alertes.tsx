@@ -5,6 +5,7 @@ import { Input } from '@/src/components/ui/input';
 import { Sheet } from '@/src/components/ui/sheet';
 import * as notificationApi from '@/src/api/notification.api';
 import type { AlerteRecherche } from '@/src/api/notification.api';
+import { useWebContentStyle } from '@/src/lib/responsive';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { TYPE_ANNONCE_LABELS, TYPE_BIEN_LABELS, type TypeAnnonce, type TypeBien } from '@/src/types/annonce.types';
 import { formatDate, getErrorMessage } from '@/src/utils/format';
@@ -33,6 +34,7 @@ export default function AlertesScreen() {
   const { ouvrir } = useLocalSearchParams<{ ouvrir?: string }>();
   const [alertes, setAlertes] = useState<AlerteRecherche[]>([]);
   const [chargement, setChargement] = useState(true);
+  const colonne = useWebContentStyle('form');
   const [erreur, setErreur] = useState<string | null>(null);
   const [renommage, setRenommage] = useState<AlerteRecherche | null>(null);
   const [nom, setNom] = useState('');
@@ -107,7 +109,7 @@ export default function AlertesScreen() {
         <FlatList
           data={alertes}
           keyExtractor={(a) => String(a.id)}
-          contentContainerStyle={st.liste}
+          contentContainerStyle={[st.liste, colonne]}
           ListHeaderComponent={
             <AppText style={st.intro}>
               {alertes.length}/{notificationApi.ALERTES_MAX} alertes. Une notification au plus par alerte et par jour. Créez-en depuis une

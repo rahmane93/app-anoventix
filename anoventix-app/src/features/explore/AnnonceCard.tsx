@@ -85,12 +85,12 @@ export const AnnonceCard = React.memo(function AnnonceCard({
             importantForAccessibility="no-hide-descendants"
           >
             {isFavBusy ? (
-              <ActivityIndicator size="small" color={colors.white} />
+              <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <Ionicons
                 name={isFav ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isFav ? colors.favorite : colors.white}
+                color={isFav ? colors.favorite : colors.textPrimary}
               />
             )}
           </TouchableOpacity>
@@ -198,7 +198,7 @@ const cardStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(17,24,39,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     alignItems: 'center',
     justifyContent: 'center',
   },

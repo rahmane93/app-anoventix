@@ -182,16 +182,14 @@ export default function MesSignalementsScreen() {
           colors={[colors.primary]}
         />
       }
-      ListHeaderComponent={
-        signalements.length > 0 ? (
+      ListHeaderComponent={(signalements.length > 0 ? (
           <View style={s.listHeader}>
             <Ionicons name="flag-outline" size={15} color={colors.textMuted} />
             <AppText style={s.listHeaderText}>
               {totalElements} signalement{totalElements !== 1 ? 's' : ''}
             </AppText>
           </View>
-        ) : null
-      }
+        ) : null) ?? undefined}
       ListEmptyComponent={
         <View style={s.center}>
           <Ionicons name="flag-outline" size={52} color={colors.border} />

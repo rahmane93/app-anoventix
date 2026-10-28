@@ -1,4 +1,6 @@
+import type { ComponentRef } from 'react';
 import { annonceHref } from '@/src/lib/annonce-url';
+import { useNavState } from '@/src/lib/nav-items';
 import { useBreakpoint, webColumnStyle } from '@/src/lib/responsive';
 import { API_BASE_URL } from '@/src/api/client';
 import { AlertBanner } from '@/src/components/ui/alert-banner';
@@ -169,9 +171,10 @@ export default function ProfileScreen() {
   // Arrivée depuis un blocage « pièce d'identité requise » (?section=piece) :
   // défile jusqu'à la section et ouvre le formulaire d'envoi si besoin.
   const { section } = useLocalSearchParams<{ section?: string }>();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [pieceSectionY, setPieceSectionY] = useState<number | null>(null);
   const { isDesktop, isWide } = useBreakpoint();
+  const aStatistiques = useNavState().items.some((i) => i.key === 'dashboard' && i.visible);
   useEffect(() => {
     if (section !== 'piece' || pieceSectionY == null) return;
     if (!docStatut || docStatut === 'REJETEE') setPieceFormOpen(true);
@@ -224,7 +227,7 @@ export default function ProfileScreen() {
       <Column on={isWide} style={styles.colMain}>
       {/* ── Héro : bannière + avatar ───────────────────────────────────── */}
       <View style={styles.heroContainer}>
-        <View style={styles.bannerWrap}>
+        <View style={[styles.bannerWrap, !avatarUri && styles.bannerWrapSansPhoto, isDesktop && styles.bannerWrapDesktop]}>
           {avatarUri ? (
             <Image
               source={{ uri: avatarUri }}
@@ -233,7 +236,7 @@ export default function ProfileScreen() {
               blurRadius={20}
             />
           ) : null}
-          <View style={styles.bannerOverlay} />
+          {avatarUri ? <View style={styles.bannerOverlay} /> : null}
         </View>
         <View style={styles.avatarContainer}>
           <TouchableOpacity
@@ -365,6 +368,14 @@ export default function ProfileScreen() {
           label="Mes alertes de recherche"
           onPress={() => router.push('/alertes')}
         />
+        {/* Mobile : « Statistiques » n'a plus son onglet (5 onglets au plus). */}
+        {!isDesktop && aStatistiques && (
+          <MenuRow
+            iconName="bar-chart-outline"
+            label="Statistiques"
+            onPress={() => router.push('/(tabs)/dashboard')}
+          />
+        )}
         {/* Toujours proposée : une clé achetée peut être enregistrée avant l'ouverture du mode (DEC-28). */}
         {(isParticulier || isProfessionnel) && (
           <MenuRow
@@ -686,6 +697,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.headerBackground,
     overflow: 'hidden',
   },
+  // Sans photo de profil : aplat de la couleur de marque plutôt qu'un rectangle gris vide.
+  bannerWrapSansPhoto: { backgroundColor: colors.primary },
+  // Web desktop : la bannière suit les marges des cartes en dessous au lieu de les dépasser.
+  bannerWrapDesktop: { marginHorizontal: spacing.base, borderRadius: radius.lg },
   bannerImage: {
     ...StyleSheet.absoluteFill,
     width: '100%',

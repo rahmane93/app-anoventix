@@ -135,9 +135,9 @@ export default function QuartiersDemandesScreen() {
           keyExtractor={(d) => String(d.id)}
           renderItem={({ item }) => <Carte item={item} onDecide={charger} />}
           ItemSeparatorComponent={BlockGap}
-          ListEmptyComponent={erreur ? null : (
+          ListEmptyComponent={(erreur ? null : (
             <EmptyState icon="location-outline" title="Aucun quartier demandé" message="Les quartiers saisis par les annonceurs apparaissent ici." />
-          )}
+          )) ?? undefined}
         />
       )}
     </AdminPage>

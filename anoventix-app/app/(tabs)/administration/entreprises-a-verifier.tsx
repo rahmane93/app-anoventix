@@ -126,9 +126,9 @@ export default function EntreprisesAVerifierScreen() {
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => <Carte item={item} onDecide={charger} />}
           ItemSeparatorComponent={BlockGap}
-          ListEmptyComponent={erreur ? null : (
+          ListEmptyComponent={(erreur ? null : (
             <EmptyState icon="business-outline" title="Aucune entreprise à vérifier" message="Les justificatifs RCCM envoyés apparaissent ici." />
-          )}
+          )) ?? undefined}
         />
       )}
     </AdminPage>

@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { photoMoyenne } from '@/src/api/annonce.api';
 import { colors, radius, shadows, spacing, typography } from '@/src/theme';
 import type { Media } from '@/src/types/annonce.types';
@@ -32,7 +33,7 @@ export function ImageCarousel({
 }) {
   const [indexChoisi, setActiveIndex] = useState(0);
   const { screenW: SCREEN_W, imgHeight: IMG_HEIGHT } = useScreenDims();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const urls = medias.map(photoMoyenne);
   // Photo supprimée pendant l'affichage : l'index est ramené dans les bornes
@@ -181,7 +182,7 @@ export function ImageCarousel({
 }
 
 const cs = StyleSheet.create({
-  wrapper: { backgroundColor: '#EAEDF3' },
+  wrapper: { backgroundColor: colors.photoPlaceholder },
   placeholder: {
     flex: 1,
     alignItems: 'center',

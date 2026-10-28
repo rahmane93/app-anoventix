@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -13,7 +14,7 @@ export const LeafletMap = forwardRef<LeafletMapHandle, LeafletMapProps>(function
   { latitude, longitude, centre, interactive = false, onChange, zoom = 13, height = 220, fill = false, style },
   ref,
 ) {
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<ComponentRef<typeof WebView>>(null);
   const hasInit = latitude != null && longitude != null;
   const lat = hasInit ? (latitude as number) : centre?.latitude ?? DEFAULT_CENTER.lat;
   const lng = hasInit ? (longitude as number) : centre?.longitude ?? DEFAULT_CENTER.lng;
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    backgroundColor: '#e8eef5',
+    backgroundColor: colors.mapBackground,
   },
   fill: { flex: 1 },
   web: { flex: 1, backgroundColor: 'transparent' },

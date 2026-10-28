@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { annonceHref } from '@/src/lib/annonce-url';
 import { useBreakpoint, webColumnStyle } from '@/src/lib/responsive';
 import { Image } from 'expo-image';
@@ -160,7 +161,7 @@ export default function PublierScreen() {
 
   // À chaque changement d'étape, on remonte en haut du formulaire ;
   // c'est ensuite à l'utilisateur de scroller pour voir la suite.
-  const scrollRef = React.useRef<ScrollView>(null);
+  const scrollRef = React.useRef<ComponentRef<typeof ScrollView>>(null);
   // Web desktop : parcours dans une colonne centrée de 720 px ; les bandeaux
   // (étapes, pied d'actions) restent pleine largeur avec un contenu aligné.
   const { isDesktop, width: winWidth } = useBreakpoint();
@@ -170,7 +171,7 @@ export default function PublierScreen() {
   }, [step]);
 
   // Focus automatique sur le titre à l'arrivée sur l'étape Détails.
-  const titreRef = React.useRef<TextInput>(null);
+  const titreRef = React.useRef<ComponentRef<typeof TextInput>>(null);
   React.useEffect(() => {
     if (step === STEP.DETAILS) {
       const t = setTimeout(() => titreRef.current?.focus(), 350);
@@ -349,6 +350,7 @@ export default function PublierScreen() {
   if (success) {
     return (
       <View style={s.gateContainer}>
+        <View style={s.successColumn}>
         <View style={[s.gateIcon, s.successIcon]}>
           <Ionicons name="checkmark-circle" size={48} color={colors.success} />
         </View>
@@ -379,6 +381,7 @@ export default function PublierScreen() {
             router.replace("/(tabs)/explore");
           }}
         />
+        </View>
       </View>
     );
   }

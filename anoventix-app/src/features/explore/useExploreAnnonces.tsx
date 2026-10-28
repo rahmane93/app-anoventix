@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { filterAnnonces, getPublicAnnonces } from '@/src/api/annonce.api';
 import { parametresSaisie } from '@/src/lib/recherche';
 import { useAnnonceStore } from '@/src/stores/annonce.store';
@@ -43,7 +44,7 @@ export function useExploreAnnonces() {
     setQRecu(initialQ);
     if (initialQ?.trim()) { setInputValue(initialQ); setQuery(initialQ); }
   }
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Liste par défaut ──────────────────────────────────────────────────────────

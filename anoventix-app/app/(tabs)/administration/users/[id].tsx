@@ -575,12 +575,16 @@ export default function AdminUserDetail() {
       setStatutModal(statut);
       return;
     }
+    // Compte jamais activé : ce n'est pas une sanction levée, c'est une activation à la main.
+    const enAttente = currentUser.statut === 'EN_ATTENTE_ACTIVATION';
     appAlert(
-      'Réactiver le compte ?',
-      'Il pourra de nouveau se connecter. Le motif de la sanction sera effacé.',
+      enAttente ? 'Activer le compte ?' : 'Réactiver le compte ?',
+      enAttente
+        ? 'Le compte pourra se connecter sans attendre le lien d’activation envoyé par email.'
+        : 'Il pourra de nouveau se connecter. Le motif de la sanction sera effacé.',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Réactiver', onPress: () => appliquerStatut('ACTIF') },
+        { text: enAttente ? 'Activer' : 'Réactiver', onPress: () => appliquerStatut('ACTIF') },
       ],
     );
   };

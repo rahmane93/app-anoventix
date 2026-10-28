@@ -64,7 +64,7 @@ const bStyles = StyleSheet.create({
     borderColor: colors.white,
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '800',
     color: colors.white,
     lineHeight: 12,
@@ -153,7 +153,7 @@ export default function TabLayout() {
         name="explore"
         options={{
           headerShown: false,
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color as string} />,
           tabBarLabel: 'Accueil',
         }}
       />
@@ -167,7 +167,7 @@ export default function TabLayout() {
           headerShown: false,  // géré par le Stack dans (tabs)/messagerie/_layout.tsx
           tabBarIcon: ({ color, focused }) => (
             <View>
-              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={24} color={color as string} />
               <UnreadBadge count={unreadCount} />
             </View>
           ),
@@ -182,7 +182,7 @@ export default function TabLayout() {
           title: 'Favoris',
           // Onglet racine : pas de bouton retour (cohérent avec les autres onglets).
           headerTitle: 'Mes favoris',
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'heart' : 'heart-outline'} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'heart' : 'heart-outline'} size={24} color={color as string} />,
         }}
       />
 
@@ -193,7 +193,7 @@ export default function TabLayout() {
           href: visible('administration') ? undefined : null,
           title: 'Administration',
           headerShown: false,
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'shield' : 'shield-outline'} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'shield' : 'shield-outline'} size={24} color={color as string} />,
         }}
       />
 
@@ -219,7 +219,7 @@ export default function TabLayout() {
                 </TouchableOpacity>
               ),
           headerRight: isAgentProfessionnel && !isDesktop ? () => <PublishButton /> : undefined,
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={24} color={color as string} />,
         }}
       />
 
@@ -230,7 +230,7 @@ export default function TabLayout() {
           href: visible('entreprise') ? undefined : null,
           title: 'Entreprise',
           headerTitle: 'Mon entreprise',
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'business' : 'business-outline'} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'business' : 'business-outline'} size={24} color={color as string} />,
         }}
       />
 
@@ -238,10 +238,25 @@ export default function TabLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          href: visible('dashboard') ? undefined : null,
+          // Mobile : 5 onglets au plus. Les statistiques passent dans le profil
+          // (Profil > Statistiques) ; le web desktop les garde dans la barre du haut.
+          href: visible('dashboard') && isDesktop ? undefined : null,
           title: 'Statistiques',
           headerTitle: 'Statistiques',
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={24} color={color} />,
+          headerLeft: isDesktop
+            ? undefined
+            : () => (
+                <TouchableOpacity
+                  onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+                  style={favStyles.btn}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Retour au profil"
+                >
+                  <Ionicons name="chevron-back" size={24} color={colors.primary} />
+                </TouchableOpacity>
+              ),
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={24} color={color as string} />,
           tabBarLabel: 'Stats',
         }}
       />
@@ -262,7 +277,7 @@ export default function TabLayout() {
               <Ionicons
                 name={isAuthenticated ? (focused ? 'person' : 'person-outline') : 'log-in-outline'}
                 size={24}
-                color={color}
+                color={color as string}
               />
             </View>
           ),

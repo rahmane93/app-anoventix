@@ -124,7 +124,7 @@ function MenuItem({ icon, label, onPress, danger }: {
 
 export function WebTopBar() {
   const pathname = usePathname();
-  const { items, isAuthenticated, canPublish, unreadCount } = useNavState();
+  const { items, isAuthenticated, canPublish, unreadCount, identiteARegler } = useNavState();
 
   const publier = () =>
     isAuthenticated ? router.push('/(tabs)/publier') : requireLogin('publier', '/(tabs)/publier');
@@ -161,10 +161,12 @@ export function WebTopBar() {
             <Pressable
               onPress={publier}
               accessibilityRole="button"
+              accessibilityHint={identiteARegler ? "Une pièce d'identité validée est requise avant de publier" : undefined}
               style={({ hovered }: { hovered?: boolean }) => [s.publish, hovered && s.publishHover]}
             >
               <Ionicons name="add" size={18} color={colors.textOnAccent} />
               <AppText style={s.publishText}>Publier une annonce</AppText>
+              {identiteARegler ? <View style={s.publishDot} /> : null}
             </Pressable>
           ) : null}
           {isAuthenticated ? (
@@ -256,6 +258,11 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   publishHover: { backgroundColor: interactive.hoverAccent },
+  // Étape à faire avant de publier (pièce d'identité).
+  publishDot: {
+    position: 'absolute', top: -3, right: -3, width: 12, height: 12, borderRadius: 6,
+    backgroundColor: colors.error, borderWidth: 2, borderColor: colors.white,
+  },
   publishText: { fontFamily: typography.fonts.bold, fontSize: 14, color: colors.textOnAccent },
   login: {
     height: 42,

@@ -76,7 +76,7 @@ const miniCard = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   body: { padding: spacing.sm, gap: 2 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   statut: {
@@ -87,7 +87,7 @@ const miniCard = StyleSheet.create({
     minWidth: 0,
     marginLeft: 'auto',
   },
-  statutText: { fontSize: 10, fontWeight: '700', color: colors.white },
+  statutText: { fontSize: 12, fontWeight: '700', color: colors.white },
   typeBien: {
     flexShrink: 1,
     fontSize: typography.sizes.xs,

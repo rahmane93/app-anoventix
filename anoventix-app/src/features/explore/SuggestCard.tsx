@@ -53,7 +53,7 @@ const scStyles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   body: { padding: spacing.sm, gap: 3 },
   typeBien: { fontSize: typography.sizes.xs, fontWeight: '600', color: colors.textMuted, letterSpacing: 0.3 },
   titre: { fontSize: typography.sizes.sm, fontWeight: '600', color: colors.textPrimary, lineHeight: 18 },
